@@ -132,10 +132,9 @@ class Client(object):
         """Retrieve services of Smart Plug."""
         return SmartPlugServices().load(self.request("smarthome/devices/"+smart_plug_id+"/services"))
     
-    def initialize_smart_plugs(self):
-        devices = self.device_list()
+    def initialize_smart_plugs(self, device_list):
         smart_plugs = []
-        for item in devices.items:
+        for item in device_list.items:
             if item.deviceModel == "PSM":
                 smart_plugs.append(self.smart_plug(item.id))
         return smart_plugs

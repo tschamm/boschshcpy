@@ -33,7 +33,7 @@ try:
 #   for item in smart_plug_services.items:
 #       print (item)
 
-  smart_plugs = client.initialize_smart_plugs()
+  smart_plugs = client.initialize_smart_plugs(client.device_list())
   for item in smart_plugs:
       print (item) 
 
