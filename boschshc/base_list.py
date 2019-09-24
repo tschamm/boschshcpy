@@ -18,18 +18,17 @@ class BaseList(Base):
         self.offset = None
         self.count = None
         self.totalCount = None
-        self._links = None
         self._items = None
 
         self.itemType = item_type
 
-    @property
-    def links(self):
-        return self._links
-
-    @links.setter
-    def links(self, value):
-        self._links = Links().load(value)
+    def load(self, data):
+#         print (self.itemType())
+        items = []
+        for dict_item in data:
+            items.append(self.itemType().load(dict_item))
+        self._items = items
+        return self
 
     @property
     def items(self):

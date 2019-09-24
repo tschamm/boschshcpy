@@ -4,7 +4,7 @@ import io
 import enum
 
 from boschshc.shc_information import ShcInformation
-from boschshc.smart_plug import SmartPlug
+from boschshc.smart_plug import SmartPlug, SmartPlugServices
 from boschshc.device import Device, DeviceList
 
 from boschshc.error import Error
@@ -116,17 +116,29 @@ class Client(object):
         """Get a detailed information about the current state of the SHC."""
         return ShcInformation().load(self.request("smarthome/information"))
 
-    def smart_plug(self, smart_plug_id):
-        """Retrieve state of Smart Plug."""
-        return SmartPlug().load(self.request("smarthome/devices/"+smart_plug_id+"/services/PowerSwitch/state"))
-    
-    def device(self, id):
+    def device(self, device_id):
         """Retrive device information."""
-        return Device().load(self.request("smarthome/devices/"+id))
+        return Device().load(self.request("smarthome/devices/"+device_id))
     
     def device_list(self):
         """Retrieve list of devices."""
         return DeviceList().load(self.request("smarthome/devices"))
+
+    def smart_plug(self, smart_plug_id):
+        """Retrieve state of Smart Plug."""
+        return SmartPlug().load(self.request("smarthome/devices/"+smart_plug_id+"/services/PowerSwitch/state"))
+    
+    def smart_plug_services(self, smart_plug_id):
+        """Retrieve services of Smart Plug."""
+        return SmartPlugServices().load(self.request("smarthome/devices/"+smart_plug_id+"/services"))
+    
+    def initialize_smart_plugs(self):
+        devices = self.device_list()
+        smart_plugs = []
+        for item in devices.items:
+            if item.deviceModel == "PSM":
+                smart_plugs.append(self.smart_plug(item.id))
+        return smart_plugs
 
     # def call(self,id):
     #     """Retrieve the information of a specific call"""

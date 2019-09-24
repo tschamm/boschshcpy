@@ -46,6 +46,7 @@ class HttpClient(object):
 #             'PUT': requests.put(url, verify=False, headers=headers, data=json.dumps(params))
         }
         response = method_switcher.get(method, str(method) + ' is not a supported HTTP method')
+#         print (response.content)
         if isinstance(response, str):
             raise ValueError(response)
 

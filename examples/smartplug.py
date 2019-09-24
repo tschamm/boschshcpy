@@ -18,18 +18,24 @@ try:
   print('  version        : %s' % shc_info.version)
   print('  updateState    : %s' % shc_info.updateState)
 
-  device = client.device(SMART_PLUG_ID)
-  print('  id        : %s' % device.id)
-  print('  name      : %s' % device.name)
-  print('  status    : %s' % device.status)
-
-  device_list = client.device_list()
-#   print('  version        : %s\n' % shc_info.version)
-#   print('  updateState    : %s\n' % shc_info.updateState)
-
+#   device = client.device(SMART_PLUG_ID)
+#   print(device)
+# 
+#   device_list = client.device_list()
+#   print (device_list)
+#   for item in device_list.items:
+#       print (item)
 
   # Fetch the smart plug object.
   smart_plug = client.smart_plug(SMART_PLUG_ID)
+#   smart_plug_services = client.smart_plug_services(SMART_PLUG_ID)
+#   print(smart_plug_services)
+#   for item in smart_plug_services.items:
+#       print (item)
+
+  smart_plugs = client.initialize_smart_plugs()
+  for item in smart_plugs:
+      print (item) 
 
   # Print the object information.
   print('\nThe following information was returned as a SmartPlug object:\n')
