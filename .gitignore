@@ -2,4 +2,4 @@
 build/
 dist/
 bshlocal.egg-info/
-__pycache__
+examples/keystore
