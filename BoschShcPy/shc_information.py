@@ -1,4 +1,4 @@
-from boschshc.base import Base
+from BoschShcPy.base import Base
 
 class ShcInformation(Base):
   def __init__(self):

@@ -1,5 +1,5 @@
-from boschshc.base import Base
-from boschshc.base_list import BaseList
+from BoschShcPy.base import Base
+from BoschShcPy.base_list import BaseList
 
 class SmartPlug(Base):
     def __init__(self):

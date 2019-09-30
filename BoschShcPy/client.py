@@ -3,12 +3,12 @@ import json
 import io
 import enum
 
-from boschshc.shc_information import ShcInformation
-from boschshc.smart_plug import SmartPlug, SmartPlugServices
-from boschshc.device import Device, DeviceList
+from BoschShcPy.shc_information import ShcInformation
+from BoschShcPy.smart_plug import SmartPlug, SmartPlugServices
+from BoschShcPy.device import Device, DeviceList
 
-from boschshc.error import Error
-from boschshc.http_client import HttpClient, ResponseFormat
+from BoschShcPy.error import Error
+from BoschShcPy.http_client import HttpClient, ResponseFormat
 
 IP_SHC = '192.168.1.6:8443'
 ENDPOINT = 'https://'+IP_SHC
