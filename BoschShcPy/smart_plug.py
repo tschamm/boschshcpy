@@ -1,29 +1,39 @@
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
+from BoschShcPy.client import ErrorException
 
 class SmartPlug(Base):
     def __init__(self, client, id, name=None):
-        self._client = client
+        self.client = client
         self.id = id
-        self._name = name
+        self.name = name
         self.type = None
         self.switchState = None
         self.automaticPowerOffTime = None
-
-    def update(self):
-        self.load( self._client.request("smarthome/devices/"+self.id+"/services/PowerSwitch/state")
-        )
-        return True
+        self.update()
 
     @property
-    def state(self):
+    def get_state(self):
         """Retrieve state of Smart Plug."""
         return self.switchState
     
     @property
-    def name(self):
+    def get_name(self):
         """Retrieve name of Smart Plug"""
-        return self._name
+        return self.name
+    
+    @property
+    def get_id(self):
+        """Retrieve id of Smart Plug"""
+        return self.id
+    
+    def update(self):
+        try:
+            self.load( self.client.request("smarthome/devices/"+self.id+"/services/PowerSwitch/state") )
+            return True
+        except ErrorException:
+            return False
+    
 
     # def smart_plug_services(self, smart_plug_id):
     #     """Retrieve services of Smart Plug."""

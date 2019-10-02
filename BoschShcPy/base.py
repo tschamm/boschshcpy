@@ -6,7 +6,7 @@ import dateutil.parser
 class Base(object):
     def load_dict(self, data):
         for name, value in list(data.items()):
-            if hasattr(self, name) and not callable(getattr(self,name)):
+            if hasattr(self, name) and not callable(getattr(self, name)):
                 setattr(self, name, value)
 
         return self

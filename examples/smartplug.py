@@ -29,7 +29,7 @@ try:
   device_list = client.device_list()
   print (device_list)
   # for item in device_list.items:
-  #     # print (item)
+  #     print (item)
   #
   #     if item.deviceModel == "PSM":
   #         smart_plug = BoschShcPy.SmartPlug(client, item.id, item.name)
@@ -55,7 +55,7 @@ try:
   # Print the object information.
   print('\nThe following information was returned as a SmartPlug object:\n')
 #   print('  id  : %d' % smart_plug.\@type)
-  print('  state    : %s\n' % smart_plug.state)
+  print('  state    : %s\n' % smart_plug.get_state)
 
 except BoschShcPy.client.ErrorException as e:
   print('\nAn error occured while requesting a SmartPlug object:\n')

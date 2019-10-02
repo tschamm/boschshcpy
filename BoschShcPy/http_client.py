@@ -1,3 +1,5 @@
+"""Code mostly taken from messagebird API, see LICENCE"""
+
 import json
 import requests
 from enum import Enum
@@ -43,7 +45,7 @@ class HttpClient(object):
 #             'PUT': requests.put(url, verify=False, headers=headers, data=json.dumps(params))
         }
         response = method_switcher.get(method, str(method) + ' is not a supported HTTP method')
-        # print (response.content)
+#         print (response.content)
         
         if isinstance(response, str):
             raise ValueError(response)
