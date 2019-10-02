@@ -4,36 +4,18 @@ import io
 import enum
 
 from BoschShcPy.shc_information import ShcInformation
-from BoschShcPy.smart_plug import SmartPlug, SmartPlugServices
+# from BoschShcPy.smart_plug import SmartPlug, SmartPlugServices
 from BoschShcPy.device import Device, DeviceList
 
 from BoschShcPy.error import Error
 from BoschShcPy.http_client import HttpClient, ResponseFormat
 
-IP_SHC = '192.168.1.6:8443'
-ENDPOINT = 'https://'+IP_SHC
-CLIENT_VERSION = '1.4.1'
+CLIENT_VERSION = '0.0.1'
 PYTHON_VERSION = '%d.%d.%d' % (sys.version_info[0], sys.version_info[1], sys.version_info[2])
-USER_AGENT = 'BoschSHC/ApiClient/%s Python/%s' % (CLIENT_VERSION, PYTHON_VERSION)
-REST_TYPE = 'rest'
+USER_AGENT = 'BoschShcPy/ApiClient/%s Python/%s' % (CLIENT_VERSION, PYTHON_VERSION)
 
-# CONVERSATION_API_ROOT = 'https://conversations.messagebird.com/v1/'
-# CONVERSATION_API_WHATSAPP_SANDBOX_ROOT = 'https://whatsapp-sandbox.messagebird.com/v1/'
-#
-#
-
-# CONVERSATION_PATH = 'conversations'
-# CONVERSATION_MESSAGES_PATH = 'messages'
-# CONVERSATION_WEB_HOOKS_PATH = 'webhooks'
-# CONVERSATION_TYPE = 'conversation'
-#
-# VOICE_API_ROOT = 'https://voice.messagebird.com'
-# VOICE_TYPE = 'voice'
-# VOICE_PATH = 'calls'
-# VOICE_LEGS_PATH = 'legs'
-# VOICE_RECORDINGS_PATH = 'recordings'
-# VOICE_TRANSCRIPTIONS_PATH = 'transcriptions'
-
+def get_uri(ip_address, port):
+    return 'https://' + ip_address + ':' + port
 
 class ErrorException(Exception):
     def __init__(self, errors):
@@ -45,33 +27,24 @@ class SingleErrorException(Exception):
     def __init__(self, errorMessage):
         super(SingleErrorException, self).__init__(errorMessage)
 
-# class Feature(enum.Enum):
-#         ENABLE_CONVERSATIONS_API_WHATSAPP_SANDBOX = 1
-
 class Client(object):
 
-    def __init__(self, access_cert, access_key, http_client=None, features=[]):
+    def __init__(self, ip_address, port, access_cert, access_key, http_client=None):
+        self.ip_address = ip_address
+        self.port = port
         self.access_cert = access_cert
         self.access_key = access_key
         self.http_client = http_client
 
-        # self.conversation_api_root = CONVERSATION_API_WHATSAPP_SANDBOX_ROOT if Feature.ENABLE_CONVERSATIONS_API_WHATSAPP_SANDBOX in features else CONVERSATION_API_ROOT
-
-    def _get_http_client(self, type=REST_TYPE):
+    def _get_http_client(self):
         if self.http_client:
             return self.http_client
 
-        # if type == CONVERSATION_TYPE:
-        #     return HttpClient(self.conversation_api_root, self.access_key, USER_AGENT)
-        #
-        # if type == VOICE_TYPE:
-        #     return HttpClient(VOICE_API_ROOT, self.access_key, USER_AGENT)
+        return HttpClient(get_uri(self.ip_address, self.port), self.access_cert, self.access_key, USER_AGENT)
 
-        return HttpClient(ENDPOINT, self.access_cert, self.access_key, USER_AGENT)
-
-    def request(self, path, method='GET', params=None, type=REST_TYPE):
+    def request(self, path, method='GET', params=None):
         """Builds a request, gets a response and decodes it."""
-        response_text = self._get_http_client(type).request(path, method, params)
+        response_text = self._get_http_client().request(path, method, params)
         if not response_text:
             return response_text
 
@@ -82,9 +55,9 @@ class Client(object):
 
         return response_json
 
-    def request_plain_text(self, path, method='GET', params=None, type=REST_TYPE):
+    def request_plain_text(self, path, method='GET', params=None):
         """Builds a request, gets a response and returns the body."""
-        response_text = self._get_http_client(type).request(path, method, params)
+        response_text = self._get_http_client().request(path, method, params)
 
         try:
             # Try to decode the response to JSON to see if the API returned any
@@ -100,9 +73,9 @@ class Client(object):
 
         return response_text
 
-    def request_store_as_file(self, path, filepath, method='GET', params=None, type=REST_TYPE):
+    def request_store_as_file(self, path, filepath, method='GET', params=None):
         """Builds a request, gets a response and decodes it."""
-        response_binary = self._get_http_client(type).request(path, method, params, ResponseFormat.binary)
+        response_binary = self._get_http_client().request(path, method, params, ResponseFormat.binary)
 
         if not response_binary:
             return response_binary
@@ -124,20 +97,25 @@ class Client(object):
         """Retrieve list of devices."""
         return DeviceList().load(self.request("smarthome/devices"))
 
-    def smart_plug(self, smart_plug_id):
-        """Retrieve state of Smart Plug."""
-        return SmartPlug().load(self.request("smarthome/devices/"+smart_plug_id+"/services/PowerSwitch/state"))
+    # def smart_plug(self, smart_plug_id, name):
+    #     """Retrieve state of Smart Plug."""
+    #     return SmartPlug(smart_plug_id, name).load(self.request("smarthome/devices/"+smart_plug_id+"/services/PowerSwitch/state"))
+    #
+    # def smart_plug_services(self, smart_plug_id):
+    #     """Retrieve services of Smart Plug."""
+    #     return SmartPlugServices().load(self.request("smarthome/devices/"+smart_plug_id+"/services"))
+    #
+    # def initialize_smart_plugs(self, device_list):
+    #     smart_plugs = []
+    #     for item in device_list.items:
+    #         if item.deviceModel == "PSM":
+    #             smart_plugs.append(self.smart_plug(item.id, item.name))
+    #     return smart_plugs
     
-    def smart_plug_services(self, smart_plug_id):
-        """Retrieve services of Smart Plug."""
-        return SmartPlugServices().load(self.request("smarthome/devices/"+smart_plug_id+"/services"))
-    
-    def initialize_smart_plugs(self, device_list):
-        smart_plugs = []
-        for item in device_list.items:
-            if item.deviceModel == "PSM":
-                smart_plugs.append(self.smart_plug(item.id))
-        return smart_plugs
+    def sensors(self):
+        """Retrieve list of devices."""
+        return DeviceList().load(self.request("smarthome/devices"))
+
 
     # def call(self,id):
     #     """Retrieve the information of a specific call"""

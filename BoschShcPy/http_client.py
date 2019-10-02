@@ -10,8 +10,6 @@ except ImportError:
 import urllib3
 urllib3.disable_warnings()
 
-# session = requests.Session()
-
 class ResponseFormat(Enum):
     text = 1
     binary = 2
@@ -40,13 +38,13 @@ class HttpClient(object):
         method_switcher = {
 #             'DELETE': requests.delete(url, verify=False, headers=headers, data=json.dumps(params)),
             'GET': requests.get(url, verify=False, cert=cert, headers=headers, params=params)#,
-#             'GET': session.get(url, verify=False, cert=cert, headers=headers, params=params)#,
 #             'PATCH': requests.patch(url, verify=False, headers=headers, data=json.dumps(params)),
 #             'POST': requests.post(url, verify=False, headers=headers, data=json.dumps(params)),
 #             'PUT': requests.put(url, verify=False, headers=headers, data=json.dumps(params))
         }
         response = method_switcher.get(method, str(method) + ' is not a supported HTTP method')
-#         print (response.content)
+        # print (response.content)
+        
         if isinstance(response, str):
             raise ValueError(response)
 
