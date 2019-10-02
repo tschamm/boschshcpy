@@ -1,7 +1,6 @@
 import sys
 import json
 import io
-import enum
 
 from BoschShcPy.shc_information import ShcInformation
 # from BoschShcPy.smart_plug import SmartPlug, SmartPlugServices

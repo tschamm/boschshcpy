@@ -16,6 +16,15 @@ class SmartPlug(Base):
     def get_state(self):
         """Retrieve state of Smart Plug."""
         return self.switchState
+
+    @property
+    def get_binarystate(self):
+        """Retrieve state of Smart Plug."""
+        if self.switchState=="ON":
+            return True
+        if self.switchState=="OFF":
+            return False
+        return False
     
     @property
     def get_name(self):
@@ -34,6 +43,21 @@ class SmartPlug(Base):
         except ErrorException:
             return False
     
+    def set_state(self, state):
+        """Set a new state of Smart Plug."""
+        data={'@type':'powerSwitchState', 'switchState': state}
+        try:
+            self.client.request("smarthome/devices/"+self.id+"/services/PowerSwitch/state", method='PUT', params=data)
+            self.update()
+            return True
+        except ErrorException:
+            return False
+
+    def set_binarystate(self, state):
+        if state:
+            self.set_state('On')
+        else:
+            self.set_state('Off')
 
     # def smart_plug_services(self, smart_plug_id):
     #     """Retrieve services of Smart Plug."""

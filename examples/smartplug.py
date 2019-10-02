@@ -39,7 +39,8 @@ try:
   smart_plug = BoschShcPy.SmartPlug(client, SMART_PLUG_ID, "Dummy")
   smart_plug.update()
   print(smart_plug)
-
+  smart_plug.set_binarystate(False)
+  print(smart_plug)
 
   # Fetch the smart plug object.
 #   smart_plug = client.smart_plug(SMART_PLUG_ID, "Dummy")
