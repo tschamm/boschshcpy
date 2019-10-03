@@ -12,12 +12,6 @@ class Base(object):
         return self
 
     def load(self, data):
-#         if isinstance(data, list):
-#             for dict_item in data:
-#                 self.load_dict(dict_item)
-#         else: 
-#             self.load_dict(data)
-        
         self.load_dict(data)
         return self
 

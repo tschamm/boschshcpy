@@ -47,14 +47,6 @@ class HttpClient(object):
         else:
             response = str(method) + ' is not a supported HTTP method'
                     
-#         method_switcher = {
-#             'DELETE': requests.delete(url, verify=False, cert=cert, headers=headers, data=json.dumps(params)),
-#             'GET': requests.get(url, verify=False, cert=cert, headers=headers, params=params),
-#             'PATCH': requests.patch(url, verify=False, cert=cert, headers=headers, data=json.dumps(params)),
-#             'POST': requests.post(url, verify=False, cert=cert, headers=headers, data=json.dumps(params)),
-#             'PUT': requests.put(url, verify=False, cert=cert, headers=headers, data=json.dumps(params))
-#         }
-#         response = method_switcher.get(method, str(method) + ' is not a supported HTTP method')
 #         print (response.content)
         
         if isinstance(response, str):
