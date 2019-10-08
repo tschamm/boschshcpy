@@ -12,7 +12,11 @@ class Base(object):
         return self
 
     def load(self, data):
-        self.load_dict(data)
+        if isinstance(data, list):
+            for elem in data:
+                self.load_dict(elem)
+        else:
+            self.load_dict(data)
         return self
 
     @staticmethod

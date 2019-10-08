@@ -2,6 +2,7 @@
 
 import json
 import requests
+# import requests_async as requests
 from enum import Enum
 
 try:

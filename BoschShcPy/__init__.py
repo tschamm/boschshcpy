@@ -1,5 +1,7 @@
 from BoschShcPy.client import Client, ErrorException
 from BoschShcPy.smart_plug import SmartPlug
+from BoschShcPy.shutter_control import ShutterControl
+from BoschShcPy.polling_service import PollingService
 from BoschShcPy.signed_request import SignedRequest
 
 __version__ = "0.0.1"

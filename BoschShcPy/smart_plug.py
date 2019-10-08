@@ -1,8 +1,7 @@
-import enum
-
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
 from BoschShcPy.client import ErrorException
+from telnetlib import SE
 
 state_rx = {'ON': True, 'OFF': False}
 state_tx = {True: 'ON', False: 'OFF'}
@@ -13,11 +12,11 @@ class SmartPlug(Base):
         self.id = id
         self.name = name
         self.type = None
-        self.switchState = state_rx['OFF']
+        self.switchState = 'OFF'
         self.automaticPowerOffTime = None
         self.powerConsumption = None
         self.energyConsumption = None
-        self.update()
+#         self.update()
 
     @property
     def get_state(self):
@@ -50,12 +49,39 @@ class SmartPlug(Base):
         except ErrorException:
             return False
     
+    def update_switchstate(self, query_result):
+        """Retrieve switch state values of Smart Plug from polling query."""
+        if self.id != query_result['deviceId'] or query_result['state']['@type'] != "powerSwitchState":
+            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            return False
+        
+        self.switchState = query_result['state']['switchState']
+        self.automaticPowerOffTime = query_result['state']['automaticPowerOffTime']
+        return True
+
+    def update_meterstate(self, query_result):
+        """Retrieve meter state values of Smart Plug from polling query."""
+        if self.id != query_result['deviceId'] or query_result['state']['@type'] != "powerMeterState":
+            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            return False
+        
+        self.powerConsumption = query_result['state']['powerConsumption']
+        self.energyConsumption = query_result['state']['energyConsumption']        
+        return True
+    
+    def update_from_query(self, query_result):
+        if query_result['id'] == "PowerSwitch":
+            self.update_switchstate(query_result)
+        if query_result['id'] == "PowerMeter":
+            self.update_meterstate(query_result)
+
     def set_state(self, state):
         """Set a new state of Smart Plug."""
         data={'@type':'powerSwitchState', 'switchState': state_tx[state]}
         try:
             self.client.request("smarthome/devices/"+self.id+"/services/PowerSwitch/state", method='PUT', params=data)
-            self.update()
+            self.switchState = state_tx[state]
+#             self.update()
             return True
         except ErrorException:
             return False
@@ -63,7 +89,7 @@ class SmartPlug(Base):
     def get_services(self):
         """Retrieve services of Smart Plug."""
         return SmartPlugServices().load(self.client.request("smarthome/devices/"+self.id+"/services"))
-
+    
     def __str__(self):
         return "\n".join([
             'Id                        : %s' % self.id,
