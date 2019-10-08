@@ -19,6 +19,12 @@ class Base(object):
             self.load_dict(data)
         return self
 
+    def update(self):
+        raise NotImplementedError()
+    
+    def update_from_query(self, query_result):
+        raise NotImplementedError()
+    
     @staticmethod
     def value_to_time(value, format='%Y-%m-%dT%H:%M:%S+00:00'):
         if value is not None:

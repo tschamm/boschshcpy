@@ -16,7 +16,6 @@ class SmartPlug(Base):
         self.automaticPowerOffTime = None
         self.powerConsumption = None
         self.energyConsumption = None
-#         self.update()
 
     @property
     def get_state(self):

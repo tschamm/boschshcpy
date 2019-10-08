@@ -4,7 +4,7 @@ import io
 
 from BoschShcPy.shc_information import ShcInformation
 from BoschShcPy.device import Device, DeviceList
-from BoschShcPy.polling_service import PollingService
+from BoschShcPy.subscribe import Subscription
 
 from BoschShcPy.error import Error
 from BoschShcPy.http_client import HttpClient, ResponseFormat
@@ -36,6 +36,7 @@ class Client(object):
         self.access_key = access_key
         self.http_client = http_client
         self._device_list = None
+        self._subscription = Subscription(self)
 
     def _get_http_client(self):
         if self.http_client:
@@ -100,20 +101,29 @@ class Client(object):
             self._device_list = DeviceList().load(self.request("smarthome/devices"))
         return self._device_list
     
-    def subscribe_polling(self):
-        """Initialize long polling by subscription."""
-        params=["com/bosch/sh/remote/*", None]
-        data=[{'jsonrpc': '2.0', 'method': 'RE/subscribe', 'id': 'boschshcpy', 'params': params}]
-        return PollingService().load(self.request("remote/json-rpc", method='POST', params=data))
+    def register_device(self, device, callback):
+        self._subscription.register(device, callback)
+    
+    def start_subscription(self):
+        self._subscription.start()
+        
+    def stop_subscription(self):
+        self._subscription.stop()
 
-    def unsubscribe_polling(self, polling_service):
-        """Unsubscribe from long polling."""
-        params=[polling_service.result]
-        data=[{'jsonrpc': '2.0', 'method': 'RE/unsubscribe', 'id': 'boschshcpy', 'params': params}]
-        return self.request("remote/json-rpc", method='POST', params=data)
-
-    def polling(self, polling_service, time):
-        """Query long polling."""
-        params=[polling_service.result, time]
-        data=[{'jsonrpc': '2.0', 'method': 'RE/longPoll', 'id': 'boschshcpy', 'params': params}]
-        return self.request("remote/json-rpc", method='POST', params=data)
+#     def subscribe_polling(self):
+#         """Initialize long polling by subscription."""
+#         params=["com/bosch/sh/remote/*", None]
+#         data=[{'jsonrpc': '2.0', 'method': 'RE/subscribe', 'id': 'boschshcpy', 'params': params}]
+#         return PollingService().load(self.request("remote/json-rpc", method='POST', params=data))
+# 
+#     def unsubscribe_polling(self, polling_service):
+#         """Unsubscribe from long polling."""
+#         params=[polling_service.result]
+#         data=[{'jsonrpc': '2.0', 'method': 'RE/unsubscribe', 'id': 'boschshcpy', 'params': params}]
+#         return self.request("remote/json-rpc", method='POST', params=data)
+# 
+#     def polling(self, polling_service, time):
+#         """Query long polling."""
+#         params=[polling_service.result, time]
+#         data=[{'jsonrpc': '2.0', 'method': 'RE/longPoll', 'id': 'boschshcpy', 'params': params}]
+#         return self.request("remote/json-rpc", method='POST', params=data)

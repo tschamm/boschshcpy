@@ -60,8 +60,11 @@ class ShutterControl(Base):
             print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
             return False
         
-        self.level = query_result['state']['level']
-        self.operationState = query_result['state']['operationState']        
+        self.operationState = query_result['state']['operationState']
+        
+        """As info is delayed, only update level if shutter control is not moving to prevent flickering"""
+        if self.operationState == 'STOPPED':        
+            self.level = query_result['state']['level']
         return True
     
     def set_level(self, level):
