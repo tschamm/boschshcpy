@@ -102,7 +102,7 @@ class Client(object):
     
     def subscribe_polling(self):
         """Initialize long polling by subscription."""
-        params=["com/bosch/sh/remote/*", null()]
+        params=["com/bosch/sh/remote/*", None]
         data=[{'jsonrpc': '2.0', 'method': 'RE/subscribe', 'id': 'boschshcpy', 'params': params}]
         return PollingService().load(self.request("remote/json-rpc", method='POST', params=data))
 

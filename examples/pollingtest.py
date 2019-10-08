@@ -34,6 +34,12 @@ try:
         item.update()
         hashed_plugs[item.id] = item
 
+    hashed_controls = {}
+    shutter_controls = BoschShcPy.shutter_control.initialize_shutter_controls(client, client.device_list())
+    for item in shutter_controls:
+        item.update()
+        hashed_controls[item.id] = item
+
     print("Starting polling")
     polling_service = client.subscribe_polling()
 #     polling_service = PollingService()
@@ -44,15 +50,20 @@ try:
     while(i < 5):
         i = i+1
         query = client.polling(polling_service, 10)
+#         print (query)
         for elem in list(query):
             if 'result' in elem.keys():
                 for result in elem['result']:
-                    print(result)
+#                     print(result)
                     if result['deviceId'] in hashed_plugs:
                         hashed_plugs[result['deviceId']].update_from_query(result)
                         print(hashed_plugs[result['deviceId']])
+                    if result['deviceId'] in hashed_controls:
+                        hashed_controls[result['deviceId']].update_from_query(result)
+                        print(hashed_controls[result['deviceId']])
 
 
+    print("Stopping polling")
     client.unsubscribe_polling(polling_service)
 #     shutter_controls = BoschShcPy.shutter_control.initialize_shutter_controls(client, client.device_list())
 #     for item in shutter_controls:

@@ -46,11 +46,23 @@ class ShutterControl(Base):
     def update(self):
         try:
             self.load( self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state") )
-            print("Update request received")
-            print(self)
+#             print("Update request received")
+#             print(self)
             return True
         except ErrorException:
             return False
+
+    def update_from_query(self, query_result):
+        if query_result['id'] != "ShutterControl":
+            return False
+        
+        if self.id != query_result['deviceId'] or query_result['state']['@type'] != "shutterControlState":
+            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            return False
+        
+        self.level = query_result['state']['level']
+        self.operationState = query_result['state']['operationState']        
+        return True
     
     def set_level(self, level):
         """Set a new level of Shutter Control."""
@@ -65,10 +77,10 @@ class ShutterControl(Base):
 
     def stop(self):
         """Stops movement of Shutter Control."""
-        data={'@type':'shutterControlState', 'calibrated': True, 'operationState': operation_state_tx[operation_state.STOPPED]}
+#         data={'@type':'shutterControlState', 'calibrated': True, 'operationState': operation_state_tx[operation_state.STOPPED]}
         try:
-            self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state", method='PUT', params=data)
-            self.update()
+            self.client.request("smarthome/shading/shutters/"+self.id+"/stop", method='PUT')
+#             self.update()
             return True
         except ErrorException:
             return False
