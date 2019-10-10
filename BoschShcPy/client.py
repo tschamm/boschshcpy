@@ -6,7 +6,7 @@ from BoschShcPy.shc_information import ShcInformation
 from BoschShcPy.device import Device, DeviceList
 from BoschShcPy.subscribe import Subscription
 
-from BoschShcPy.error import Error
+# from BoschShcPy.error import Error
 from BoschShcPy.http_client import HttpClient, ResponseFormat
 
 CLIENT_VERSION = "0.0.1"
@@ -51,9 +51,9 @@ class Client(object):
             return response_text
 
         response_json = json.loads(response_text)
-
-        if 'errors' in response_json:
-            raise (ErrorException([Error().load(e) for e in response_json['errors']]))
+        
+        if 'errorCode' in response_json:
+            raise (ErrorException(response_json['errorCode']))
 
         return response_json
 
@@ -66,8 +66,8 @@ class Client(object):
             # errors.
             response_json = json.loads(response_text)
 
-            if 'errors' in response_json:
-                raise (ErrorException([Error().load(e) for e in response_json['errors']]))
+            if 'errorCode' in response_json:
+                raise (ErrorException(response_json['errorCode']))
         except ValueError:
             # Do nothing: json.loads throws if the input string is not valid JSON,
             # which is expected. We'll just return the response body below.
@@ -103,6 +103,11 @@ class Client(object):
     
     def register_device(self, device, callback):
         self._subscription.register(device, callback)
+        
+    def register_device_list(self, device_list, callback):
+        for device in device_list.items:
+            self._subscription.register(device, callback)
+
     
     def start_subscription(self):
         self._subscription.start()

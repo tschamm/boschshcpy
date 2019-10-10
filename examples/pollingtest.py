@@ -33,20 +33,23 @@ try:
     print("Accessing all devices...")
     
     hashed_devices = {}
+#     client.register_device_list(client.device_list(), callback)
     
     hashed_plugs = {}
     smart_plugs = BoschShcPy.smart_plug.initialize_smart_plugs(client, client.device_list())
     for item in smart_plugs:
-        item.update()
+#         item.update()
 #         hashed_plugs[item.id] = item
 #         hashed_devices[item.id] = item
         client.register_device(item, callback)
+        client.register_device(item.device, callback)
 
     hashed_controls = {}
     shutter_controls = BoschShcPy.shutter_control.initialize_shutter_controls(client, client.device_list())
     for item in shutter_controls:
-        item.update()
+#         item.update()
         client.register_device(item, callback)
+        client.register_device(item.device, callback)
 #         hashed_controls[item.id] = item
 #         hashed_devices[item.id] = item
 

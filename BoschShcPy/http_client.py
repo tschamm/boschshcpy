@@ -22,7 +22,7 @@ class HttpClient(object):
     """Used for sending simple HTTP requests."""
 
     def __init__(self, endpoint, access_cert, access_key, user_agent):
-        self.__supported_status_codes = [200, 201, 204, 401, 404, 405, 422]
+        self.__supported_status_codes = [200, 201, 204, 401, 404, 405, 422, 503]
 
         self.endpoint = endpoint
         self.access_cert = access_cert
@@ -47,7 +47,7 @@ class HttpClient(object):
             response = requests.put(url, verify=False, cert=cert, headers=headers, data=json.dumps(params))
         else:
             response = str(method) + ' is not a supported HTTP method'
-                    
+
 #         print (response.content)
         
         if isinstance(response, str):

@@ -1,14 +1,19 @@
+import logging
+
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
 from BoschShcPy.client import ErrorException
-from telnetlib import SE
+from BoschShcPy.device import Device, status_rx
+
+_LOGGER = logging.getLogger(__name__)
 
 state_rx = {'ON': True, 'OFF': False}
 state_tx = {True: 'ON', False: 'OFF'}
 
 class SmartPlug(Base):
-    def __init__(self, client, id, name=None):
+    def __init__(self, client, device, id, name=None):
         self.client = client
+        self.device = device
         self.id = id
         self.name = name
         self.type = None
@@ -33,12 +38,21 @@ class SmartPlug(Base):
         return self.id
     
     @property
+    def get_device(self):
+        """Retrieve device of Smart Plug"""
+        return self.device
+    
+    @property
     def get_powerConsumption(self):
         return self.powerConsumption
     
     @property
     def get_energyConsumption(self):
         return self.energyConsumption
+
+    @property
+    def get_availability(self):
+        return status_rx[self.device.status]
 
     def update(self):
         try:
@@ -82,7 +96,8 @@ class SmartPlug(Base):
             self.switchState = state_tx[state]
 #             self.update()
             return True
-        except ErrorException:
+        except ErrorException as e:
+            _LOGGER.debug("Request failed with error {}".format(e))
             return False
     
     def get_services(self):
@@ -91,12 +106,14 @@ class SmartPlug(Base):
     
     def __str__(self):
         return "\n".join([
-            'Id                        : %s' % self.id,
-            'Name                      : %s' % self.name,
-            'switchState               : %s' % self.switchState,
-            'automaticPowerOffTime     : %s' % self.automaticPowerOffTime,
-            'powerConsumption          : %s' % self.powerConsumption,
-            'energyConsumption         : %s' % self.energyConsumption,
+            'Smart Plug:',
+            '  Id                        : %s' % self.id,
+            '  Name                      : %s' % self.name,
+            '  switchState               : %s' % self.switchState,
+            '  automaticPowerOffTime     : %s' % self.automaticPowerOffTime,
+            '  powerConsumption          : %s' % self.powerConsumption,
+            '  energyConsumption         : %s' % self.energyConsumption,
+            '-%s' % self.device,
         ])
 
 class SmartPlugServices(BaseList):
@@ -122,5 +139,5 @@ def initialize_smart_plugs(client, device_list):
     smart_plugs = []
     for item in device_list.items:
         if item.deviceModel == "PSM":
-            smart_plugs.append(SmartPlug(client, item.id, item.name))
+            smart_plugs.append(SmartPlug(client, item, item.id, item.name))
     return smart_plugs

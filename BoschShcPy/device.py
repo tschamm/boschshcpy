@@ -1,6 +1,9 @@
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
 
+status_rx = {'AVAILABLE': True, 'UNAVAILABLE': False}
+status_tx = {True: 'AVAILABLE', False: 'UNAVAILABLE'}
+
 class DeviceList(BaseList):
     def __init__(self):
         # We're expecting items of type Device
@@ -32,16 +35,24 @@ class Device(Base):
         self.name = None
         self.deleted = None
         self.status = None
+    
+    def get_id(self):
+        return self.id
+    
+    def update_from_query(self, query_result):
+        if query_result['@type'] == "device":
+            self.load(query_result)
 
     def __str__(self):
         return "\n".join([
-            'id                     : %s' % self.id,
-            'deviceServiceIds       : %s' % self.deviceServiceIds,
-            'manufacturer           : %s' % self.manufacturer,
-            'deviceModel            : %s' % self.deviceModel,
-            'serial                 : %s' % self.serial,
-            'name                   : %s' % self.name,
-            'deleted                : %s' % self.deleted,
-            'status                 : %s' % self.status,
+            'Device:',
+            '  Id                        : %s' % self.id,
+            '  deviceServiceIds          : %s' % self.deviceServiceIds,
+            '  manufacturer              : %s' % self.manufacturer,
+            '  deviceModel               : %s' % self.deviceModel,
+            '  serial                    : %s' % self.serial,
+            '  name                      : %s' % self.name,
+            '  deleted                   : %s' % self.deleted,
+            '  status                    : %s' % self.status,
         ])
     

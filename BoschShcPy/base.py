@@ -16,8 +16,12 @@ class Base(object):
             for elem in data:
                 self.load_dict(elem)
         else:
+#             print(data)
             self.load_dict(data)
         return self
+
+    def get_id(self):
+        raise NotImplementedError()
 
     def update(self):
         raise NotImplementedError()

@@ -3,6 +3,7 @@ from enum import Enum, auto
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
 from BoschShcPy.client import ErrorException
+from BoschShcPy.device import Device, status_rx
 
 class operation_state(Enum):
     STOPPED = auto()
@@ -13,13 +14,14 @@ operation_state_rx = {'STOPPED': operation_state.STOPPED, 'MOVING': operation_st
 operation_state_tx = {operation_state.STOPPED: 'STOPPED', operation_state.MOVING: 'MOVING', operation_state.CALIBRATING: 'CALIBRATING'}
 
 class ShutterControl(Base):
-    def __init__(self, client, id, name=None):
+    def __init__(self, client, device, id, name=None):
         self.client = client
+        self.device = device
         self.id = id
         self.name = name
         self.type = None
         self.operationState = 'STOPPED'
-        self.level = 0.
+        self.level = None
 #         self.update()
 
     @property
@@ -38,10 +40,18 @@ class ShutterControl(Base):
         return self.id
     
     @property
+    def get_device(self):
+        """Retrieve device of Smart Plug"""
+        return self.device
+    
+    @property
     def get_level(self):
         """Retrieve level of Shutter Control"""
         return self.level
     
+    @property
+    def get_availability(self):
+        return status_rx[self.device.status]
     
     def update(self):
         try:
@@ -94,10 +104,12 @@ class ShutterControl(Base):
 
     def __str__(self):
         return "\n".join([
-            'Id                        : %s' % self.id,
-            'Name                      : %s' % self.name,
-            'operationState            : %s' % self.operationState,
-            'level                     : %s' % self.level, 
+            'Shutter Control:',
+            '  Id                        : %s' % self.id,
+            '  Name                      : %s' % self.name,
+            '  operationState            : %s' % self.operationState,
+            '  level                     : %s' % self.level, 
+            '-%s' % self.device,
         ])
 
 # b'{"@type":"shutterControlState","calibrated":true,"referenceMovingTimes":{"movingTimeTopToBottomInMillis":17680,"movingTimeBottomToTopInMillis":18080},"level":0.0,"operationState":"STOPPED","endPositionAutoDetect":true,"endPositionSupported":true,"delayCompensationTime":12.7,"delayCompensationSupported":true,"automaticDelayCompensation":true,"slatsRunningTimeInMillis":0}'
@@ -125,5 +137,5 @@ def initialize_shutter_controls(client, device_list):
     shutter_controls = []
     for item in device_list.items:
         if item.deviceModel == "BBL":
-            shutter_controls.append(ShutterControl(client, item.id, item.name))
+            shutter_controls.append(ShutterControl(client, item, item.id, item.name))
     return shutter_controls

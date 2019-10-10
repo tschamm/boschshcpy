@@ -1,4 +1,5 @@
 from BoschShcPy.client import Client, ErrorException
+from BoschShcPy.device import Device
 from BoschShcPy.smart_plug import SmartPlug
 from BoschShcPy.shutter_control import ShutterControl
 from BoschShcPy.polling_service import PollingService

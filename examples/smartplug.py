@@ -26,7 +26,7 @@ try:
     # 
     
     print("Accessing a dummy device...")
-    smart_plug = BoschShcPy.SmartPlug(client, SMART_PLUG_ID, "Dummy")
+    smart_plug = BoschShcPy.SmartPlug(client, BoschShcPy.Device(), SMART_PLUG_ID, "Dummy")
     smart_plug.update()
     print(smart_plug)
     

@@ -12,27 +12,37 @@ class Subscription():
         self.poll_thread = None
         self.exiting = None
         self.polling_service = None
-        self.registered_devices = {}
-        self.registered_callbacks = {}
+        self.registered_devices = collections.defaultdict(list)
+        self.registered_callbacks = collections.defaultdict(list)
         
     def event(self, query_result):
-        if 'deviceId' not in query_result:
+        """First check for deviceId, then check for id. Otherwise return."""
+        device_id = None
+        if '@type' in query_result and query_result['@type'] == "DeviceServiceData":
+            device_id = query_result['deviceId']
+        elif '@type' in query_result and query_result['@type'] == "device":
+            device_id = query_result['id']
+        else:
             return
-            
-        if query_result['deviceId'] in self.registered_devices:
-            self.event_device(self.registered_devices[query_result['deviceId']], query_result)
+         
+        for device in self.registered_devices.get(device_id, ()):
+            self.event_device(device, query_result)
         pass
     
     def event_device(self, device, query_result):
-#         print("Updating device by event...")
+#         print("Updating device %s by event..." % device.get_id)
         device.update_from_query(query_result)
-        self.registered_callbacks[device](device)
+        for callback in self.registered_callbacks.get(device, ()):
+            try:
+                callback(device)
+            except Exception:
+                pass
 #         print(device)
         pass
     
     def register(self, device, callback):
-        self.registered_devices[device.id] = device        
-        self.registered_callbacks[device] = callback
+        self.registered_devices[device.id].append(device)   
+        self.registered_callbacks[device].append(callback)
     
     def subscribe_polling(self):
         """Initialize long polling by subscription."""
@@ -46,6 +56,7 @@ class Subscription():
         params=[self.polling_service.result]
         data=[{'jsonrpc': '2.0', 'method': 'RE/unsubscribe', 'id': 'boschshcpy', 'params': params}]
         self.client.request("remote/json-rpc", method='POST', params=data)
+        self.polling_service = None
         return
 
     def polling(self, duration=20):
