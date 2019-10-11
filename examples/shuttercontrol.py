@@ -2,6 +2,7 @@
 
 import sys, os 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import time
 
 import BoschShcPy
 
@@ -31,10 +32,11 @@ try:
         item.update()
         print(item)
         
-#     shutter_control = BoschShcPy.ShutterControl(client, SHUTTER_CONTROL_ID, "Dummy")
-#     shutter_control.set_level(0.0)
-#     shutter_control.stop()
-#     shutter_control.update()
+    shutter_control = BoschShcPy.ShutterControl(client, BoschShcPy.Device(), SHUTTER_CONTROL_ID, "Dummy")
+    shutter_control.set_level(0.0)
+    time.sleep(0.7)
+    shutter_control.stop()
+    shutter_control.update()
 
 
 except BoschShcPy.client.ErrorException as e:

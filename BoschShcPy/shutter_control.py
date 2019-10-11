@@ -90,9 +90,9 @@ class ShutterControl(Base):
 
     def stop(self):
         """Stops movement of Shutter Control."""
-#         data={'@type':'shutterControlState', 'calibrated': True, 'operationState': operation_state_tx[operation_state.STOPPED]}
+        data={'@type':'shutterControlState', 'operationState': operation_state_tx[operation_state.STOPPED]}
         try:
-            self.client.request("smarthome/shading/shutters/"+self.id+"/stop", method='PUT')
+            self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state", method='PUT', params=data)
 #             self.update()
             return True
         except ErrorException:
