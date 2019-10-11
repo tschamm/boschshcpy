@@ -41,7 +41,7 @@ class ShutterControl(Base):
     
     @property
     def get_device(self):
-        """Retrieve device of Smart Plug"""
+        """Retrieve device of Shutter Control"""
         return self.device
     
     @property

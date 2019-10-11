@@ -32,30 +32,24 @@ try:
     
     print("Accessing all devices...")
     
-    hashed_devices = {}
-#     client.register_device_list(client.device_list(), callback)
-    
-    hashed_plugs = {}
     smart_plugs = BoschShcPy.smart_plug.initialize_smart_plugs(client, client.device_list())
     for item in smart_plugs:
-#         item.update()
-#         hashed_plugs[item.id] = item
-#         hashed_devices[item.id] = item
         client.register_device(item, callback)
         client.register_device(item.device, callback)
 
-    hashed_controls = {}
     shutter_controls = BoschShcPy.shutter_control.initialize_shutter_controls(client, client.device_list())
     for item in shutter_controls:
-#         item.update()
         client.register_device(item, callback)
         client.register_device(item.device, callback)
-#         hashed_controls[item.id] = item
-#         hashed_devices[item.id] = item
+
+    shutter_contacts = BoschShcPy.shutter_contact.initialize_shutter_contacts(client, client.device_list())
+    for item in shutter_contacts:
+        client.register_device(item, callback)
+        client.register_device(item.device, callback)
 
     print("Starting polling")
     client.start_subscription()
-    time.sleep(20)
+    time.sleep(40)
     client.stop_subscription()
 #     polling_service = PollingService()
 #     polling_service.id = "boschshc"

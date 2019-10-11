@@ -2,6 +2,8 @@
 
 import json
 import requests
+import logging
+
 # import requests_async as requests
 from enum import Enum
 
@@ -13,10 +15,12 @@ except ImportError:
 import urllib3
 urllib3.disable_warnings()
 
+_LOGGER = logging.getLogger(__name__)
+
+
 class ResponseFormat(Enum):
     text = 1
     binary = 2
-
 
 class HttpClient(object):
     """Used for sending simple HTTP requests."""
@@ -48,6 +52,7 @@ class HttpClient(object):
         else:
             response = str(method) + ' is not a supported HTTP method'
 
+        _LOGGER.debug(response.content)
 #         print (response.content)
         
         if isinstance(response, str):
