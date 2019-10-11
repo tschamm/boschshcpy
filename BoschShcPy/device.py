@@ -35,6 +35,8 @@ class Device(Base):
         self.name = None
         self.deleted = None
         self.status = None
+        self.profile = None
+        self.roomId = None
     
     def get_id(self):
         return self.id
@@ -54,5 +56,7 @@ class Device(Base):
             '  name                      : %s' % self.name,
             '  deleted                   : %s' % self.deleted,
             '  status                    : %s' % self.status,
+            '  profile                   : %s' % self.profile,
+            '  roomId                    : %s' % self.roomId,
         ])
     
