@@ -3,3 +3,6 @@ build/
 dist/
 bshlocal.egg-info/
 examples/keystore
+__pycache__
+.project
+.pydevproject
