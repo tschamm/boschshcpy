@@ -5,11 +5,13 @@ from BoschShcPy.base_list import BaseList
 from BoschShcPy.client import ErrorException
 from BoschShcPy.device import Device, status_rx
 
+from BoschShcPy.subscribe import AsyncUpdate
+
 class operation_state(Enum):
     STOPPED = auto()
     MOVING = auto()
     CALIBRATING = auto()
-    
+
 operation_state_rx = {'STOPPED': operation_state.STOPPED, 'MOVING': operation_state.MOVING, 'CALIBRATING': operation_state.CALIBRATING}
 operation_state_tx = {operation_state.STOPPED: 'STOPPED', operation_state.MOVING: 'MOVING', operation_state.CALIBRATING: 'CALIBRATING'}
 
@@ -33,26 +35,26 @@ class ShutterControl(Base):
     def get_name(self):
         """Retrieve name of Shutter Control"""
         return self.name
-    
+
     @property
     def get_id(self):
         """Retrieve id of Shutter Control"""
         return self.id
-    
+
     @property
     def get_device(self):
         """Retrieve device of Shutter Control"""
         return self.device
-    
+
     @property
     def get_level(self):
         """Retrieve level of Shutter Control"""
         return self.level
-    
+
     @property
     def get_availability(self):
         return status_rx[self.device.status]
-    
+
     def update(self):
         try:
             self.load( self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state") )
@@ -62,21 +64,28 @@ class ShutterControl(Base):
         except ErrorException:
             return False
 
+    def async_update(self, callback):
+        async_update = AsyncUpdate(self.client)
+        async_update.register(self, callback)
+        async_update.start("smarthome/devices/"+self.id+"/services/ShutterControl/state")
+        async_update.stop
+        return True
+
     def update_from_query(self, query_result):
         if query_result['id'] != "ShutterControl":
             return False
-        
+
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "shutterControlState":
             print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
             return False
-        
+
         self.operationState = query_result['state']['operationState']
-        
+
         """As info is delayed, only update level if shutter control is not moving to prevent flickering"""
-        if self.operationState == 'STOPPED':        
+        if self.operationState == 'STOPPED':
             self.level = query_result['state']['level']
         return True
-    
+
     def set_level(self, level):
         """Set a new level of Shutter Control."""
         data={'@type':'shutterControlState', 'level': level}
@@ -97,7 +106,7 @@ class ShutterControl(Base):
             return True
         except ErrorException:
             return False
-    
+
 #     def get_services(self):
 #         """Retrieve services of Shutter Control."""
 #         return SmartPlugServices().load(self.client.request("smarthome/devices/"+self.id+"/services"))
@@ -108,7 +117,7 @@ class ShutterControl(Base):
             '  Id                        : %s' % self.id,
             '  Name                      : %s' % self.name,
             '  operationState            : %s' % self.operationState,
-            '  level                     : %s' % self.level, 
+            '  level                     : %s' % self.level,
             '-%s' % self.device,
         ])
 
@@ -118,13 +127,13 @@ class ShutterControl(Base):
 #     def __init__(self):
 #         # We're expecting items of type Device
 #         super(SmartPlugServices, self).__init__(SmartPlugService)
-#         
+#
 # class SmartPlugService(Base):
 #     def __init__(self):
 #         self.id = None
 #         self.deviceId = None
 #         self.state = None
-#         
+#
 #     def __str__(self):
 #         return "\n".join([
 #             'id                     : %s' % self.id,

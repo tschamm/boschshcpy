@@ -5,6 +5,7 @@ import io
 from BoschShcPy.shc_information import ShcInformation
 from BoschShcPy.device import Device, DeviceList
 from BoschShcPy.subscribe import Subscription
+from BoschShcPy.error import ErrorException
 
 # from BoschShcPy.error import Error
 from BoschShcPy.http_client import HttpClient, ResponseFormat
@@ -15,16 +16,6 @@ USER_AGENT = 'BoschShcPy/ApiClient/%s Python/%s' % (CLIENT_VERSION, PYTHON_VERSI
 
 def get_uri(ip_address, port):
     return 'https://' + ip_address + ':' + port
-
-class ErrorException(Exception):
-    def __init__(self, errors):
-        self.errors = errors
-        message = ' '.join([str(e) for e in self.errors])
-        super(ErrorException, self).__init__(message)
-
-class SingleErrorException(Exception):
-    def __init__(self, errorMessage):
-        super(SingleErrorException, self).__init__(errorMessage)
 
 class Client(object):
 
@@ -89,7 +80,9 @@ class Client(object):
 
     def shc_information(self):
         """Get a detailed information about the current state of the SHC."""
-        return ShcInformation().load(self.request("smarthome/information"))
+        shc_device = ShcInformation(self)
+        shc_device.update()
+        return shc_device
 
     def device(self, device_id):
         """Retrive device information."""

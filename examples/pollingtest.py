@@ -3,14 +3,15 @@
 import sys, os 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import time
+import logging
 
 import BoschShcPy
-from BoschShcPy.polling_service import PollingService
 
 ACCESS_CERT = 'keystore/aps-cert.pem'
 ACCESS_KEY = 'keystore/aps-key.pem'
 
-# SHUTTER_CONTROL_ID = "hdm:HomeMaticIP:3014F711A00018D878598448"
+logging.basicConfig(level=logging.DEBUG)
+
 IP_SHC = '192.168.1.6'
 PORT_SHC = '8443'
 
@@ -46,6 +47,10 @@ try:
     for item in shutter_contacts:
         client.register_device(item, callback)
         client.register_device(item.device, callback)
+        
+    intrusion_detection = BoschShcPy.IntrusionDetection(client)
+    intrusion_detection.register_polling(client, callback)
+
 
     print("Starting polling")
     client.start_subscription()

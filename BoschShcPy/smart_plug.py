@@ -31,21 +31,21 @@ class SmartPlug(Base):
     def get_name(self):
         """Retrieve name of Smart Plug"""
         return self.name
-    
+
     @property
     def get_id(self):
         """Retrieve id of Smart Plug"""
         return self.id
-    
+
     @property
     def get_device(self):
         """Retrieve device of Smart Plug"""
         return self.device
-    
+
     @property
     def get_powerConsumption(self):
         return self.powerConsumption
-    
+
     @property
     def get_energyConsumption(self):
         return self.energyConsumption
@@ -61,13 +61,22 @@ class SmartPlug(Base):
             return True
         except ErrorException:
             return False
-    
+
+    def async_update(self, callback):
+        async_update = AsyncUpdate(self.client)
+        async_update.register(self, callback)
+        async_update.start("smarthome/devices/"+self.id+"/services/PowerSwitch/state")
+        async_update.stop
+        async_update.start("smarthome/devices/"+self.id+"/services/PowerMeter/state")
+        async_update.stop
+        return True
+
     def update_switchstate(self, query_result):
         """Retrieve switch state values of Smart Plug from polling query."""
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "powerSwitchState":
             print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
             return False
-        
+
         self.switchState = query_result['state']['switchState']
         self.automaticPowerOffTime = query_result['state']['automaticPowerOffTime']
         return True
@@ -77,11 +86,11 @@ class SmartPlug(Base):
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "powerMeterState":
             print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
             return False
-        
+
         self.powerConsumption = query_result['state']['powerConsumption']
-        self.energyConsumption = query_result['state']['energyConsumption']        
+        self.energyConsumption = query_result['state']['energyConsumption']
         return True
-    
+
     def update_from_query(self, query_result):
         if query_result['id'] == "PowerSwitch":
             self.update_switchstate(query_result)
@@ -99,11 +108,11 @@ class SmartPlug(Base):
         except ErrorException as e:
             _LOGGER.debug("Request failed with error {}".format(e))
             return False
-    
+
     def get_services(self):
         """Retrieve services of Smart Plug."""
         return SmartPlugServices().load(self.client.request("smarthome/devices/"+self.id+"/services"))
-    
+
     def __str__(self):
         return "\n".join([
             'Smart Plug:',
@@ -120,13 +129,13 @@ class SmartPlugServices(BaseList):
     def __init__(self):
         # We're expecting items of type Device
         super(SmartPlugServices, self).__init__(SmartPlugService)
-        
+
 class SmartPlugService(Base):
     def __init__(self):
         self.id = None
         self.deviceId = None
         self.state = None
-        
+
     def __str__(self):
         return "\n".join([
             'id                     : %s' % self.id,

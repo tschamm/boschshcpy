@@ -5,6 +5,8 @@ from BoschShcPy.base_list import BaseList
 from BoschShcPy.client import ErrorException
 from BoschShcPy.device import Device, status_rx
 
+from BoschShcPy.subscribe import AsyncUpdate
+
 class state(Enum):
     CLOSED = auto()
     OPEN = auto()
@@ -14,7 +16,7 @@ class deviceclass(Enum):
     ENTRANCE_DOOR = auto()
     REGULAR_WINDOW = auto()
     FRENCH_WINDOW = auto()
-    
+
 state_rx = {'CLOSED': state.CLOSED, 'OPEN': state.OPEN}
 state_tx = {state.CLOSED: 'CLOSED', state.OPEN: 'OPEN'}
 
@@ -40,27 +42,27 @@ class ShutterContact(Base):
     def get_name(self):
         """Retrieve name of Shutter Contact"""
         return self.name
-    
+
     @property
     def get_id(self):
         """Retrieve id of Shutter Contact"""
         return self.id
-    
+
     @property
     def get_device(self):
         """Retrieve device of Shutter Contact"""
         return self.device
-    
+
     @property
     def get_batterylevel(self):
         """Retrieve battery level of Shutter Contact"""
         return self.batterylevel
-    
+
     @property
     def get_availability(self):
         """Retrieve availability of Shutter Contact"""
         return status_rx[self.device.status]
-    
+
     @property
     def get_deviceclass(self):
         """Retrieve device class of Shutter Contact"""
@@ -75,26 +77,33 @@ class ShutterContact(Base):
         except ErrorException:
             return False
 
+    def async_update(self, callback):
+        async_update = AsyncUpdate(self.client)
+        async_update.register(self, callback)
+        async_update.start("smarthome/devices/"+self.id+"/services/ShutterContact/state")
+        async_update.stop
+        return True
+
     def update_from_query(self, query_result):
         if query_result['id'] != "ShutterContact":
             return False
-        
+
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "shutterContactState":
             print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
             return False
-        
+
         self.value = query_result['state']['value']
-        
+
 #             self.level = query_result['state']['level']
         return True
-        
+
     def __str__(self):
         return "\n".join([
             'Shutter Contact:',
             '  Id                        : %s' % self.id,
             '  Name                      : %s' % self.name,
             '  State                     : %s' % self.value,
-            '  Battery Level             : %s' % self.batterylevel, 
+            '  Battery Level             : %s' % self.batterylevel,
             '-%s' % self.device,
         ])
 
