@@ -42,8 +42,8 @@ operation_state_tx = {operation_state.SYSTEM_DISARMED: 'SYSTEM_DISARMED',
 class IntrusionDetection(Base):
     def __init__(self, client):
         self.client = client
-        self.id = 'intrusionDetectionSystem'
-        self.name = 'Intrustion Detection System'
+        self.id = 'intrusionDetectionControlState'
+        self.name = 'Intrusion Detection System'
         self.value = 'SYSTEM_DISARMED'
         self.actuators = []
         self.triggers = []

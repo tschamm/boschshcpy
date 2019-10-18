@@ -53,7 +53,7 @@ class HttpClient(object):
             response = str(method) + ' is not a supported HTTP method'
 
         _LOGGER.debug(response.content)
-#         print (response.content)
+        # print (response.content)
         
         if isinstance(response, str):
             raise ValueError(response)
