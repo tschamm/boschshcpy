@@ -35,9 +35,9 @@ class Client(object):
 
         return HttpClient(get_uri(self.ip_address, self.port), self.access_cert, self.access_key, USER_AGENT)
 
-    def request(self, path, method='GET', params=None):
+    def request(self, path, method='GET', params=None, headers=None):
         """Builds a request, gets a response and decodes it."""
-        response_text = self._get_http_client().request(path, method, params)
+        response_text = self._get_http_client().request(path, method, params, headers)
         if not response_text:
             return response_text
 
@@ -48,9 +48,9 @@ class Client(object):
 
         return response_json
 
-    def request_plain_text(self, path, method='GET', params=None):
+    def request_plain_text(self, path, method='GET', params=None, headers=None):
         """Builds a request, gets a response and returns the body."""
-        response_text = self._get_http_client().request(path, method, params)
+        response_text = self._get_http_client().request(path, method, params, headers)
 
         try:
             # Try to decode the response to JSON to see if the API returned any

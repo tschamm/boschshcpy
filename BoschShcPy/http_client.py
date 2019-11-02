@@ -33,12 +33,12 @@ class HttpClient(object):
         self.access_key = access_key
         self.user_agent = user_agent
 
-    def request(self, path, method='GET', params=None, format=ResponseFormat.text):
+    def request(self, path, method='GET', params=None, headers=None, format=ResponseFormat.text):
         """Builds a request and gets a response."""
         if params is None: params = {}
         url = urljoin(self.endpoint, path)
         cert=(self.access_cert, self.access_key)
-        headers = {
+        if headers is None: headers = {
             'Content-Type': 'application/json'
         }
 
