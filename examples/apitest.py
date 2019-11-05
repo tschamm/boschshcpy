@@ -8,9 +8,7 @@ import logging
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import BoschShcPy
-
-ACCESS_CERT = 'keystore/boschshc-cert.pem'
-ACCESS_KEY = 'keystore/boschshc-key.pem'
+from BoschShcPy.certificate import generate_selfsigned_cert
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -21,12 +19,28 @@ PORT_SHC = '8443'
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--password",
                     help="systempassword - encoded in base64 - which you have set-up initially in the SHC-Setup process.")
+parser.add_argument("-ac", "--access_cert",
+                    help="Path to access certificat.",
+                    default="keystore/boschshc-cert.pem")
+parser.add_argument("-ak", "--access_key",
+                    help="Path to access key.",
+                    default="keystore/boschshc-key.pem")
 parser.add_argument("-n", "--name",
                     help="Name of the new client user.",
                     default="SHC Api Test")
 args = parser.parse_args()
 
 try:
+    ACCESS_CERT = args.access_cert
+    ACCESS_KEY = args.access_key
+    if not os.path.isfile(ACCESS_CERT) or not os.path.isfile(ACCESS_KEY):
+        cert, key = generate_selfsigned_cert("BoschShcPy")
+        with open(ACCESS_CERT, 'wb') as writer:
+            writer.write(cert)
+        with open(ACCESS_KEY, 'wb') as writer:
+            writer.write(key)
+            writer.write(cert)
+
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
     client = BoschShcPy.Client(IP_SHC, PORT_SHC, ACCESS_CERT, ACCESS_KEY)
     api = BoschShcPy.Api(client)

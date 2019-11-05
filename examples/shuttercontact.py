@@ -7,8 +7,8 @@ import logging
 
 import BoschShcPy
 
-ACCESS_CERT = 'keystore/aps-cert.pem'
-ACCESS_KEY = 'keystore/aps-key.pem'
+ACCESS_CERT = 'keystore/boschshc-cert.pem'
+ACCESS_KEY = 'keystore/boschshc-key.pem'
 
 logging.basicConfig(level=logging.DEBUG)
 

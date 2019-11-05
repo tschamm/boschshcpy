@@ -7,3 +7,9 @@ __pycache__
 .project
 .pydevproject
 .vscode/settings.json
+.idea/inspectionProfiles/profiles_settings.xml
+.env
+.idea/BoschSHC.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
