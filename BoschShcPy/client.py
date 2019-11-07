@@ -133,21 +133,3 @@ class Client(object):
         
     def stop_subscription(self):
         self._subscription.stop()
-
-#     def subscribe_polling(self):
-#         """Initialize long polling by subscription."""
-#         params=["com/bosch/sh/remote/*", None]
-#         data=[{'jsonrpc': '2.0', 'method': 'RE/subscribe', 'id': 'boschshcpy', 'params': params}]
-#         return PollingService().load(self.request("remote/json-rpc", method='POST', params=data))
-# 
-#     def unsubscribe_polling(self, polling_service):
-#         """Unsubscribe from long polling."""
-#         params=[polling_service.result]
-#         data=[{'jsonrpc': '2.0', 'method': 'RE/unsubscribe', 'id': 'boschshcpy', 'params': params}]
-#         return self.request("remote/json-rpc", method='POST', params=data)
-# 
-#     def polling(self, polling_service, time):
-#         """Query long polling."""
-#         params=[polling_service.result, time]
-#         data=[{'jsonrpc': '2.0', 'method': 'RE/longPoll', 'id': 'boschshcpy', 'params': params}]
-#         return self.request("remote/json-rpc", method='POST', params=data)

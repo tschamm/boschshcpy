@@ -13,7 +13,7 @@ class Api(object):
         """Initializes the client with IP address and access credentials."""
         self.client = client
 
-    def register_client(self, name, password):
+    def register_client(self, id, name, password):
         if not os.path.exists(self.client.access_cert) or not os.path.exists(self.client.access_key):
             # only continue if access_cert or access_key
             return ""
@@ -29,16 +29,13 @@ class Api(object):
             'Systempassword': password
             }
 
-        data = {'@type': 'client',
-                'id': '0123456789:host012345',
-                'name': name,
-                'os': 'ANDROID',
-                'pushNotificationToken': 'aGcmToken',
-                'primaryRole': 'ROLE_RESTRICTED_CLIENT',
-                'roles': [], 
-                'dynamicRoles': [],
-                'certificate': cert
-                }
+        data = {
+            "@type": "client",
+            "id": "oss_{}".format(id),
+            "name": "OSS {}".format(name),
+            "primaryRole": "ROLE_RESTRICTED_CLIENT",
+            'certificate': cert
+            }
         
         try:
             response = self.client.request("smarthome/clients", method='POST', params=data, headers=headers)

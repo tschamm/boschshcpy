@@ -10,7 +10,7 @@ ACCESS_KEY = 'keystore/aps-key.pem'
 
 SMART_PLUG_ID = "hdm:HomeMaticIP:3014F711A0000496D858ACC5"
 IP_SHC = '192.168.1.6'
-PORT_SHC = '8443'
+PORT_SHC = '8444'
 
 
 try:

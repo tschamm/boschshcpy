@@ -11,7 +11,7 @@ ACCESS_KEY = 'keystore/aps-key.pem'
 
 SHUTTER_CONTROL_ID = "hdm:HomeMaticIP:3014F711A00018D878598448"
 IP_SHC = '192.168.1.6'
-PORT_SHC = '8443'
+PORT_SHC = '8444'
 
 
 try:

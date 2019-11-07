@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # SHUTTER_CONTACT_ID = "hdm:HomeMaticIP:3014F711A00018D878598448"
 IP_SHC = '192.168.1.6'
-PORT_SHC = '8443'
+PORT_SHC = '8444'
 
 if __name__ == '__main__':
     try:
@@ -24,7 +24,7 @@ if __name__ == '__main__':
         
         shc_info = client.shc_information()
         print('  version        : %s' % shc_info.version)
-        print('  updateState    : %s' % shc_info.updateState)
+        print('  updateState    : %s' % 'True' if shc_info.get_state() == BoschShcPy.shc_information.state.UPDATE_AVAILABLE else 'False')
         
         #   device = client.device(shutter_contact_ID)
         #   print(device)
@@ -33,13 +33,17 @@ if __name__ == '__main__':
         print("Accessing intrusion detection control...")
         intrusion_detection = BoschShcPy.IntrusionDetection(client)
         intrusion_detection.update()
-        print(intrusion_detection)
-        
-        print("Arming the IDC")
-        intrusion_detection.arm()
-        time.sleep(intrusion_detection.armActivationDelayTime)
+
+        intrusion_detection.arm_instant()
+
         intrusion_detection.update()
         print(intrusion_detection)
+        
+        # print("Arming the IDC")
+        # intrusion_detection.arm()
+        # time.sleep(intrusion_detection.armActivationDelayTime)
+        # intrusion_detection.update()
+        # print(intrusion_detection)
         
 #         print("Disarming the IDC")
 #         intrusion_detection.disarm()

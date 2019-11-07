@@ -10,7 +10,7 @@ ACCESS_CERT = 'keystore/aps-cert.pem'
 ACCESS_KEY = 'keystore/aps-key.pem'
 
 IP_SHC = '192.168.1.6'
-PORT_SHC = '8443'
+PORT_SHC = '8444'
 
 
 try:

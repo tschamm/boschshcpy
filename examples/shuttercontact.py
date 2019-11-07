@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 # SHUTTER_CONTACT_ID = "hdm:HomeMaticIP:3014F711A00018D878598448"
 IP_SHC = '192.168.1.6'
-PORT_SHC = '8443'
+PORT_SHC = '8444'
 
 def callback(device):
     print("Notification of device update")

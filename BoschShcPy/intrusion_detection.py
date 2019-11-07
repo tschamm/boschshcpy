@@ -130,6 +130,29 @@ class IntrusionDetection(Base):
         """Arm the intrusion detection system."""
         return self.setOperationState(operation_state.SYSTEM_ARMED)
 
+    def arm_activation_delay(self, seconds):
+        """Set the arm activation delay time the intrusion detection system."""
+        if operation_state == operation_state.SYSTEM_ARMING:
+            return False
+        
+        data = {'@type': 'intrusionDetectionControlState',
+                'armActivationDelayTime': seconds}
+        try:
+            self.client.request("smarthome/devices/intrusionDetectionSystem/services/IntrusionDetectionControl/state", method='PUT', params=data)
+            return True
+        except ErrorException:
+            return False
+
+    def arm_instant(self):
+        """Set an instant arm activation of the intrusion detection system."""
+        if operation_state == operation_state.SYSTEM_ARMING:
+            return False
+
+        delay_time = self.armActivationDelayTime
+        self.arm_activation_delay(1)
+        self.arm()
+        self.arm_activation_delay(delay_time)
+
     def mute_alarm(self):
         """Mute the alarm of the intrusion detection system."""
         return self.setOperationState(operation_state.MUTE_ALARM)

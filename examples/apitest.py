@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 SHUTTER_CONTROL_ID = "hdm:HomeMaticIP:3014F711A00018D878598448"
 IP_SHC = '192.168.1.6'
-PORT_SHC = '8443'
+PORT_SHC = '8444'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--password",
@@ -28,6 +28,9 @@ parser.add_argument("-ak", "--access_key",
 parser.add_argument("-n", "--name",
                     help="Name of the new client user.",
                     default="SHC Api Test")
+parser.add_argument("-id", "--id",
+                    help="ID of the new client user.",
+                    default="shc_api_test")
 args = parser.parse_args()
 
 try:
@@ -45,7 +48,7 @@ try:
     client = BoschShcPy.Client(IP_SHC, PORT_SHC, ACCESS_CERT, ACCESS_KEY)
     api = BoschShcPy.Api(client)
 
-    token = api.register_client(args.name, args.password)
+    token = api.register_client(args.id, args.name, args.password)
     if token != "":
         print('successful registered new device with token {}'.format(token))
     else:

@@ -19,7 +19,7 @@ class ShcInformation(Base):
         self.client = client
     
     def get_state(self):
-        return state_tx[self.updateState]
+        return state_rx[self.updateState]
    
     def update_from_query(self, query_result):
         """Currently, query is unknown to the author, so this won't work properly""" 
