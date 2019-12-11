@@ -133,3 +133,7 @@ class Client(object):
         
     def stop_subscription(self):
         self._subscription.stop()
+
+    @property
+    def get_ip_address(self):
+        return self.ip_address

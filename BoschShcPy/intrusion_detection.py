@@ -22,15 +22,7 @@ operation_state_tx = {operation_state.SYSTEM_DISARMED: 'SYSTEM_DISARMED',
 
 # {"@type":"intrusionDetectionControlState",
 #     "value":"SYSTEM_DISARMED",
-#     "triggers":[{"id":"hdm:HomeMaticIP:3014F711A00000987859CF7D","active":true,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A0000096D85A26A3","active":true,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A00000987859CF73","active":true,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A0000096D85A01CA","active":false,"readonly":false},
-#                 {"id":"hdm:ZigBee:000d6f000b856cb6","active":false,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A000009A18587DB1","active":true,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A00000987859CF45","active":true,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A00000987859CF77","active":true,"readonly":false},
-#                 {"id":"hdm:HomeMaticIP:3014F711A00000987859CF5E","active":true,"readonly":false}],
+#     "triggers":[{"id":"hdm:HomeMaticIP:01234","active":true,"readonly":false}],
 #     "actuators":[{"id":"intrusion:visual","active":true,"readonly":false},
 #                  {"id":"intrusion:video","active":false,"readonly":false},
 #                  {"id":"intrusion:siren","active":true,"readonly":false},
@@ -40,10 +32,11 @@ operation_state_tx = {operation_state.SYSTEM_DISARMED: 'SYSTEM_DISARMED',
 #     "alarmActivationDelayTime":10}
 
 class IntrusionDetection(Base):
-    def __init__(self, client):
+    def __init__(self, client, device, id, name=None):
         self.client = client
-        self.id = 'intrusionDetectionControlState'
-        self.name = 'Intrusion Detection System'
+        self.device = device
+        self.id = id
+        self.name = name
         self.value = 'SYSTEM_DISARMED'
         self.actuators = []
         self.triggers = []
@@ -67,25 +60,14 @@ class IntrusionDetection(Base):
         """Retrieve id of Intrusion Detection"""
         return self.id
      
-#     @property
-#     def get_device(self):
-#         """Retrieve device of Intrusion Detection"""
-#         return self.device
-#     
-#     @property
-#     def get_level(self):
-#         """Retrieve level of Intrusion Detection"""
-#         return self.level
-#     
-#     @property
-#     def get_availability(self):
-#         return status_rx[self.device.status]
+    @property
+    def get_device(self):
+        """Retrieve device of Intrusion Detection"""
+        return self.device
     
     def update(self):
         try:
             self.load( self.client.request("smarthome/devices/intrusionDetectionSystem/services/IntrusionDetectionControl/state") )
-#             print("Update request received")
-#             print(self)
             return True
         except ErrorException:
             return False
@@ -160,21 +142,6 @@ class IntrusionDetection(Base):
     def trigger(self):
         print("Trigger alarm simulation")
 
-# 
-#     def stop(self):
-#         """Stops movement of Intrusion Detection."""
-#         data={'@type':'shutterControlState', 'operationState': operation_state_tx[operation_state.STOPPED]}
-#         try:
-#             self.client.request("smarthome/devices/"+self.id+"/services/IntrusionDetection/state", method='PUT', params=data)
-# #             self.update()
-#             return True
-#         except ErrorException:
-#             return False
-    
-#     def get_services(self):
-#         """Retrieve services of Intrusion Detection."""
-#         return SmartPlugServices().load(self.client.request("smarthome/devices/"+self.id+"/services"))
-
     def __str__(self):
         return "\n".join([
             'Intrusion Detection:',
@@ -189,29 +156,8 @@ class IntrusionDetection(Base):
     def register_polling(self, client, callback):
         client.register_device(self, callback)
     
-
-# class SmartPlugServices(BaseList):
-#     def __init__(self):
-#         # We're expecting items of type Device
-#         super(SmartPlugServices, self).__init__(SmartPlugService)
-#         
-# class SmartPlugService(Base):
-#     def __init__(self):
-#         self.id = None
-#         self.deviceId = None
-#         self.state = None
-#         
-#     def __str__(self):
-#         return "\n".join([
-#             'id                     : %s' % self.id,
-#             'deviceId               : %s' % self.deviceId,
-#             'state                  : %s' % self.state,
-#         ])
-
-# def initialize_intrusion_detections(client, device_list):
-#     """Helper function to initialize all shutter controls given from a device list."""
-#     intrusion_detections = []
-#     for item in device_list.items:
-#         if item.deviceModel == "BBL":
-#             intrusion_detections.append(IntrusionDetection(client, item, item.id, item.name))
-#     return intrusion_detections
+def initialize_intrusion_detection(client, device_list):
+    """Helper function to initialize intrusion detection given from a device list."""
+    for item in device_list.items:
+        if item.deviceModel == "INTRUSION_DETECTION_SYSTEM":
+            return IntrusionDetection(client, item, item.id, item.name)

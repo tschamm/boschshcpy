@@ -8,14 +8,25 @@ class state(Enum):
     DOWNLOADING = auto()
     UPDATE_IN_PROGRESS = auto()
     UPDATE_AVAILABLE = auto()
+    NOT_INITIALIZED = auto()
 
-state_rx = {'NO_UPDATE_AVAILABLE': state.NO_UPDATE_AVAILABLE, 'DOWNLOADING': state.DOWNLOADING, 'UPDATE_IN_PROGRESS': state.UPDATE_IN_PROGRESS, 'UPDATE_AVAILABLE': state.UPDATE_AVAILABLE}
-state_tx = {state.NO_UPDATE_AVAILABLE: 'NO_UPDATE_AVAILABLE', state.DOWNLOADING: 'DOWNLOADING', state.UPDATE_IN_PROGRESS: 'UPDATE_IN_PROGRESS', state.UPDATE_AVAILABLE: 'UPDATE_AVAILABLE'}
+
+state_rx = {'NO_UPDATE_AVAILABLE': state.NO_UPDATE_AVAILABLE, 
+            'DOWNLOADING': state.DOWNLOADING,
+            'UPDATE_IN_PROGRESS': state.UPDATE_IN_PROGRESS, 
+            'UPDATE_AVAILABLE': state.UPDATE_AVAILABLE, 
+            'NOT_INITIALIZED': state.NOT_INITIALIZED,
+            }
+state_tx = {state.NO_UPDATE_AVAILABLE: 'NO_UPDATE_AVAILABLE',
+            state.DOWNLOADING: 'DOWNLOADING',
+            state.UPDATE_IN_PROGRESS: 'UPDATE_IN_PROGRESS',
+            state.UPDATE_AVAILABLE: 'UPDATE_AVAILABLE',
+            }
 
 class ShcInformation(Base):
     def __init__(self, client):
         self.version = None
-        self.updateState = None
+        self.updateState = 'NOT_INITIALIZED'
         self.client = client
     
     def get_state(self):

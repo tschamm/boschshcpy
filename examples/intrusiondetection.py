@@ -31,14 +31,17 @@ if __name__ == '__main__':
         # 
         
         print("Accessing intrusion detection control...")
-        intrusion_detection = BoschShcPy.IntrusionDetection(client)
+        intrusion_detection = BoschShcPy.intrusion_detection.initialize_intrusion_detection(client, client.device_list())
         intrusion_detection.update()
 
         intrusion_detection.arm_instant()
 
         intrusion_detection.update()
         print(intrusion_detection)
-        
+        intrusion_detection.disarm()
+        intrusion_detection.update()
+        print(intrusion_detection)
+
         # print("Arming the IDC")
         # intrusion_detection.arm()
         # time.sleep(intrusion_detection.armActivationDelayTime)

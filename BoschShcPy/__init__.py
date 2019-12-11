@@ -1,4 +1,5 @@
-from BoschShcPy.client import Client, ErrorException
+from BoschShcPy.client import Client
+from BoschShcPy.error import ErrorException
 from BoschShcPy.api import Api
 from BoschShcPy.device import Device
 from BoschShcPy.smart_plug import SmartPlug

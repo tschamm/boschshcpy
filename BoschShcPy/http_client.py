@@ -28,6 +28,7 @@
 import json
 import requests
 import logging
+from os.path import isfile
 
 # import requests_async as requests
 from enum import Enum
@@ -39,6 +40,8 @@ except ImportError:
 
 import urllib3
 urllib3.disable_warnings()
+
+from BoschShcPy.error import ErrorException
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +65,8 @@ class HttpClient(object):
         """Builds a request and gets a response."""
         if params is None: params = {}
         url = urljoin(self.endpoint, path)
+        if not isfile(self.access_cert) or not isfile(self.access_key):
+            raise (ErrorException("Certification files not valid"))
         cert=(self.access_cert, self.access_key)
         if headers is None: headers = {
             'Content-Type': 'application/json'

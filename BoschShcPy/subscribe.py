@@ -59,7 +59,7 @@ class Subscription():
         self.polling_service = None
         return
 
-    def polling(self, duration=20):
+    def polling(self, duration=5):
         """Query long polling."""
 
         while not self.exiting:

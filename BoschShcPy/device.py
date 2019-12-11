@@ -37,6 +37,7 @@ class Device(Base):
         self.status = None
         self.profile = None
         self.roomId = None
+        self.rootDeviceId = None
     
     def get_id(self):
         return self.id
