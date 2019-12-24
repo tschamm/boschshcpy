@@ -1,7 +1,7 @@
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
 
-status_rx = {'AVAILABLE': True, 'UNAVAILABLE': False}
+status_rx = {'AVAILABLE': True, 'UNAVAILABLE': False, 'UNDEFINED': False}
 status_tx = {True: 'AVAILABLE', False: 'UNAVAILABLE'}
 
 class DeviceList(BaseList):
