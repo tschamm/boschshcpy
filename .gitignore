@@ -1,0 +1,5 @@
+.idea/
+build/
+dist/
+bshlocal.egg-info/
+__pycache__
