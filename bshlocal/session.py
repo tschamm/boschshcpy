@@ -4,7 +4,7 @@ import threading
 import time
 import sys
 
-from .api import BSHLocalAPI
+from .api import BSHLocalAPI, JSONRPCError
 from .device import BSHLocalDevice
 from .room import BSHLocalRoom
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
@@ -59,7 +59,7 @@ class BSHLocalSession:
                 self._process_long_polling_poll_result(raw_result)
 
             return True
-        except api.JSONRPCError as json_rpc_error:
+        except JSONRPCError as json_rpc_error:
             if json_rpc_error.code == -32001:
                 self._poll_id = None
                 logger.warning(f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time...")

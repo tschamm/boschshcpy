@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bshlocal",  # Replace with your own username
-    version="0.0.2",
+    version="0.0.3",
     author="Clemens-Alexander Brust",
     author_email="cabrust@pm.me",
     description="Bosch Smart Home Local API Python Library",
