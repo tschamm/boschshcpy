@@ -88,6 +88,13 @@ class BSHLocalSession:
                         if not self._long_poll():
                             logging.warning("_long_poll returned False. Waiting 1 second.")
                             time.sleep(1.0)
+                    except RuntimeError as err:
+                        if self._stop_polling_thread:
+                            logging.info("Stopping polling thread after expected runtime error.")
+                            return
+                        else:
+                            logging.error(f"Runtime error in running polling thread: {err}. Waiting 15 seconds.")
+                            time.sleep(15.0)
                     except Exception as ex:
                         logging.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
                         time.sleep(15.0)
