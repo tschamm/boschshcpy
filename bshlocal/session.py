@@ -88,9 +88,8 @@ class BSHLocalSession:
                         if not self._long_poll():
                             logging.warning("_long_poll returned False. Waiting 1 second.")
                             time.sleep(1.0)
-                    except:
-                        ex = sys.exc_info()[0]
-                        logging.error(f"Error in polling thread: {str(ex)}. Waiting 15 seconds.")
+                    except Exception as ex:
+                        logging.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
                         time.sleep(15.0)
 
             self._polling_thread = threading.Thread(target=polling_thread_main, name="BSHLocalPollingThread")
@@ -103,6 +102,9 @@ class BSHLocalSession:
         if self._polling_thread is not None:
             self._stop_polling_thread = True
             self._polling_thread.join()
+
+            self._maybe_unsubscribe()
+            self._polling_thread = None
         else:
             raise ValueError("Not polling!")
 
