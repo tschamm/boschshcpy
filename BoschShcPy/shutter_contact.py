@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import logging
 
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
@@ -6,6 +7,8 @@ from BoschShcPy.client import ErrorException
 from BoschShcPy.device import Device, status_rx
 
 from BoschShcPy.subscribe import AsyncUpdate
+
+_LOGGER = logging.getLogger(__name__)
 
 class state(Enum):
     CLOSED = auto()
@@ -31,7 +34,6 @@ class ShutterContact(Base):
         self.name = name
         self.value = 'CLOSED'
         self.batterylevel = None
-#         self.update()
 
     @property
     def get_state(self):
@@ -71,8 +73,6 @@ class ShutterContact(Base):
     def update(self):
         try:
             self.load( self.client.request("smarthome/devices/"+self.id+"/services/ShutterContact/state") )
-#             print("Update request received")
-#             print(self)
             return True
         except ErrorException:
             return False
@@ -89,12 +89,12 @@ class ShutterContact(Base):
             return False
 
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "shutterContactState":
-            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            _LOGGER.error("Wrong device id %s or state type %s" % (
+                query_result['deviceId'], query_result['state']['@type']))
             return False
 
         self.value = query_result['state']['value']
 
-#             self.level = query_result['state']['level']
         return True
 
     def __str__(self):

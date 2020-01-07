@@ -74,7 +74,8 @@ class SmartPlug(Base):
     def update_switchstate(self, query_result):
         """Retrieve switch state values of Smart Plug from polling query."""
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "powerSwitchState":
-            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            _LOGGER.error("Wrong device id %s or state type %s" % (
+                query_result['deviceId'], query_result['state']['@type']))
             return False
 
         self.switchState = query_result['state']['switchState']
@@ -84,7 +85,8 @@ class SmartPlug(Base):
     def update_meterstate(self, query_result):
         """Retrieve meter state values of Smart Plug from polling query."""
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "powerMeterState":
-            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            _LOGGER.error("Wrong device id %s or state type %s" % (
+                query_result['deviceId'], query_result['state']['@type']))
             return False
 
         self.powerConsumption = query_result['state']['powerConsumption']
@@ -103,7 +105,6 @@ class SmartPlug(Base):
         try:
             self.client.request("smarthome/devices/"+self.id+"/services/PowerSwitch/state", method='PUT', params=data)
             self.switchState = state_tx[state]
-#             self.update()
             return True
         except ErrorException as e:
             _LOGGER.debug("Request failed with error {}".format(e))

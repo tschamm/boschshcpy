@@ -30,14 +30,12 @@ class Subscription():
         pass
 
     def event_device(self, device, query_result):
-#         print("Updating device %s by event..." % device.get_id)
         device.update_from_query(query_result)
         for callback in self.registered_callbacks.get(device, ()):
             try:
                 callback(device)
             except Exception:
                 pass
-#         print(device)
         pass
 
     def register(self, device, callback):
@@ -70,7 +68,6 @@ class Subscription():
             for elem in list(query_result):
                 if 'result' in elem.keys():
                     for result in elem['result']:
-#                         print (result)
                         if not self.exiting:
                             self.event(result)
                             time.sleep(0.2)
@@ -103,14 +100,11 @@ class AsyncUpdate():
         self.registered_callback = None
 
     def event_device(self, query_result):
-        print("Updating device %s by event..." % self.registered_device.get_id)
         self.registered_device.load( query_result )
-        # self.registered_device.update_from_query(query_result)
         try:
             self.registered_callback(self.registered_device)
         except Exception:
             pass
-#         print(device)
         pass
 
     def register(self, device, callback):

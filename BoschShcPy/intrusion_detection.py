@@ -20,17 +20,6 @@ operation_state_tx = {operation_state.SYSTEM_DISARMED: 'SYSTEM_DISARMED',
                       operation_state.SYSTEM_ARMED: 'SYSTEM_ARMED',
                       operation_state.MUTE_ALARM: 'MUTE_ALARM'}
 
-# {"@type":"intrusionDetectionControlState",
-#     "value":"SYSTEM_DISARMED",
-#     "triggers":[{"id":"hdm:HomeMaticIP:01234","active":true,"readonly":false}],
-#     "actuators":[{"id":"intrusion:visual","active":true,"readonly":false},
-#                  {"id":"intrusion:video","active":false,"readonly":false},
-#                  {"id":"intrusion:siren","active":true,"readonly":false},
-#                  {"id":"intrusion:push","active":true,"readonly":true}],
-#     "remainingTimeUntilArmed"
-#     "armActivationDelayTime":60,
-#     "alarmActivationDelayTime":10}
-
 class IntrusionDetection(Base):
     def __init__(self, client, device, id, name=None):
         self.client = client
@@ -71,22 +60,6 @@ class IntrusionDetection(Base):
             return True
         except ErrorException:
             return False
-
-#     def update_from_query(self, query_result):
-#         if query_result['id'] != "IntrusionDetection":
-#             return False
-#         
-#         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "shutterControlState":
-#             print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
-#             return False
-#         
-#         self.operationState = query_result['state']['operationState']
-#         
-#         """As info is delayed, only update level if shutter control is not moving to prevent flickering"""
-#         if self.operationState == 'STOPPED':        
-#             self.level = query_result['state']['level']
-#         return True
-#
 
     def setOperationState(self, operation_state):
         """Set a new operation state of the intrusion detection system."""
@@ -140,6 +113,7 @@ class IntrusionDetection(Base):
         return self.setOperationState(operation_state.MUTE_ALARM)
     
     def trigger(self):
+        # not implemented yet
         print("Trigger alarm simulation")
 
     def __str__(self):

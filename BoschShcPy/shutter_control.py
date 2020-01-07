@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import logging
 
 from BoschShcPy.base import Base
 from BoschShcPy.base_list import BaseList
@@ -6,6 +7,8 @@ from BoschShcPy.client import ErrorException
 from BoschShcPy.device import Device, status_rx
 
 from BoschShcPy.subscribe import AsyncUpdate
+
+_LOGGER = logging.getLogger(__name__)
 
 class operation_state(Enum):
     STOPPED = auto()
@@ -24,7 +27,6 @@ class ShutterControl(Base):
         self.type = None
         self.operationState = 'STOPPED'
         self.level = None
-#         self.update()
 
     @property
     def get_state(self):
@@ -58,8 +60,6 @@ class ShutterControl(Base):
     def update(self):
         try:
             self.load( self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state") )
-#             print("Update request received")
-#             print(self)
             return True
         except ErrorException:
             return False
@@ -76,7 +76,8 @@ class ShutterControl(Base):
             return False
 
         if self.id != query_result['deviceId'] or query_result['state']['@type'] != "shutterControlState":
-            print("Wrong device id %s or state type %s" % (query_result['deviceId'], query_result['state']['@type']))
+            _LOGGER.error("Wrong device id %s or state type %s" % (
+                query_result['deviceId'], query_result['state']['@type']))
             return False
 
         self.operationState = query_result['state']['operationState']
@@ -92,7 +93,6 @@ class ShutterControl(Base):
         try:
             self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state", method='PUT', params=data)
             self.level = level
-#             self.update()
             return True
         except ErrorException:
             return False
@@ -102,14 +102,9 @@ class ShutterControl(Base):
         data={'@type':'shutterControlState', 'operationState': operation_state_tx[operation_state.STOPPED]}
         try:
             self.client.request("smarthome/devices/"+self.id+"/services/ShutterControl/state", method='PUT', params=data)
-#             self.update()
             return True
         except ErrorException:
             return False
-
-#     def get_services(self):
-#         """Retrieve services of Shutter Control."""
-#         return SmartPlugServices().load(self.client.request("smarthome/devices/"+self.id+"/services"))
 
     def __str__(self):
         return "\n".join([
@@ -121,25 +116,6 @@ class ShutterControl(Base):
             '-%s' % self.device,
         ])
 
-# b'{"@type":"shutterControlState","calibrated":true,"referenceMovingTimes":{"movingTimeTopToBottomInMillis":17680,"movingTimeBottomToTopInMillis":18080},"level":0.0,"operationState":"STOPPED","endPositionAutoDetect":true,"endPositionSupported":true,"delayCompensationTime":12.7,"delayCompensationSupported":true,"automaticDelayCompensation":true,"slatsRunningTimeInMillis":0}'
-
-# class SmartPlugServices(BaseList):
-#     def __init__(self):
-#         # We're expecting items of type Device
-#         super(SmartPlugServices, self).__init__(SmartPlugService)
-#
-# class SmartPlugService(Base):
-#     def __init__(self):
-#         self.id = None
-#         self.deviceId = None
-#         self.state = None
-#
-#     def __str__(self):
-#         return "\n".join([
-#             'id                     : %s' % self.id,
-#             'deviceId               : %s' % self.deviceId,
-#             'state                  : %s' % self.state,
-#         ])
 
 def initialize_shutter_controls(client, device_list):
     """Helper function to initialize all shutter controls given from a device list."""

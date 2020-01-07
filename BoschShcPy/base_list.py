@@ -49,7 +49,6 @@ class BaseList(Base):
         self.itemType = item_type
 
     def load(self, data):
-#         print (self.itemType())
         items = []
         for dict_item in data:
             items.append(self.itemType().load(dict_item))

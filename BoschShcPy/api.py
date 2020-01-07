@@ -48,7 +48,7 @@ class Api(object):
             return response['token']
 
         except ErrorException as e:
-            print('\nAn error occured during new client registering:\n')
+            _LOGGER.error('\nAn error occured during new client registering:\n')
 
 
 
