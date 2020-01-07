@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# Use this script to register a new client connection to Bosch Smart Home products
+# See https://github.com/BoschSmartHome/bosch-shc-api-docs
+
 import argparse, sys
 import os
 import time
@@ -8,7 +11,7 @@ import logging
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import BoschShcPy
-from BoschShcPy.certificate import generate_selfsigned_cert
+from certificate import generate_selfsigned_cert
 
 logging.basicConfig(level=logging.DEBUG)
 
