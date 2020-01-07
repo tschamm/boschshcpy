@@ -2,6 +2,7 @@
 
 # Use this script to register a new client connection to Bosch Smart Home products
 # See https://github.com/BoschSmartHome/bosch-shc-api-docs
+# Before executing the script to register a new client, the button on the controller has to be pressed until the LED begins flashing.
 
 import argparse, sys
 import os
