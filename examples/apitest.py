@@ -16,12 +16,8 @@ from certificate import generate_selfsigned_cert
 
 logging.basicConfig(level=logging.DEBUG)
 
-SHUTTER_CONTROL_ID = "hdm:HomeMaticIP:3014F711A00018D878598448"
-IP_SHC = '192.168.1.6'
-PORT_SHC = '8444'
-
 parser = argparse.ArgumentParser()
-parser.add_argument("-p", "--password",
+parser.add_argument("-pw", "--password",
                     help="systempassword - encoded in base64 - which you have set-up initially in the SHC-Setup process.")
 parser.add_argument("-ac", "--access_cert",
                     help="Path to access certificat.",
@@ -35,6 +31,11 @@ parser.add_argument("-n", "--name",
 parser.add_argument("-id", "--id",
                     help="ID of the new client user.",
                     default="shc_api_test")
+parser.add_argument("-ip", "--ip_address",
+                    help="IP of the smart home controller.")
+parser.add_argument("-p", "--port",
+                    help="Port of the smart home controller.",
+                    default="8443")
 args = parser.parse_args()
 
 try:
@@ -49,7 +50,7 @@ try:
             writer.write(cert)
 
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
-    client = BoschShcPy.Client(IP_SHC, PORT_SHC, ACCESS_CERT, ACCESS_KEY)
+    client = BoschShcPy.Client(args.ip_address, args.port, ACCESS_CERT, ACCESS_KEY)
     api = BoschShcPy.Api(client)
 
     token = api.register_client(args.id, args.name, args.password)
@@ -62,11 +63,6 @@ try:
     shc_info = client.shc_information()
     print('  version        : %s' % shc_info.version)
     print('  updateState    : %s' % shc_info.updateState)
-
-    #   device = client.device(shutter_control_ID)
-    #   print(device)
-    #
-
     
 
 except BoschShcPy.client.ErrorException as e:
