@@ -30,6 +30,7 @@ import io
 
 from BoschShcPy.shc_information import ShcInformation
 from BoschShcPy.device import Device, DeviceList
+from BoschShcPy.scenario import Scenario, ScenarioList
 from BoschShcPy.subscribe import Subscription
 from BoschShcPy.error import ErrorException
 
@@ -53,6 +54,7 @@ class Client(object):
         self.access_key = access_key
         self.http_client = http_client
         self._device_list = None
+        self._scenario_list = None
         self._subscription = Subscription(self)
 
     def _get_http_client(self):
@@ -119,7 +121,17 @@ class Client(object):
         if not self._device_list:
             self._device_list = DeviceList().load(self.request("smarthome/devices"))
         return self._device_list
-    
+
+    def scenario(self, scenario_id):
+        """Retrive scenario information."""
+        return Scenario().load(self.request("smarthome/scenarios/"+scenario_id))
+
+    def scenario_list(self):
+        """Retrieve list of scenarios."""
+        if not self._scenario_list:
+            self._scenario_list = ScenarioList().load(self.request("smarthome/scenarios"))
+        return self._scenario_list
+
     def register_device(self, device, callback):
         self._subscription.register(device, callback)
         
