@@ -124,12 +124,16 @@ class Client(object):
 
     def scenario(self, scenario_id):
         """Retrive scenario information."""
-        return Scenario().load(self.request("smarthome/scenarios/"+scenario_id))
+        scenario = Scenario().load(self.request("smarthome/scenarios/"+scenario_id))
+        scenario.set_client(self)
+        return scenario
 
     def scenario_list(self):
         """Retrieve list of scenarios."""
         if not self._scenario_list:
             self._scenario_list = ScenarioList().load(self.request("smarthome/scenarios"))
+            for item in self._scenario_list.items:
+                item.set_client(self)
         return self._scenario_list
 
     def register_device(self, device, callback):
