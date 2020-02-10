@@ -18,6 +18,7 @@ class Device(Base):
         WRC2: Universal Switch
         HUE_LIGHT
         PSM: Smart Plug
+        BSM: Light Control
         CAMERA_EYES
         SMOKE_DETECTION_SYSTEM
         HUE_BRIDGE

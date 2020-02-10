@@ -25,6 +25,9 @@ class Scenario(Base):
 
     def set_client(self, client):
         self.client = client
+
+    def update(self):
+        return True
     
     def update_from_query(self, query_result):
         if query_result['@type'] == "scenario":

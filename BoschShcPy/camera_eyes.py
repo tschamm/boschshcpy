@@ -62,7 +62,7 @@ class CameraEyes(Base):
             # self.privacyMode = self.value
             
             result = self.client.request("smarthome/devices/"+self.id+"/services")
-            print (result)
+            # print (result)
             for service_data in result:
                 self.update_from_query(service_data)
 

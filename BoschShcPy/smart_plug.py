@@ -151,3 +151,11 @@ def initialize_smart_plugs(client, device_list):
         if item.deviceModel == "PSM":
             smart_plugs.append(SmartPlug(client, item, item.id, item.name))
     return smart_plugs
+
+def initialize_light_control(client, device_list):
+    """Helper function to initialize all light controls given from a device list."""
+    light_controls = []
+    for item in device_list.items:
+        if item.deviceModel == "BSM":
+            light_controls.append(SmartPlug(client, item, item.id, item.name))
+    return light_controls
