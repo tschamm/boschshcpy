@@ -4,6 +4,7 @@ dist/
 bshlocal.egg-info/
 examples/keystore
 __pycache__
+*.pyc
 .project
 .pydevproject
 .vscode/settings.json

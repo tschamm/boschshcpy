@@ -25,15 +25,7 @@
 #
 
 from datetime import datetime, timedelta
-import ipaddress
-import argparse, sys, os
-
-parser = argparse.ArgumentParser()
-parser.add_argument("-ac", "--access_cert",
-                    help="Path to access certificat.")
-parser.add_argument("-ak", "--access_key",
-                    help="Path to access key.")
-args = parser.parse_args()
+from ipaddress import ip_address
 
 def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
     """Generates self signed certificate for a hostname, and optional IP addresses."""
@@ -95,7 +87,16 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
     return cert_pem, key_pem
 
 
-def main():
+if __name__ == "__main__":
+    import argparse, sys, os
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-ac", "--access_cert",
+                        help="Path to access certificat.")
+    parser.add_argument("-ak", "--access_key",
+                        help="Path to access key.")
+    args = parser.parse_args()
+
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit()
@@ -109,6 +110,3 @@ def main():
             writer.write(cert)
     else:
         print ("Cert or key file already existing, aborting!")
-
-if __name__ == "__main__":
-    main()

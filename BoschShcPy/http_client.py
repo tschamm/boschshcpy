@@ -76,14 +76,18 @@ class HttpClient(object):
         if method == "GET":
             response = requests.get(url, verify=False, cert=cert, headers=headers, params=params)
         elif method == "POST":
-            response = requests.post(url, verify=False, cert=cert, headers=headers, data=json.dumps(params))
+            try:
+                response = requests.post(url, verify=False, cert=cert, headers=headers, data=json.dumps(params))
+            except requests.exceptions.SSLError as e:
+                _LOGGER.error('An error occured during requests.post(%s): %s' % (url, e))
+                raise (ErrorException("Unexpected error during client request.post"))
         elif method == "PUT":
             response = requests.put(url, verify=False, cert=cert, headers=headers, data=json.dumps(params))
         else:
             response = str(method) + ' is not a supported HTTP method'
 
         _LOGGER.debug(response.content)
-        
+    
         if isinstance(response, str):
             raise ValueError(response)
 

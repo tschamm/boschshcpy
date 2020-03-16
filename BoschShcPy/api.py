@@ -43,12 +43,9 @@ class Api(object):
 
             # check for 201, or 401 if failed
             if not 'token' in response:
-                return ""
+                return None
             
             return response['token']
 
         except ErrorException as e:
-            _LOGGER.error('\nAn error occured during new client registering:\n')
-
-
-
+            _LOGGER.error('An error occured during new client registering: %s' % (e))
