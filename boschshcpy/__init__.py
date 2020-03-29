@@ -1,1 +1,1 @@
-from .session import BSHLocalSession
+from .session import SHCSession

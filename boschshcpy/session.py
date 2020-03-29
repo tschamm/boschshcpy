@@ -4,18 +4,18 @@ import threading
 import time
 import sys
 
-from .api import BSHLocalAPI, JSONRPCError
-from .device import BSHLocalDevice
-from .room import BSHLocalRoom
+from .api import SHCAPI, JSONRPCError
+from .device import SHCDevice
+from .room import SHCRoom
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 
-logger = logging.getLogger("bshlocal")
+logger = logging.getLogger("boschshcpy")
 
 
-class BSHLocalSession:
+class SHCSession:
     def __init__(self, controller_ip: str, certificate, key):
         # API
-        self._api = BSHLocalAPI(controller_ip=controller_ip, certificate=certificate, key=key)
+        self._api = SHCAPI(controller_ip=controller_ip, certificate=certificate, key=key)
 
         # Subscription status
         self._poll_id = None
@@ -39,14 +39,14 @@ class BSHLocalSession:
                 logger.info(f"Skipping device id {device_id} which has no services that are supported by this library")
                 continue
 
-            device = BSHLocalDevice(api=self._api, raw_device=raw_device)
+            device = SHCDevice(api=self._api, raw_device=raw_device)
             self._devices_by_id[device_id] = device
 
     def _enumerate_rooms(self):
         raw_rooms = self._api.get_rooms()
         for raw_room in raw_rooms:
             room_id = raw_room["id"]
-            room = BSHLocalRoom(api=self._api, raw_room=raw_room)
+            room = SHCRoom(api=self._api, raw_room=raw_room)
             self._rooms_by_id[room_id] = room
 
     def _long_poll(self, wait_seconds=30):
@@ -102,7 +102,7 @@ class BSHLocalSession:
                         logging.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
                         time.sleep(15.0)
 
-            self._polling_thread = threading.Thread(target=polling_thread_main, name="BSHLocalPollingThread")
+            self._polling_thread = threading.Thread(target=polling_thread_main, name="SHCPollingThread")
             self._polling_thread.start()
 
         else:
@@ -119,17 +119,17 @@ class BSHLocalSession:
             raise ValueError("Not polling!")
 
     @property
-    def devices(self) -> typing.Sequence[BSHLocalDevice]:
+    def devices(self) -> typing.Sequence[SHCDevice]:
         return list(self._devices_by_id.values())
 
-    def device(self, device_id) -> BSHLocalDevice:
+    def device(self, device_id) -> SHCDevice:
         return self._devices_by_id[device_id]
 
     @property
-    def rooms(self) -> typing.Sequence[BSHLocalRoom]:
+    def rooms(self) -> typing.Sequence[SHCRoom]:
         return list(self._rooms_by_id.values())
 
-    def room(self, room_id) -> BSHLocalRoom:
+    def room(self, room_id) -> SHCRoom:
         return self._rooms_by_id[room_id]
 
     @property

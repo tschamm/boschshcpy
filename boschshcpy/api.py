@@ -20,7 +20,7 @@ class JSONRPCError(Exception):
         return f"JSONRPCError (code: {self.code}, message: {self.message})"
 
 
-class BSHLocalAPI:
+class SHCAPI:
     def __init__(self, controller_ip: str, certificate, key):
         self._certificate = certificate
         self._key = key

@@ -1,8 +1,8 @@
-from .api import BSHLocalAPI
+from .api import SHCAPI
 
 
-class BSHLocalDeviceService:
-    def __init__(self, api: BSHLocalAPI, raw_device_service):
+class SHCDeviceService:
+    def __init__(self, api: SHCAPI, raw_device_service):
         self._api = api
         self._raw_device_service = raw_device_service
         self._raw_state = self._raw_device_service["state"]
@@ -29,6 +29,9 @@ class BSHLocalDeviceService:
         print(f"  Device Service: {self.id}")
         print(f"    State: {self.state}")
         print(f"    Path:  {self.path}")
+
+    def set_callback(self, callback):
+        self.on_state_changed = callback
 
     def put_state_element(self, key, value):
         self._api.put_device_service_state(self.device_id, self.id, {"@type": self.state["@type"], key: value})

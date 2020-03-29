@@ -10,10 +10,10 @@ It supports both long and short polling. The following device services are imple
 
 Example:
 ```python
-import bshlocal
+import boschshcpy
 
 # Create session
-session = bshlocal.BSHLocalSession(controller_ip="192.168.25.51", certificate='cert.pem', key='key.pem')
+session = boschshcpy.SHCSession(controller_ip="192.168.25.51", certificate='cert.pem', key='key.pem')
 device = session.device('roomClimateControl_hz_5')
 service = device.device_service('TemperatureLevel')
 print(service.temperature)

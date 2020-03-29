@@ -1,4 +1,4 @@
-class BSHLocalRoom:
+class SHCRoom:
     def __init__(self, api, raw_room):
         self._api = api
         self._raw_room = raw_room

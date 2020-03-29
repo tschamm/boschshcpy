@@ -1,13 +1,13 @@
 import typing
 import logging
 
-from .device_service import BSHLocalDeviceService
+from .device_service import SHCDeviceService
 from .services_impl import build, SUPPORTED_DEVICE_SERVICE_IDS
 
-logger = logging.getLogger("bshlocal")
+logger = logging.getLogger("boschshcpy")
 
 
-class BSHLocalDevice:
+class SHCDevice:
     def __init__(self, api, raw_device):
         self._api = api
         self._raw_device = raw_device
@@ -47,11 +47,11 @@ class BSHLocalDevice:
 
     @property
     def serial(self):
-        return self._raw_device['serial']
+        return self._raw_device['serial'] if 'serial' in self._raw_device else None
 
     @property
     def profile(self):
-        return self._raw_device['profile']
+        return self._raw_device['profile'] if 'profile' in self._raw_device else None
 
     @property
     def name(self):
@@ -62,7 +62,7 @@ class BSHLocalDevice:
         return self._raw_device['status']
 
     @property
-    def device_services(self) -> typing.Sequence[BSHLocalDeviceService]:
+    def device_services(self) -> typing.Sequence[SHCDeviceService]:
         return list(self._device_services_by_id.values())
 
     @property
@@ -79,6 +79,7 @@ class BSHLocalDevice:
         print(f"  Model         : {self.device_model}")
         print(f"  Room          : {self.room_id}")
         print(f"  Serial        : {self.serial}")
+        print(f"  Profile       : {self.profile}")
         for device_service in self.device_services:
             device_service.summary()
 

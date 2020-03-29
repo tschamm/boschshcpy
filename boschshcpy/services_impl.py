@@ -1,8 +1,8 @@
 from enum import Enum
-from .device_service import BSHLocalDeviceService
+from .device_service import SHCDeviceService
 
 
-class TemperatureLevelService(BSHLocalDeviceService):
+class TemperatureLevelService(SHCDeviceService):
     @property
     def temperature(self) -> float:
         return float(self.state["temperature"])
@@ -12,7 +12,7 @@ class TemperatureLevelService(BSHLocalDeviceService):
         print(f"    Temperature              : {self.temperature}")
 
 
-class RoomClimateControlService(BSHLocalDeviceService):
+class RoomClimateControlService(SHCDeviceService):
     class OperationMode(Enum):
         AUTOMATIC = "AUTOMATIC"
         MANUAL = "MANUAL"
@@ -90,7 +90,7 @@ class RoomClimateControlService(BSHLocalDeviceService):
         print(f"    Show Setpoint Temperature: {self.show_setpoint_temperature}")
 
 
-class ShutterContactService(BSHLocalDeviceService):
+class ShutterContactService(SHCDeviceService):
     class State(Enum):
         CLOSED = "CLOSED"
         OPEN = "OPEN"
@@ -104,7 +104,7 @@ class ShutterContactService(BSHLocalDeviceService):
         print(f"    Value                    : {self.value}")
 
 
-class ValveTappetService(BSHLocalDeviceService):
+class ValveTappetService(SHCDeviceService):
     @property
     def position(self) -> int:
         return int(self.state["position"])
@@ -114,10 +114,143 @@ class ValveTappetService(BSHLocalDeviceService):
         print(f"    Position                 : {self.position}")
 
 
+class PowerSwitchService(SHCDeviceService):
+    class State(Enum):
+        ON = "ON"
+        OFF = "OFF"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["switchState"])
+
+    @property
+    def powerofftime(self) -> int:
+        return int(self.state["automaticPowerOffTime"])
+
+    def summary(self):
+        super().summary()
+        print(f"    switchState              : {self.value}")
+        print(f"    automaticPowerOffTime    : {self.powerofftime}")
+
+
+class PowerMeterService(SHCDeviceService):
+    @property
+    def powerconsumption(self) -> float:
+        return float(self.state["powerConsumption"])
+
+    @property
+    def energyconsumption(self) -> float:
+        return float(self.state["energyConsumption"])
+
+    def summary(self):
+        super().summary()
+        print(f"    powerConsumption         : {self.powerconsumption}")
+        print(f"    energyConsumption        : {self.energyconsumption}")
+
+
+class RoutingService(SHCDeviceService):
+    class State(Enum):
+        ENABLED = "ENABLED"
+        DISABLED = "DISABLED"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    value                    : {self.value}")
+
+
+class PowerSwitchProgramService(SHCDeviceService):
+    class State(Enum):
+        MANUAL = "MANUAL"
+        AUTOMATIC = "AUTOMATIC"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["operationMode"])
+
+    def summary(self):
+        super().summary()
+        print(f"    operationMode            : {self.value}")
+
+
+class BinarySwitchService(SHCDeviceService):
+    @property
+    def value(self) -> bool:
+        return self.state["on"]
+
+    def summary(self):
+        super().summary()
+        print(f"    switchState              : {self.value}")
+
+
+class SmokeDetectorCheckService(SHCDeviceService):
+    class State(Enum):
+        NONE = "NONE"
+        SMOKE_TEST_OK = "SMOKE_TEST_OK"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    smokeDetectorCheckState  : {self.value}")
+
+
+class AlarmService(SHCDeviceService):
+    class State(Enum):
+        IDLE_OFF = "IDLE_OFF"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    alarmState               : {self.value}")
+
+
+class ShutterControlService(SHCDeviceService):
+    class State(Enum):
+        STOPPED = "STOPPED"
+        MOVING = "MOVING"
+        CALIBRATING = "CALIBRATING"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["operationState"])
+
+    @property
+    def calibrated(self) -> bool:
+        return self.state["calibrated"]
+
+    @property
+    def level(self) -> float:
+        return self.state["level"]
+
+    def summary(self):
+        super().summary()
+        print(f"    operationState           : {self.value}")
+        print(f"    Level                    : {self.level}")
+        print(f"    Calibrated               : {self.calibrated}")
+
+
 SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "RoomClimateControl": RoomClimateControlService,
                    "ShutterContact": ShutterContactService,
-                   "ValveTappet": ValveTappetService}
+                   "ValveTappet": ValveTappetService,
+                   "PowerSwitch": PowerSwitchService,
+                   "PowerMeter": PowerMeterService,
+                   "Routing": RoutingService,
+                   "PowerSwitchProgram": PowerSwitchProgramService,
+                   "BinarySwitch": BinarySwitchService,
+                   "SmokeDetectorCheck": SmokeDetectorCheckService,
+                   "Alarm": AlarmService,
+                   "ShutterControl": ShutterControlService}
+# Todo: implement BatteryLevelService
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
