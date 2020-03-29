@@ -1,64 +1,92 @@
-from BoschShcPy.base import Base
-from BoschShcPy.base_list import BaseList
+import typing
+import logging
 
-status_rx = {'AVAILABLE': True, 'UNAVAILABLE': False, 'UNDEFINED': False}
-status_tx = {True: 'AVAILABLE', False: 'UNAVAILABLE'}
+from .device_service import BSHLocalDeviceService
+from .services_impl import build, SUPPORTED_DEVICE_SERVICE_IDS
 
-class DeviceList(BaseList):
-    def __init__(self):
-        # We're expecting items of type Device
-        super(DeviceList, self).__init__(Device)
-        
-class Device(Base):
-    def __init__(self):
-        """ Initialize a shc device. Could be of device model type: 
-        SD: Smoke Detector
-        BBL: Shutter Control
-        SWD: Shutter Contact
-        WRC2: Universal Switch
-        HUE_LIGHT
-        PSM: Smart Plug
-        BSM: Light Control
-        CAMERA_EYES
-        SMOKE_DETECTION_SYSTEM
-        HUE_BRIDGE
-        INTRUSION_DETECTION_SYSTEM
-        HUE_LIGHT_ROOM_CONTROL
-        VENTILATION_SERVICE
-        PRESENCE_SIMULATION_SERVICE
-        HUE_BRIDGE_MANAGER
-        """ 
-        self.id = None
-        self.deviceServiceIds = None
-        self.manufacturer = None
-        self.deviceModel = None 
-        self.serial = None
-        self.name = None
-        self.deleted = None
-        self.status = None
-        self.profile = None
-        self.roomId = None
-        self.rootDeviceId = None
-    
-    def get_id(self):
-        return self.id
-    
-    def update_from_query(self, query_result):
-        if query_result['@type'] == "device":
-            self.load(query_result)
+logger = logging.getLogger("bshlocal")
 
-    def __str__(self):
-        return "\n".join([
-            'Device:',
-            '  Id                        : %s' % self.id,
-            '  deviceServiceIds          : %s' % self.deviceServiceIds,
-            '  manufacturer              : %s' % self.manufacturer,
-            '  deviceModel               : %s' % self.deviceModel,
-            '  serial                    : %s' % self.serial,
-            '  name                      : %s' % self.name,
-            '  deleted                   : %s' % self.deleted,
-            '  status                    : %s' % self.status,
-            '  profile                   : %s' % self.profile,
-            '  roomId                    : %s' % self.roomId,
-        ])
+
+class BSHLocalDevice:
+    def __init__(self, api, raw_device):
+        self._api = api
+        self._raw_device = raw_device
+
+        self._device_services_by_id = {}
+        self._enumerate_services()
+
+    def _enumerate_services(self):
+        for device_service_id in self._raw_device['deviceServiceIds']:
+            if device_service_id not in SUPPORTED_DEVICE_SERVICE_IDS:
+                continue
+
+            raw_device_service_data = self._api.get_device_service(self.id, device_service_id)
+            device_service = build(self._api, raw_device_service_data)
+
+            self._device_services_by_id[device_service_id] = device_service
+
+    @property
+    def root_device_id(self):
+        return self._raw_device['rootDeviceId']
+
+    @property
+    def id(self):
+        return self._raw_device['id']
+
+    @property
+    def manufacturer(self):
+        return self._raw_device['manufacturer']
+
+    @property
+    def room_id(self):
+        return self._raw_device['roomId']
+
+    @property
+    def device_model(self):
+        return self._raw_device['deviceModel']
+
+    @property
+    def serial(self):
+        return self._raw_device['serial']
+
+    @property
+    def profile(self):
+        return self._raw_device['profile']
+
+    @property
+    def name(self):
+        return self._raw_device['name']
+
+    @property
+    def status(self):
+        return self._raw_device['status']
+
+    @property
+    def device_services(self) -> typing.Sequence[BSHLocalDeviceService]:
+        return list(self._device_services_by_id.values())
+
+    @property
+    def device_service_ids(self) -> typing.Set[str]:
+        return set(self._device_services_by_id.keys())
     
+    def device_service(self, device_service_id):
+        return self._device_services_by_id[device_service_id]
+
+    def summary(self):
+        print(f"Device: {self.id}")
+        print(f"  Name          : {self.name}")
+        print(f"  Manufacturer  : {self.manufacturer}")
+        print(f"  Model         : {self.device_model}")
+        print(f"  Room          : {self.room_id}")
+        print(f"  Serial        : {self.serial}")
+        for device_service in self.device_services:
+            device_service.summary()
+
+    def process_long_polling_poll_result(self, raw_result):
+        assert raw_result["@type"] == "DeviceServiceData"
+        device_service_id = raw_result["id"]
+        if device_service_id in self._device_services_by_id.keys():
+            device_service = self._device_services_by_id[device_service_id]
+            device_service.process_long_polling_poll_result(raw_result)
+        else:
+            logger.debug(f"Skipping polling result with unknown device service id {device_service_id}.")
