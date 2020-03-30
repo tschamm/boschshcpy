@@ -7,6 +7,7 @@ import sys
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .room import SHCRoom
+from .information import SHCInformation
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 
 logger = logging.getLogger("boschshcpy")
@@ -20,12 +21,16 @@ class SHCSession:
         # Subscription status
         self._poll_id = None
 
+        # SHC Information
+        self._shc_information = None
+
         # All devices
         self._rooms_by_id = {}
         self._devices_by_id = {}
 
         self._enumerate_devices()
         self._enumerate_rooms()
+        self._get_information()
 
         self._polling_thread = None
         self._stop_polling_thread = False
@@ -48,6 +53,10 @@ class SHCSession:
             room_id = raw_room["id"]
             room = SHCRoom(api=self._api, raw_room=raw_room)
             self._rooms_by_id[room_id] = room
+
+    def _get_information(self):
+        raw_information = self._api.get_shcinformation()
+        self._shc_information = SHCInformation(api=self._api, raw_information=raw_information)
 
     def _long_poll(self, wait_seconds=30):
         if self._poll_id is None:
@@ -132,6 +141,10 @@ class SHCSession:
     def room(self, room_id) -> SHCRoom:
         return self._rooms_by_id[room_id]
 
+    @property
+    def information(self) -> SHCInformation:
+        return self._shc_information
+    
     @property
     def api(self):
         return self._api

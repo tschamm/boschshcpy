@@ -38,22 +38,25 @@ class SHCAPI:
         urllib3.disable_warnings()
 
     def _get_api_result_or_fail(self, api_url, expected_type=None, expected_element_type=None, headers=None):
-        result = self._requests_session.get(api_url, headers=headers)
-        if not result.ok:
-            self._process_nok_result(result)
+        try:
+            result = self._requests_session.get(api_url, headers=headers)
+            if not result.ok:
+                self._process_nok_result(result)
 
-        else:
-            if len(result.content) > 0:
-                result = json.loads(result.content)
-                if expected_type is not None:
-                    assert result['@type'] == expected_type
-                if expected_element_type is not None:
-                    for result_ in result:
-                        assert result_['@type'] == expected_element_type
-
-                return result
             else:
-                return {}
+                if len(result.content) > 0:
+                    result = json.loads(result.content)
+                    if expected_type is not None:
+                        assert result['@type'] == expected_type
+                    if expected_element_type is not None:
+                        for result_ in result:
+                            assert result_['@type'] == expected_element_type
+
+                    return result
+                else:
+                    return {}
+        except requests.exceptions.SSLError as e:
+            raise Exception(f"API call returned SSLError: {e}!")
 
     def _put_api_or_fail(self, api_url, body):
         result = self._requests_session.put(api_url, data=json.dumps(body))
@@ -80,6 +83,10 @@ class SHCAPI:
         raise ValueError(f"API call returned non-OK result (code {result.status_code})!: {result.content}")
 
     # API calls here
+    def get_shcinformation(self):
+        api_url = f"{self._api_root}/information"
+        return self._get_api_result_or_fail(api_url)
+
     def get_rooms(self):
         api_url = f"{self._api_root}/rooms"
         return self._get_api_result_or_fail(api_url, expected_element_type="room")
