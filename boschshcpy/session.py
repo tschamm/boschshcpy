@@ -10,6 +10,7 @@ from .room import SHCRoom
 from .scenario import SHCScenario
 from .information import SHCInformation
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
+from .model_impl import SUPPORTED_MODELS, SHCShutterContact, SHCShutterControl
 
 logger = logging.getLogger("boschshcpy")
 
@@ -29,6 +30,9 @@ class SHCSession:
         self._rooms_by_id = {}
         self._scenarios_by_id = {}
         self._devices_by_id = {}
+        self._devices_by_model = {}
+        for model in SUPPORTED_MODELS:
+            self._devices_by_model[model] = {}
 
         self._enumerate_devices()
         self._enumerate_rooms()
@@ -40,6 +44,7 @@ class SHCSession:
 
     def _enumerate_devices(self):
         raw_devices = self._api.get_devices()
+
         for raw_device in raw_devices:
             device_id = raw_device['id']
 
@@ -47,7 +52,20 @@ class SHCSession:
                 logger.info(f"Skipping device id {device_id} which has no services that are supported by this library")
                 continue
 
-            device = SHCDevice(api=self._api, raw_device=raw_device)
+            device_model = raw_device['deviceModel']
+            device = None
+            if device_model in SUPPORTED_MODELS:
+                if device_model == 'SWD':
+                    device = SHCShutterContact(api=self._api, raw_device=raw_device)
+                elif device_model == 'BBL':
+                    device = SHCShutterControl(api=self._api, raw_device=raw_device)
+                else:
+                    logger.info(f"Skipping device id {device_id} as it's device model {device_model} is supported, but implementation is missing")
+                    continue
+                self._devices_by_model[device_model][device_id] = device
+            else:
+                device = SHCDevice(api=self._api, raw_device=raw_device)
+
             self._devices_by_id[device_id] = device
 
     def _enumerate_rooms(self):
@@ -140,6 +158,11 @@ class SHCSession:
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
         return list(self._devices_by_id.values())
+
+    def devices_by_model(self, model):
+        if model not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model[model].values())
 
     def device(self, device_id) -> SHCDevice:
         return self._devices_by_id[device_id]
