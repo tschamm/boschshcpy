@@ -203,6 +203,9 @@ class SmokeDetectorCheckService(SHCDeviceService):
 class AlarmService(SHCDeviceService):
     class State(Enum):
         IDLE_OFF = "IDLE_OFF"
+        INTRUSION_ALARM = "INTRUSION_ALARM"
+        SECONDARY_ALARM = "SECONDARY_ALARM"
+        PRIMARY_ALARM = "PRIMARY_ALARM"
 
     @property
     def value(self) -> State:

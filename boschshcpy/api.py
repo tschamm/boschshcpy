@@ -91,6 +91,10 @@ class SHCAPI:
         api_url = f"{self._api_root}/rooms"
         return self._get_api_result_or_fail(api_url, expected_element_type="room")
 
+    def get_scenarios(self):
+        api_url = f"{self._api_root}/scenarios"
+        return self._get_api_result_or_fail(api_url, expected_element_type="scenario")
+
     def get_devices(self):
         api_url = f"{self._api_root}/devices"
         return self._get_api_result_or_fail(api_url, expected_element_type="device")

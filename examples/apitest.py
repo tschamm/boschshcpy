@@ -13,7 +13,7 @@ import boschshcpy
 
 def api_test():
     session = boschshcpy.SHCSession(args.ip_address, args.access_cert, args.access_key)
-    print(session.information.summary())
+    session.information.summary()
     
 if __name__ == "__main__":
     import argparse, sys

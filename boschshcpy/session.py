@@ -7,6 +7,7 @@ import sys
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .room import SHCRoom
+from .scenario import SHCScenario
 from .information import SHCInformation
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 
@@ -26,10 +27,12 @@ class SHCSession:
 
         # All devices
         self._rooms_by_id = {}
+        self._scenarios_by_id = {}
         self._devices_by_id = {}
 
         self._enumerate_devices()
         self._enumerate_rooms()
+        self._enumerate_scenarios()
         self._get_information()
 
         self._polling_thread = None
@@ -53,6 +56,13 @@ class SHCSession:
             room_id = raw_room["id"]
             room = SHCRoom(api=self._api, raw_room=raw_room)
             self._rooms_by_id[room_id] = room
+
+    def _enumerate_scenarios(self):
+        raw_scenarios = self._api.get_scenarios()
+        for raw_scenario in raw_scenarios:
+            scenario_id = raw_scenario["id"]
+            scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
+            self._scenarios_by_id[scenario_id] = scenario
 
     def _get_information(self):
         raw_information = self._api.get_shcinformation()
@@ -140,6 +150,13 @@ class SHCSession:
 
     def room(self, room_id) -> SHCRoom:
         return self._rooms_by_id[room_id]
+
+    @property
+    def scenarios(self) -> typing.Sequence[SHCScenario]:
+        return list(self._scenarios_by_id.values())
+
+    def scenario(self, scenario_id) -> SHCScenario:
+        return self._scenarios_by_id[scenario_id]
 
     @property
     def information(self) -> SHCInformation:
