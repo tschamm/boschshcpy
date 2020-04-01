@@ -33,11 +33,15 @@ print(shuttercontact.device_class)
 shuttercontrols = session.device_helper.shutter_controls
 for control in shuttercontrols:
     print(f"Name: {control.name}, level: {control.level}")
+    control.set_stopped()
 
 cameras = session.device_helper.camera_eyes
 for cam in cameras:
-    print(f"Name: {cam.name}, light: {cam.get_light_state}")
+    print(f"Name: {cam.name}, light: {cam.lightstate}")
 
+idc = session.device_helper.intrusion_detection_system
+print (f"Name: {idc.name}, state: {idc.alarmstate}")
+idc.arm_instant()
 
 # shuttercontrol = session.device('hdm:HomeMaticIP:3014F711A00018D878598325')
 # shuttercontrol.summary()

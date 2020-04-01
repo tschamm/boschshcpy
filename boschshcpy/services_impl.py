@@ -282,6 +282,33 @@ class CameraNotificationService(SHCDeviceService):
         print(f"    value                    : {self.value}")
 
 
+class IntrusionDetectionControlService(SHCDeviceService):
+    class State(Enum):
+        SYSTEM_DISARMED = "SYSTEM_DISARMED"
+        SYSTEM_ARMING = "SYSTEM_ARMING"
+        SYSTEM_ARMED = "SYSTEM_ARMED"
+        MUTE_ALARM = "MUTE_ALARM"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+    
+    @property
+    def armActivationDelayTime(self) -> int:
+        return self.state["armActivationDelayTime"]
+
+    @property
+    def alarmActivationDelayTime(self) -> int:
+        return self.state["alarmActivationDelayTime"]
+
+    def summary(self):
+        super().summary()
+        print(f"    value                    : {self.value}")
+        print(f"    armActivationDelayTime   : {self.armActivationDelayTime}")
+        print(f"    alarmActivationDelayTime : {self.alarmActivationDelayTime}")
+
+
+
 SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "RoomClimateControl": RoomClimateControlService,
                    "ShutterContact": ShutterContactService,
@@ -296,7 +323,8 @@ SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "ShutterControl": ShutterControlService,
                    "CameraLight": CameraLightService,
                    "PrivacyMode": PrivacyModeService,
-                   "CameraNotification": CameraNotificationService}
+                   "CameraNotification": CameraNotificationService,
+                   "IntrusionDetectionControl": IntrusionDetectionControlService}
 # Todo: implement BatteryLevelService
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()

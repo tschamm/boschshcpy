@@ -2,7 +2,7 @@ import typing
 import logging
 
 from .device import SHCDevice
-from .models_impl import SUPPORTED_MODELS, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector
+from .models_impl import SUPPORTED_MODELS, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector, SHCIntrusionDetectionSystem
 
 logger = logging.getLogger("boschshcpy")
 
@@ -24,7 +24,8 @@ class SHCDeviceHelper:
             'BBL': lambda: SHCShutterControl(api=self._api, raw_device=raw_device),
             'PSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
             'SD': lambda: SHCSmokeDetector(api=self._api, raw_device=raw_device),
-            'CAMERA_EYES': lambda: SHCCameraEyes(api=self._api, raw_device=raw_device)
+            'CAMERA_EYES': lambda: SHCCameraEyes(api=self._api, raw_device=raw_device),
+            'INTRUSION_DETECTION_SYSTEM': lambda: SHCIntrusionDetectionSystem(api=self._api, raw_device=raw_device)
         }
         if device_model in switcher and device_model in SUPPORTED_MODELS:
             device = switcher[device_model]()
@@ -42,20 +43,36 @@ class SHCDeviceHelper:
 
     @property
     def shutter_contacts(self) -> typing.Sequence[SHCShutterContact]:
+        if 'SWD' not in SUPPORTED_MODELS: 
+            return []
         return list(self._devices_by_model['SWD'].values())
 
     @property
     def shutter_controls(self) -> typing.Sequence[SHCShutterControl]:
+        if 'BBL' not in SUPPORTED_MODELS:
+            return []
         return list(self._devices_by_model['BBL'].values())
 
     @property
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
+        if 'PSM' not in SUPPORTED_MODELS:
+            return []
         return list(self._devices_by_model['PSM'].values())
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
+        if 'SD' not in SUPPORTED_MODELS:
+            return []
         return list(self._devices_by_model['SD'].values())
 
     @property
     def camera_eyes(self) -> typing.Sequence[SHCCameraEyes]:
+        if 'CAMERA_EYES' not in SUPPORTED_MODELS:
+            return []
         return list(self._devices_by_model['CAMERA_EYES'].values())
+
+    @property
+    def intrusion_detection_system(self) -> SHCIntrusionDetectionSystem:
+        if 'INTRUSION_DETECTION_SYSTEM' not in SUPPORTED_MODELS:
+            return None
+        return list(self._devices_by_model['INTRUSION_DETECTION_SYSTEM'].values())[0]

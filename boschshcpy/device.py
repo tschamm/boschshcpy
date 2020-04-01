@@ -39,7 +39,7 @@ class SHCDevice:
 
     @property
     def room_id(self):
-        return self._raw_device['roomId']
+        return self._raw_device['roomId'] if 'roomId' in self._raw_device else None
 
     @property
     def device_model(self):

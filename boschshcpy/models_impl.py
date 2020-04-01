@@ -1,7 +1,8 @@
 from enum import Enum
 
 from .device import SHCDevice
-from .services_impl import CameraLightService
+from .device_service import SHCDeviceService
+from .services_impl import ShutterControlService, CameraLightService, IntrusionDetectionControlService
 
 
 class SHCSmokeDetector(SHCDevice):
@@ -52,7 +53,7 @@ class SHCShutterControl(SHCDevice):
         return self._service.level
 
     def set_stopped(self):
-        self._service.put_state_element('operationState', 'STOPPED')
+        self._service.put_state_element('operationState', ShutterControlService.State.STOPPED.name)
 
     def summary(self):
         print(f"BBL ShutterControl:")
@@ -100,12 +101,63 @@ class SHCCameraEyes(SHCDevice):
             'value', "ON" if state else "OFF")
 
     @property
-    def get_light_state(self) -> CameraLightService.State:
+    def lightstate(self) -> CameraLightService.State:
         self._cameralight_service.short_poll()
         return self._cameralight_service.value
 
     def summary(self):
         print(f"CAMERA_EYES CameraEyes:")
+        super().summary()
+
+
+class SHCIntrusionDetectionSystem(SHCDevice):
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._service = self.device_service('IntrusionDetectionControl')
+
+    def set_alarmstate(self, state: IntrusionDetectionControlService.State):
+        self._service.put_state_element('value', state.name)
+
+    def disarm(self):
+        self.set_alarmstate(IntrusionDetectionControlService.State.SYSTEM_DISARMED)
+
+    def arm(self):
+        self.set_alarmstate(IntrusionDetectionControlService.State.SYSTEM_ARMED)
+
+    def arm_activation_delay(self, seconds):
+        if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
+            return
+
+        self._service.put_state_element('armActivationDelayTime', seconds)
+
+    def arm_instant(self):
+        if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
+            return
+
+        delay_time = self._service.armActivationDelayTime
+        self.arm_activation_delay(1)
+        self.arm()
+        self.arm_activation_delay(delay_time)
+
+    def mute_alarm(self):
+        self.set_alarmstate(IntrusionDetectionControlService.State.MUTE_ALARM)
+
+    def trigger(self):
+        # not implemented yet
+        print("Trigger alarm simulation")
+
+    @property
+    def alarmstate(self) -> IntrusionDetectionControlService.State:
+        self._service.short_poll()
+        return self._service.value
+
+    @property
+    def armActivationDelayTime(self):
+        self._service.short_poll()
+        return self._service.value
+
+    def summary(self):
+        print(f"-IntrusionDetectionSystem-:")
         super().summary()
 
 
@@ -115,6 +167,7 @@ MODEL_MAPPING = {
     "PSM": "SmartPlug",
     "SD": "SmokeDetector",
     "CAMERA_EYES": "CameraEyes",
+    "INTRUSION_DETECTION_SYSTEM": "-IntrusionDetectionSystem-"
 }
 # "WRC2": "UniversalSwitchFlex",
 # "BSM": "LightControl",
