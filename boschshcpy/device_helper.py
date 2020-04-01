@@ -2,7 +2,7 @@ import typing
 import logging
 
 from .device import SHCDevice
-from .model_impl import SUPPORTED_MODELS, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector
+from .models_impl import SUPPORTED_MODELS, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector
 
 logger = logging.getLogger("boschshcpy")
 
