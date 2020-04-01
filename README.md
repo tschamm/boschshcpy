@@ -1,4 +1,4 @@
-# Bosch Smart Home Local API Python Library
+# Bosch Smart Home Controller API Python Library
 
 This library implements the local communication REST API for the Bosch Smart Home Controller system.
 The API documentation is available [here](https://github.com/BoschSmartHome/bosch-shc-api-docs).
