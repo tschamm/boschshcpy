@@ -37,7 +37,6 @@ for control in shuttercontrols:
 cameras = session.device_helper.camera_eyes
 for cam in cameras:
     print(f"Name: {cam.name}, light: {cam.get_light_state}")
-    cam.set_cameralight(False)
 
 
 # shuttercontrol = session.device('hdm:HomeMaticIP:3014F711A00018D878598325')

@@ -1,2 +1,2 @@
 from .session import SHCSession
-from .device_helper import SHCDeviceHelper, SHCShutterContact, SHCShutterControl
+from .device_helper import SHCDeviceHelper, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector

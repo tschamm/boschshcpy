@@ -2,24 +2,7 @@ import typing
 import logging
 
 from .device import SHCDevice
-from .shutter_contact import SHCShutterContact
-from .shutter_control import SHCShutterControl
-from .smart_plug import SHCSmartPlug
-from .smoke_detector import SHCSmokeDetector
-from .camera_eyes import SHCCameraEyes
-
-MODEL_MAPPING = {
-    "SWD": "ShutterContact",
-    "BBL": "ShutterControl",
-    "PSM": "SmartPlug",
-    "SD": "SmokeDetector",
-    "CAMERA_EYES": "CameraEyes",
-}
-    # "WRC2": "UniversalSwitchFlex",
-    # "BSM": "LightControl",
-    # "MD": "MotionDetector"
-
-SUPPORTED_MODELS = MODEL_MAPPING.keys()
+from .model_impl import SUPPORTED_MODELS, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector
 
 logger = logging.getLogger("boschshcpy")
 
