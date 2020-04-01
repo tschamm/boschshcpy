@@ -1,2 +1,2 @@
 from .session import SHCSession
-from .model_impl import SHCShutterContact, SHCShutterControl
+from .device_helper import SHCDeviceHelper, SHCShutterContact, SHCShutterControl

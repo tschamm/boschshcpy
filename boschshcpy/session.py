@@ -10,7 +10,7 @@ from .room import SHCRoom
 from .scenario import SHCScenario
 from .information import SHCInformation
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
-from .model_impl import SUPPORTED_MODELS, SHCShutterContact, SHCShutterControl
+from .device_helper import SHCDeviceHelper
 
 logger = logging.getLogger("boschshcpy")
 
@@ -19,6 +19,7 @@ class SHCSession:
     def __init__(self, controller_ip: str, certificate, key):
         # API
         self._api = SHCAPI(controller_ip=controller_ip, certificate=certificate, key=key)
+        self._device_helper = SHCDeviceHelper(self._api)
 
         # Subscription status
         self._poll_id = None
@@ -30,9 +31,6 @@ class SHCSession:
         self._rooms_by_id = {}
         self._scenarios_by_id = {}
         self._devices_by_id = {}
-        self._devices_by_model = {}
-        for model in SUPPORTED_MODELS:
-            self._devices_by_model[model] = {}
 
         self._enumerate_devices()
         self._enumerate_rooms()
@@ -51,22 +49,8 @@ class SHCSession:
             if set(raw_device['deviceServiceIds']).isdisjoint(SUPPORTED_DEVICE_SERVICE_IDS):
                 logger.info(f"Skipping device id {device_id} which has no services that are supported by this library")
                 continue
-
-            device_model = raw_device['deviceModel']
-            device = None
-            if device_model in SUPPORTED_MODELS:
-                if device_model == 'SWD':
-                    device = SHCShutterContact(api=self._api, raw_device=raw_device)
-                elif device_model == 'BBL':
-                    device = SHCShutterControl(api=self._api, raw_device=raw_device)
-                else:
-                    logger.info(f"Skipping device id {device_id} as it's device model {device_model} is supported, but implementation is missing")
-                    continue
-                self._devices_by_model[device_model][device_id] = device
-            else:
-                device = SHCDevice(api=self._api, raw_device=raw_device)
-
-            self._devices_by_id[device_id] = device
+            
+            self._devices_by_id[device_id] = self._device_helper.device_init(raw_device)
 
     def _enumerate_rooms(self):
         raw_rooms = self._api.get_rooms()
@@ -159,11 +143,6 @@ class SHCSession:
     def devices(self) -> typing.Sequence[SHCDevice]:
         return list(self._devices_by_id.values())
 
-    def devices_by_model(self, model):
-        if model not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model[model].values())
-
     def device(self, device_id) -> SHCDevice:
         return self._devices_by_id[device_id]
 
@@ -188,3 +167,7 @@ class SHCSession:
     @property
     def api(self):
         return self._api
+
+    @property
+    def device_helper(self):
+        return self._device_helper
