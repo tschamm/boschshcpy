@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="boschshcpy",
-    version="0.0.7",
+    version="0.1.0",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
-    description="Bosch Smart Home API Python Library",
+    description="Bosch Smart Home Controller API Python Library",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tschamm/bosch-shc-py",
+    url="https://github.com/tschamm/boschshcpy",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -19,5 +19,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.7',
-    install_requires=['requests==2.22']
+    install_requires=['requests>=2.22']
 )
