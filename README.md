@@ -1,19 +1,41 @@
 # Bosch Smart Home Local API Python Library
 
-This library implements the local communication REST API for the Bosch Smart Home system.
+This library implements the local communication REST API for the Bosch Smart Home Controller system.
 The API documentation is available [here](https://github.com/BoschSmartHome/bosch-shc-api-docs).
 It supports both long and short polling. The following device services are implemented:
- * ```TemperatureLevel```
- * ```ValveTappet```
- * ```ShutterContact```
- * ```RoomClimateControl```
+* ```TemperatureLevel```
+* ```RoomClimateControl```
+* ```ShutterContact```
+* ```ValveTappet```
+* ```PowerSwitch```
+* ```PowerMeter```
+* ```Routing```
+* ```PowerSwitchProgram```
+* ```BinarySwitch```
+* ```SmokeDetectorCheck```
+* ```Alarm```
+* ```ShutterControl```
+* ```CameraLight```
+* ```PrivacyMode```
+* ```CameraNotification```
+* ```IntrusionDetectionControl```
 
-Example:
+The following device models are implemented, using the above services:
+* ```ShutterContact```
+* ```ShutterControl```
+* ```SmartPlug```
+* ```SmokeDetector```
+* ```CameraEyes```
+* ```-IntrusionDetectionSystem-```
+
+## Example:
 ```python
 import boschshcpy
 
 # Create session
 session = boschshcpy.SHCSession(controller_ip="192.168.25.51", certificate='cert.pem', key='key.pem')
+session.information.summary()
+
 device = session.device('roomClimateControl_hz_5')
 service = device.device_service('TemperatureLevel')
 print(service.temperature)
@@ -29,21 +51,11 @@ session.start_polling()
 
 # Stop polling
 session.stop_polling()
-```
 
-# boschshcpy
-Python3 package to access Bosch Smart Home Components (see https://github.com/BoschSmartHome/bosch-shc-api-docs)
+# Trigger intrusion detection system
+intrusion_control = session.device_helper.intrusion_detection_system
+intrusion_control.arm_instant()
+```
 
 ## Usage guide:
-Before accessing the Bosch Smart Home Components, a client has to be registered on the controller. For this, a cert/key pair has to be provided to the controller. For starting the registration, press and hold the button on the controller until the led starts flashing.
-
-The usage example will generate a cert/key pair and registers the client on the on the controller:
-```bash
-cd examples && mkdir keystore
-python3 apitest.py -pw "Your base64 encoded controller password" -ac keystore/test-cert.pem -ak keystore/test-key.pem -n "Your Application" -ip "IP of the controller"
-```
-
-## Examples
-When using the other provided example code, make sure to update the ip address of the Smart Home Controller inside the scripts.
-
-More documentation to follow.
+Before accessing the Bosch Smart Home Controller, a client must be registered on the controller. For this a valid cert/key pair must be provided to the controller. To start the client registration, press and hold the button on the controller until the led starts flashing. More information [here](https://github.com/BoschSmartHome/bosch-shc-api-docs/tree/master/postman#register-a-new-client-to-the-bosch-smart-home-controller)
