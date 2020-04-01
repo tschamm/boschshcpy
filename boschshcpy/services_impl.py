@@ -240,6 +240,47 @@ class ShutterControlService(SHCDeviceService):
         print(f"    Level                    : {self.level}")
         print(f"    Calibrated               : {self.calibrated}")
 
+class CameraLightService(SHCDeviceService):
+    class State(Enum):
+        ON = "ON"
+        OFF = "OFF"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    value                    : {self.value}")
+
+
+class PrivacyModeService(SHCDeviceService):
+    class State(Enum):
+        ENABLED = "ENABLED"
+        DISABLED = "DISABLED"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    value                    : {self.value}")
+
+
+class CameraNotificationService(SHCDeviceService):
+    class State(Enum):
+        ENABLED = "ENABLED"
+        DISABLED = "DISABLED"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    value                    : {self.value}")
+
 
 SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "RoomClimateControl": RoomClimateControlService,
@@ -252,7 +293,10 @@ SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "BinarySwitch": BinarySwitchService,
                    "SmokeDetectorCheck": SmokeDetectorCheckService,
                    "Alarm": AlarmService,
-                   "ShutterControl": ShutterControlService}
+                   "ShutterControl": ShutterControlService,
+                   "CameraLight": CameraLightService,
+                   "PrivacyMode": PrivacyModeService,
+                   "CameraNotification": CameraNotificationService}
 # Todo: implement BatteryLevelService
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()

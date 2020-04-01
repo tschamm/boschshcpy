@@ -4,11 +4,20 @@ import logging
 from .device import SHCDevice
 from .shutter_contact import SHCShutterContact
 from .shutter_control import SHCShutterControl
+from .smart_plug import SHCSmartPlug
+from .smoke_detector import SHCSmokeDetector
+from .camera_eyes import SHCCameraEyes
 
 MODEL_MAPPING = {
     "SWD": "ShutterContact",
-    "BBL": "ShutterControl"
-    }
+    "BBL": "ShutterControl",
+    "PSM": "SmartPlug",
+    "SD": "SmokeDetector",
+    "CAMERA_EYES": "CameraEyes",
+}
+    # "WRC2": "UniversalSwitchFlex",
+    # "BSM": "LightControl",
+    # "MD": "MotionDetector"
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
 
@@ -27,19 +36,19 @@ class SHCDeviceHelper:
         device_model = raw_device['deviceModel']
 
         device = None
-        if device_model in SUPPORTED_MODELS:
-            if device_model == 'SWD':
-                device = SHCShutterContact(
-                    api=self._api, raw_device=raw_device)
-            elif device_model == 'BBL':
-                device = SHCShutterControl(
-                    api=self._api, raw_device=raw_device)
-            else:
-                device = SHCDevice(api=self._api, raw_device=raw_device)
+        switcher = {
+            'SWD': lambda: SHCShutterContact(api=self._api, raw_device=raw_device),
+            'BBL': lambda: SHCShutterControl(api=self._api, raw_device=raw_device),
+            'PSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
+            'SD': lambda: SHCSmokeDetector(api=self._api, raw_device=raw_device),
+            'CAMERA_EYES': lambda: SHCCameraEyes(api=self._api, raw_device=raw_device)
+        }
+        if device_model in switcher and device_model in SUPPORTED_MODELS:
+            device = switcher[device_model]()
             self._devices_by_model[device_model][device_id] = device
         else:
             device = SHCDevice(api=self._api, raw_device=raw_device)
-        
+
         return device
 
     @property
@@ -55,3 +64,15 @@ class SHCDeviceHelper:
     @property
     def shutter_controls(self) -> typing.Sequence[SHCShutterControl]:
         return list(self._devices_by_model['BBL'].values())
+
+    @property
+    def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
+        return list(self._devices_by_model['PSM'].values())
+
+    @property
+    def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
+        return list(self._devices_by_model['SD'].values())
+
+    @property
+    def camera_eyes(self) -> typing.Sequence[SHCCameraEyes]:
+        return list(self._devices_by_model['CAMERA_EYES'].values())
