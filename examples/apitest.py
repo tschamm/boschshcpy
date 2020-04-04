@@ -12,9 +12,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import boschshcpy
 
 def api_test():
-    session = boschshcpy.SHCSession(args.ip_address, args.access_cert, args.access_key)
+    session = boschshcpy.SHCSession(args.ip_address, args.access_cert, args.access_key, False)
     session.information.summary()
     
+    if session.information.version != "n/a":
+        session.reinitialize()
+
 if __name__ == "__main__":
     import argparse, sys
     

@@ -1,6 +1,9 @@
 import requests
 import json
 
+import logging
+
+logger = logging.getLogger("boschshcpy")
 
 class JSONRPCError(Exception):
     def __init__(self, code, message):
@@ -56,7 +59,7 @@ class SHCAPI:
                 else:
                     return {}
         except requests.exceptions.SSLError as e:
-            raise Exception(f"API call returned SSLError: {e}!")
+            raise Exception(f"API call returned SSLError: {e}.")
 
     def _put_api_or_fail(self, api_url, body):
         result = self._requests_session.put(api_url, data=json.dumps(body))
@@ -85,7 +88,12 @@ class SHCAPI:
     # API calls here
     def get_shcinformation(self):
         api_url = f"{self._api_root}/information"
-        return self._get_api_result_or_fail(api_url)
+        try:
+            result = self._get_api_result_or_fail(api_url)
+        except Exception as e:
+            logging.error(f"Failed to get information from SHC controller: {e}")
+            return None
+        return result
 
     def get_rooms(self):
         api_url = f"{self._api_root}/rooms"

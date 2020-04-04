@@ -36,12 +36,6 @@ class SHCDeviceHelper:
         return device
 
     @property
-    def devices_by_model(self, model):
-        if model not in SUPPORTED_MODELS:
-            return {}
-        return self._devices_by_model[model]
-
-    @property
     def shutter_contacts(self) -> typing.Sequence[SHCShutterContact]:
         if 'SWD' not in SUPPORTED_MODELS: 
             return []

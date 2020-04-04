@@ -7,7 +7,6 @@ class SHCInformation:
         DOWNLOADING = "DOWNLOADING"
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
-        NOT_INITIALIZED = "NOT_INITIALIZED"
 
     def __init__(self, api, raw_information):
         self._api = api
@@ -15,15 +14,15 @@ class SHCInformation:
 
     @property
     def version(self):
-        return self._raw_information["version"]
+        return self._raw_information["version"] if self._raw_information else "n/a"
 
     @property
     def updateState(self) -> UpdateState:
-        return self.UpdateState(self._raw_information["updateState"])
+        return self.UpdateState(self._raw_information["updateState"] if self._raw_information else "NO_UPDATE_AVAILABLE")
 
     @property
     def connectivityVersion(self):
-        return self._raw_information["connectivityVersion"]
+        return self._raw_information["connectivityVersion"] if self._raw_information else "n/a"
 
     def summary(self):
         print(f"Information:")

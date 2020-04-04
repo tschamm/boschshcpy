@@ -16,7 +16,7 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key):
+    def __init__(self, controller_ip: str, certificate, key, enumerate = True):
         # API
         self._api = SHCAPI(controller_ip=controller_ip, certificate=certificate, key=key)
         self._device_helper = SHCDeviceHelper(self._api)
@@ -32,13 +32,18 @@ class SHCSession:
         self._scenarios_by_id = {}
         self._devices_by_id = {}
 
+        self._get_information()
+
+        if enumerate: self._enumerate_all()
+
+        self._polling_thread = None
+        self._stop_polling_thread = False
+
+    def _enumerate_all(self):
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
         self._get_information()
-
-        self._polling_thread = None
-        self._stop_polling_thread = False
 
     def _enumerate_devices(self):
         raw_devices = self._api.get_devices()
@@ -100,7 +105,7 @@ class SHCSession:
             device.process_long_polling_poll_result(raw_result)
         else:
             logger.debug(f"Skipping polling result with unknown device id {device_id}.")
-
+    
     def start_polling(self):
         if self._polling_thread is None:
             def polling_thread_main():
@@ -136,8 +141,27 @@ class SHCSession:
 
             self._maybe_unsubscribe()
             self._polling_thread = None
+            self._poll_id = None
         else:
             raise ValueError("Not polling!")
+
+    def reinitialize(self):
+        reinit_polling = False
+        if self._polling_thread is not None:
+            self.stop_polling()
+            reinit_polling = True
+
+        self._shc_information = None
+
+        self._rooms_by_id = {}
+        self._scenarios_by_id = {}
+        self._devices_by_id = {}
+
+        self._get_information()
+        self._enumerate_all()
+
+        if reinit_polling:
+            self.start_polling()
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
