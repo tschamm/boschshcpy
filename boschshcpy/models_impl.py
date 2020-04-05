@@ -2,7 +2,7 @@ from enum import Enum
 
 from .device import SHCDevice
 from .device_service import SHCDeviceService
-from .services_impl import ShutterControlService, CameraLightService, IntrusionDetectionControlService
+from .services_impl import ShutterContactService, ShutterControlService, CameraLightService, IntrusionDetectionControlService
 
 
 class SHCSmokeDetector(SHCDevice):
@@ -61,6 +61,7 @@ class SHCShutterControl(SHCDevice):
 
 
 class SHCShutterContact(SHCDevice):
+    from .services_impl import ShutterContactService
     class DeviceClass(Enum):
         GENERIC = "GENERIC"
         ENTRANCE_DOOR = "ENTRANCE_DOOR"
@@ -69,10 +70,18 @@ class SHCShutterContact(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
+        self._service = self.device_service('ShutterContact')
 
     @property
     def device_class(self) -> DeviceClass:
         return self.DeviceClass(self.profile)
+
+    @property
+    def state(self) -> ShutterContactService.State:
+        return self._service.value
+
+    def update(self):
+        self._service.short_poll()
 
     def summary(self):
         print(f"SWD ShutterContact:")

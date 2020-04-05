@@ -52,7 +52,7 @@ class SHCSession:
             device_id = raw_device['id']
 
             if set(raw_device['deviceServiceIds']).isdisjoint(SUPPORTED_DEVICE_SERVICE_IDS):
-                logger.info(f"Skipping device id {device_id} which has no services that are supported by this library")
+                logger.debug(f"Skipping device id {device_id} which has no services that are supported by this library")
                 continue
             
             self._devices_by_id[device_id] = self._device_helper.device_init(raw_device)
@@ -98,7 +98,9 @@ class SHCSession:
             self.api.long_polling_unsubscribe(self._poll_id)
 
     def _process_long_polling_poll_result(self, raw_result):
-        assert raw_result["@type"] == "DeviceServiceData"
+        if raw_result["@type"] != "DeviceServiceData":
+            # Skipping polling results of type message, device or unknown type
+            return
         device_id = raw_result["deviceId"]
         if device_id in self._devices_by_id.keys():
             device = self._devices_by_id[device_id]
