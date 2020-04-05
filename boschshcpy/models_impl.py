@@ -6,6 +6,8 @@ from .services_impl import ShutterContactService, ShutterControlService, CameraL
 
 
 class SHCSmokeDetector(SHCDevice):
+    from .services_impl import AlarmService, SmokeDetectorCheckService
+
     class AlarmState(Enum):
         INTRUSION_ALARM_ON_REQUESTED = "INTRUSION_ALARM_ON_REQUESTED"
         INTRUSION_ALARM_OFF_REQUESTED = "INTRUSION_ALARM_OFF_REQUESTED"
@@ -14,10 +16,24 @@ class SHCSmokeDetector(SHCDevice):
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._service = self.device_service('Alarm')
+        self._alarm_service = self.device_service('Alarm')
+        self._smokedetectorcheck_service = self.device_service(
+            'SmokeDetectorCheck')
 
     def set_alarmstate(self, state: AlarmState):
-        self._service.put_state_element('state', state.name)
+        self._alarm_service.put_state_element('state', state.name)
+
+    @property
+    def alarm_state(self) -> AlarmService.State:
+        return self._alarm_service.value
+
+    @property
+    def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
+        return self._smokedetectorcheck_service.value
+
+    def update(self):
+        self._alarm_service.short_poll()
+        self._smokedetectorcheck_service.short_poll()
 
     def summary(self):
         print(f"SD SmokeDetector:")
