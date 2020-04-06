@@ -41,13 +41,38 @@ class SHCSmokeDetector(SHCDevice):
 
 
 class SHCSmartPlug(SHCDevice):
+    from .services_impl import PowerSwitchService, PowerMeterService, PowerSwitchProgramService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._service = self.device_service('PowerSwitch')
+        self._powerswitch_service = self.device_service('PowerSwitch')
+        self._powerswitchprogram_service = self.device_service('PowerSwitchProgram')
+        self._powermeter_service = self.device_service('PowerMeter')
 
     def set_state(self, state: bool):
-        self._service.put_state_element('state', state)
+        self._powerswitch_service.put_state_element('switchState', "ON" if state else "OFF")
+
+    @property
+    def state(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    @property
+    def energyconsumption(self):
+        return self._powermeter_service.energyconsumption
+
+    @property
+    def powerconsumption(self):
+        return self._powermeter_service.powerconsumption
+
+    @property
+    def state(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    def update(self):
+        self._powerswitch_service.short_poll()
+        self._powerswitchprogram_service.short_poll()
+        self._powermeter_service.short_poll()
 
     def summary(self):
         print(f"PSM SmartPlug:")
@@ -112,6 +137,8 @@ class SHCShutterContact(SHCDevice):
 
 
 class SHCCameraEyes(SHCDevice):
+    from .services_impl import CameraLightService, CameraNotificationService, PrivacyModeService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
@@ -134,8 +161,12 @@ class SHCCameraEyes(SHCDevice):
 
     @property
     def lightstate(self) -> CameraLightService.State:
-        self._cameralight_service.short_poll()
         return self._cameralight_service.value
+
+    def update(self):
+        self._cameralight_service.short_poll()
+        self._cameranotification_service.short_poll()
+        self._privacymode_service.short_poll()
 
     def summary(self):
         print(f"CAMERA_EYES CameraEyes:")
@@ -197,12 +228,12 @@ MODEL_MAPPING = {
     "SWD": "ShutterContact",
     "BBL": "ShutterControl",
     "PSM": "SmartPlug",
+    "BSM": "LightControl", # uses same impl as PSM
     "SD": "SmokeDetector",
     "CAMERA_EYES": "CameraEyes",
-    "INTRUSION_DETECTION_SYSTEM": "-IntrusionDetectionSystem-"
+    "INTRUSION_DETECTION_SYSTEM": "-IntrusionDetectionSystem-",
 }
 # "WRC2": "UniversalSwitchFlex",
-# "BSM": "LightControl",
 # "MD": "MotionDetector"
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()

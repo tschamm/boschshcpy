@@ -23,6 +23,7 @@ class SHCDeviceHelper:
             'SWD': lambda: SHCShutterContact(api=self._api, raw_device=raw_device),
             'BBL': lambda: SHCShutterControl(api=self._api, raw_device=raw_device),
             'PSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
+            'BSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
             'SD': lambda: SHCSmokeDetector(api=self._api, raw_device=raw_device),
             'CAMERA_EYES': lambda: SHCCameraEyes(api=self._api, raw_device=raw_device),
             'INTRUSION_DETECTION_SYSTEM': lambda: SHCIntrusionDetectionSystem(api=self._api, raw_device=raw_device)
@@ -52,6 +53,12 @@ class SHCDeviceHelper:
         if 'PSM' not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model['PSM'].values())
+
+    @property
+    def light_controls(self) -> typing.Sequence[SHCSmartPlug]:
+        if 'BSM' not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model['BSM'].values())
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
