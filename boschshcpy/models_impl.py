@@ -16,8 +16,8 @@ class SHCSmokeDetector(SHCDevice):
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._alarm_service = self.device_service('Alarm')
-        self._smokedetectorcheck_service = self.device_service(
+        self._alarm_service: AlarmService = self.device_service('Alarm')
+        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
             'SmokeDetectorCheck')
 
     def set_alarmstate(self, state: AlarmState):
@@ -55,21 +55,28 @@ class SHCSmartPlug(SHCDevice):
 
 
 class SHCShutterControl(SHCDevice):
+    from .services_impl import ShutterControlService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device=raw_device)
-
-        self._service = self.device_service('ShutterControl')
+        self._service: ShutterControlService = self.device_service('ShutterControl')
 
     def set_level(self, level):
         self._service.put_state_element('level', level)
 
     @property
     def level(self) -> float:
-        self._service.short_poll()
         return self._service.level
 
     def set_stopped(self):
         self._service.put_state_element('operationState', ShutterControlService.State.STOPPED.name)
+
+    @property
+    def operation_state(self) -> ShutterControlService.State:
+        return self._service.value
+
+    def update(self):
+        self._service.short_poll()
 
     def summary(self):
         print(f"BBL ShutterControl:")
