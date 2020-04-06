@@ -174,6 +174,8 @@ class SHCCameraEyes(SHCDevice):
 
 
 class SHCIntrusionDetectionSystem(SHCDevice):
+    from .services_impl import IntrusionDetectionControlService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
         self._service = self.device_service('IntrusionDetectionControl')
@@ -211,13 +213,14 @@ class SHCIntrusionDetectionSystem(SHCDevice):
 
     @property
     def alarmstate(self) -> IntrusionDetectionControlService.State:
-        self._service.short_poll()
         return self._service.value
 
     @property
     def armActivationDelayTime(self):
-        self._service.short_poll()
         return self._service.value
+
+    def update(self):
+        self._service.short_poll()
 
     def summary(self):
         print(f"-IntrusionDetectionSystem-:")
