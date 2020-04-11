@@ -23,11 +23,6 @@ def registering():
     else:
         print('No valid token received, did you press client registration button on smart home controller?')
         sys.exit()
-        
-    session = boschshcpy.SHCSession(
-        args.ip_address, args.access_cert, args.access_key)
-    print(session._get_information.summary())
-
 
 if __name__ == "__main__":
     import argparse, sys

@@ -228,15 +228,20 @@ class SHCIntrusionDetectionSystem(SHCDevice):
 
 
 MODEL_MAPPING = {
-    "SWD": "ShutterContact",
-    "BBL": "ShutterControl",
-    "PSM": "SmartPlug",
-    "BSM": "LightControl", # uses same impl as PSM
-    "SD": "SmokeDetector",
-    "CAMERA_EYES": "CameraEyes",
-    "INTRUSION_DETECTION_SYSTEM": "-IntrusionDetectionSystem-",
+    "SWD": "Door/Window Contact",
+    "BBL": "Shutter Control",
+    "PSM": "Smart Plug",
+    "BSM": "Light Control", # uses same impl as PSM
+    "SD": "Smoke Detector",
+    "CAMERA_EYES": "Security Camera Eyes",
+    "INTRUSION_DETECTION_SYSTEM": "Intrusion Detection System",
 }
-# "WRC2": "UniversalSwitchFlex",
-# "MD": "MotionDetector"
+# "WRC2": "Universal Switch",
+# "MD": "Motion Detector",
+# "ROOM_CLIMATE_CONTROL": "Climate Control",
+# "TRV": "Thermostat"
+# "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
+# "CAMERA_360": "Security Camera 360"
+# "TWINGUARD": "Twinguard"
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
