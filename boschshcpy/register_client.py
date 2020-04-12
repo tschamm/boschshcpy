@@ -1,8 +1,8 @@
-import os.path
-import requests
 import json
-
 import logging
+import os.path
+
+import requests
 
 logger = logging.getLogger("boschshcpy")
 

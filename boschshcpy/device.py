@@ -1,8 +1,8 @@
-import typing
 import logging
+import typing
 
 from .device_service import SHCDeviceService
-from .services_impl import build, SUPPORTED_DEVICE_SERVICE_IDS
+from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS, build
 
 logger = logging.getLogger("boschshcpy")
 

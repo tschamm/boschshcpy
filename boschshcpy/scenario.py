@@ -1,5 +1,6 @@
 from .api import SHCAPI
 
+
 class SHCScenario:
     def __init__(self, api: SHCAPI, raw_scenario):
         self._api = api

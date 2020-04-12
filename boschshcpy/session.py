@@ -1,16 +1,16 @@
-import typing
 import logging
+import sys
 import threading
 import time
-import sys
+import typing
 
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
+from .device_helper import SHCDeviceHelper
+from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
-from .information import SHCInformation
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
-from .device_helper import SHCDeviceHelper
 
 logger = logging.getLogger("boschshcpy")
 

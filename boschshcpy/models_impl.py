@@ -2,7 +2,10 @@ from enum import Enum
 
 from .device import SHCDevice
 from .device_service import SHCDeviceService
-from .services_impl import ShutterContactService, ShutterControlService, CameraLightService, IntrusionDetectionControlService
+from .services_impl import (CameraLightService,
+                            IntrusionDetectionControlService,
+                            ShutterContactService, ShutterControlService,
+                            TemperatureLevelService, ValveTappetService)
 
 
 class SHCSmokeDetector(SHCDevice):
@@ -226,6 +229,28 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         print(f"-IntrusionDetectionSystem-:")
         super().summary()
 
+class SHCThermostat(SHCDevice):
+    from .services_impl import TemperatureLevelService, ValveTappetService
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._temperaturelevel_service = self.device_service('TemperatureLevel')
+        self._valvetappet_service = self.device_service('ValveTappet')
+
+    @property
+    def position(self) -> int:
+        return self._valvetappet_service.position
+
+    @property
+    def temperature(self) -> float:
+        return self._temperaturelevel_service.temperature
+
+    def update(self):
+        self._service.short_poll()
+
+    def summary(self):
+        print(f"TRV Thermostat:")
+        super().summary()
+
 
 MODEL_MAPPING = {
     "SWD": "Door/Window Contact",
@@ -235,11 +260,11 @@ MODEL_MAPPING = {
     "SD": "Smoke Detector",
     "CAMERA_EYES": "Security Camera Eyes",
     "INTRUSION_DETECTION_SYSTEM": "Intrusion Detection System",
+    "TRV": "Thermostat",
 }
 # "WRC2": "Universal Switch",
 # "MD": "Motion Detector",
 # "ROOM_CLIMATE_CONTROL": "Climate Control",
-# "TRV": "Thermostat"
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"
 # "TWINGUARD": "Twinguard"

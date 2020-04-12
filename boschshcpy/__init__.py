@@ -1,3 +1,5 @@
-from .session import SHCSession
+from .device_helper import (SHCCameraEyes, SHCDeviceHelper,
+                            SHCIntrusionDetectionSystem, SHCShutterContact,
+                            SHCShutterControl, SHCSmartPlug, SHCSmokeDetector)
 from .scenario import SHCScenario
-from .device_helper import SHCDeviceHelper, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector, SHCIntrusionDetectionSystem
+from .session import SHCSession

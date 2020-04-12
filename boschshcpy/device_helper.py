@@ -1,8 +1,11 @@
-import typing
 import logging
+import typing
 
 from .device import SHCDevice
-from .models_impl import SUPPORTED_MODELS, SHCCameraEyes, SHCShutterContact, SHCShutterControl, SHCSmartPlug, SHCSmokeDetector, SHCIntrusionDetectionSystem
+from .models_impl import (SUPPORTED_MODELS, SHCCameraEyes,
+                          SHCIntrusionDetectionSystem, SHCShutterContact,
+                          SHCShutterControl, SHCSmartPlug, SHCSmokeDetector,
+                          SHCThermostat)
 
 logger = logging.getLogger("boschshcpy")
 
@@ -25,8 +28,9 @@ class SHCDeviceHelper:
             'PSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
             'BSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
             'SD': lambda: SHCSmokeDetector(api=self._api, raw_device=raw_device),
+            'TRV': lambda: SHCThermostat(api=self._api, raw_device=raw_device),
             'CAMERA_EYES': lambda: SHCCameraEyes(api=self._api, raw_device=raw_device),
-            'INTRUSION_DETECTION_SYSTEM': lambda: SHCIntrusionDetectionSystem(api=self._api, raw_device=raw_device)
+            'INTRUSION_DETECTION_SYSTEM': lambda: SHCIntrusionDetectionSystem(api=self._api, raw_device=raw_device),
         }
         if device_model in switcher and device_model in SUPPORTED_MODELS:
             device = switcher[device_model]()
@@ -65,6 +69,12 @@ class SHCDeviceHelper:
         if 'SD' not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model['SD'].values())
+
+    @property
+    def thermostats(self) -> typing.Sequence[SHCThermostat]:
+        if 'TRV' not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model['TRV'].values())
 
     @property
     def camera_eyes(self) -> typing.Sequence[SHCCameraEyes]:
