@@ -33,7 +33,7 @@ print(shuttercontact.device_class)
 shuttercontrols = session.device_helper.shutter_controls
 for control in shuttercontrols:
     print(f"Name: {control.name}, level: {control.level}")
-    control.set_stopped()
+    control.stop()
 
 cameras = session.device_helper.camera_eyes
 for cam in cameras:
@@ -46,20 +46,13 @@ idc.arm_instant()
 # shuttercontrol = session.device('hdm:HomeMaticIP:3014F711A00018D878598325')
 # shuttercontrol.summary()
 # print(shuttercontrol.level)
-# shuttercontrol.set_level(0.)
+# shuttercontrol.level(0.)
 # time.sleep(0.8)
-# shuttercontrol.set_stopped()
+# shuttercontrol.stop()
 # time.sleep(6)
 # print(shuttercontrol.level)
 
 # # Update this service's state
-
-
-# def callback():
-#     print("callback ...")
-#     print(service.state)
-
-# service.set_callback(callback)
 
 # # Start long polling thread in background
 # session.start_polling()

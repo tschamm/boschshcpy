@@ -30,9 +30,6 @@ class SHCDeviceService:
         print(f"    State: {self.state}")
         print(f"    Path:  {self.path}")
 
-    def set_callback(self, callback):
-        self.on_state_changed = callback
-
     def put_state_element(self, key, value):
         self._api.put_device_service_state(self.device_id, self.id, {"@type": self.state["@type"], key: value})
 
