@@ -68,10 +68,6 @@ class SHCSmartPlug(SHCDevice):
     def powerconsumption(self):
         return self._powermeter_service.powerconsumption
 
-    @property
-    def state(self) -> PowerSwitchService.State:
-        return self._powerswitch_service.value
-
     def update(self):
         self._powerswitch_service.short_poll()
         self._powerswitchprogram_service.short_poll()
