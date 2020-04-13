@@ -195,5 +195,5 @@ class SHCSession:
         return self._api
 
     @property
-    def device_helper(self):
+    def device_helper(self) -> SHCDeviceHelper:
         return self._device_helper
