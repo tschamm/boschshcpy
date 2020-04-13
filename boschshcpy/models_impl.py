@@ -23,13 +23,13 @@ class SHCSmokeDetector(SHCDevice):
         self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
             'SmokeDetectorCheck')
 
-    @alarmstate.setter
-    def alarmstate(self, state: AlarmState):
-        self._alarm_service.put_state_element('state', state.name)
-
     @property
     def alarmstate(self) -> AlarmService.State:
         return self._alarm_service.value
+
+    @alarmstate.setter
+    def alarmstate(self, state: AlarmState):
+        self._alarm_service.put_state_element('state', state.name)
 
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
@@ -54,13 +54,13 @@ class SHCSmartPlug(SHCDevice):
         self._powerswitchprogram_service = self.device_service('PowerSwitchProgram')
         self._powermeter_service = self.device_service('PowerMeter')
 
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element('switchState', "ON" if state else "OFF")
-
     @property
     def state(self) -> PowerSwitchService.State:
         return self._powerswitch_service.value
+
+    @state.setter
+    def state(self, state: bool):
+        self._powerswitch_service.put_state_element('switchState', "ON" if state else "OFF")
 
     @property
     def energyconsumption(self) -> float:
@@ -87,13 +87,13 @@ class SHCShutterControl(SHCDevice):
         super().__init__(api, raw_device=raw_device)
         self._service: ShutterControlService = self.device_service('ShutterControl')
 
-    @level.setter
-    def level(self, level):
-        self._service.put_state_element('level', level)
-
     @property
     def level(self) -> float:
         return self._service.level
+
+    @level.setter
+    def level(self, level):
+        self._service.put_state_element('level', level)
 
     def stop(self):
         self._service.put_state_element('operationState', ShutterControlService.State.STOPPED.name)
@@ -149,14 +149,18 @@ class SHCCameraEyes(SHCDevice):
             'CameraNotification')
         self._cameralight_service = self.device_service('CameraLight')
 
+    @property
+    def privacymode(self) -> PrivacyModeService.State:
+        return self._privacymode_service.value
+
     @privacymode.setter
     def privacymode(self, state: bool):
         self._privacymode_service.put_state_element(
             'value', "ENABLED" if state else "DISABLED")
 
     @property
-    def privacymode(self) -> PrivacyModeService.State:
-        return self._privacymode_service.value
+    def cameranotification(self) -> CameraNotificationService.State:
+        return self._cameranotification_service.value
 
     @cameranotification.setter
     def cameranotification(self, state: bool):
@@ -164,17 +168,13 @@ class SHCCameraEyes(SHCDevice):
             'value', "ENABLED" if state else "DISABLED")
 
     @property
-    def cameranotification(self) -> CameraNotificationService.State:
-        return self._cameranotification_service.value
+    def cameralight(self) -> CameraLightService.State:
+        return self._cameralight_service.value
 
     @cameralight.setter
     def cameralight(self, state: bool):
         self._cameralight_service.put_state_element(
             'value', "ON" if state else "OFF")
-
-    @property
-    def cameralight(self) -> CameraLightService.State:
-        return self._cameralight_service.value
 
     def update(self):
         self._cameralight_service.short_poll()
@@ -194,10 +194,13 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         self._service = self.device_service('IntrusionDetectionControl')
 
     def disarm(self):
-        self.alarmstate(IntrusionDetectionControlService.State.SYSTEM_DISARMED)
+        self.alarmstate = IntrusionDetectionControlService.State.SYSTEM_DISARMED
 
     def arm(self):
-        self.alarmstate(IntrusionDetectionControlService.State.SYSTEM_ARMED)
+        self.alarmstate = IntrusionDetectionControlService.State.SYSTEM_ARMED
+
+    def mute_alarm(self):
+        self.alarmstate = IntrusionDetectionControlService.State.MUTE_ALARM
 
     def arm_activation_delay(self, seconds):
         if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
@@ -214,20 +217,17 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         self.arm()
         self.arm_activation_delay(delay_time)
 
-    def mute_alarm(self):
-        self.alarmstate(IntrusionDetectionControlService.State.MUTE_ALARM)
-
     def trigger(self):
         # not implemented yet
         pass
 
-    @alarmstate.setter
-    def alarmstate(self, state: IntrusionDetectionControlService.State):
-        self._service.put_state_element('value', state.name)
-
     @property
     def alarmstate(self) -> IntrusionDetectionControlService.State:
         return self._service.value
+
+    @alarmstate.setter
+    def alarmstate(self, state: IntrusionDetectionControlService.State):
+        self._service.put_state_element('value', state.name)
 
     @property
     def armActivationDelayTime(self):
@@ -256,7 +256,8 @@ class SHCThermostat(SHCDevice):
         return self._temperaturelevel_service.temperature
 
     def update(self):
-        self._service.short_poll()
+        self._temperaturelevel_service.short_poll()
+        self._valvetappet_service.short_poll()
 
     def summary(self):
         print(f"TRV Thermostat:")
