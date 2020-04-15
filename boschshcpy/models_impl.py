@@ -264,6 +264,54 @@ class SHCThermostat(SHCDevice):
         super().summary()
 
 
+class SHCUniversalSwitch(SHCDevice):
+    from .services_impl import KeypadService
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._keypad_service = self.device_service('Keypad')
+
+    @property
+    def keycode(self) -> int:
+        return self._keypad_service.keyCode
+
+    @property
+    def keyname(self) -> KeypadService.KeyState:
+        return self._keypad_service.keyName
+
+    @property
+    def eventtype(self) -> KeypadService.KeyEvent:
+        return self._keypad_service.eventType
+
+    @property
+    def eventtimestamp(self) -> int:
+        return self._keypad_service.eventTimestamp
+
+    def update(self):
+        self._keypad_service.short_poll()
+
+    def summary(self):
+        print(f"WRC2 Universal Switch:")
+        super().summary()
+
+
+class SHCMotionDetector(SHCDevice):
+    from .services_impl import LatestMotionService
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._service = self.device_service('LatestMotion')
+
+    @property
+    def latestmotion(self) -> str:
+        return self._service.latestMotion
+
+    def update(self):
+        self._service.short_poll()
+
+    def summary(self):
+        print(f"MD Motion Detector:")
+        super().summary()
+
+
 MODEL_MAPPING = {
     "SWD": "Door/Window Contact",
     "BBL": "Shutter Control",
@@ -273,9 +321,9 @@ MODEL_MAPPING = {
     "CAMERA_EYES": "Security Camera Eyes",
     "INTRUSION_DETECTION_SYSTEM": "Intrusion Detection System",
     "TRV": "Thermostat",
+    "WRC2": "Universal Switch",
+    "MD": "Motion Detector",
 }
-# "WRC2": "Universal Switch",
-# "MD": "Motion Detector",
 # "ROOM_CLIMATE_CONTROL": "Climate Control",
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"

@@ -191,6 +191,7 @@ class SmokeDetectorCheckService(SHCDeviceService):
     class State(Enum):
         NONE = "NONE"
         SMOKE_TEST_OK = "SMOKE_TEST_OK"
+        SMOKE_TEST_REQUESTED = "SMOKE_TEST_REQUESTED"
 
     @property
     def value(self) -> State:
@@ -323,7 +324,119 @@ class IntrusionDetectionControlService(SHCDeviceService):
         print(f"    armActivationDelayTime   : {self.armActivationDelayTime}")
         print(f"    alarmActivationDelayTime : {self.alarmActivationDelayTime}")
 
+class KeypadService(SHCDeviceService):
+    class KeyState(Enum):
+        LOWER_BUTTON = "LOWER_BUTTON"
+        UPPER_BUTTON = "UPPER_BUTTON"
 
+    class KeyEvent(Enum):
+        PRESS_SHORT = "PRESS_SHORT"
+        PRESS_LONG = "PRESS_LONG"
+
+    @property
+    def keyCode(self) -> int:
+        return self.state["keyCode"]
+
+    @property
+    def keyName(self) -> KeyState:
+        return self.KeyState(self.state["keyName"])
+    
+    @property
+    def eventType(self) -> KeyEvent:
+        return self.KeyEvent(self.state["eventType"])
+
+    @property
+    def eventTimestamp(self) -> int:
+        return self.state["eventTimestamp"]
+
+    def summary(self):
+        super().summary()
+        print(f"    keyCode                  : {self.keyCode}")
+        print(f"    keyName                  : {self.keyName}")
+        print(f"    eventType                : {self.eventType}")
+        print(f"    eventTimestamp           : {self.eventTimestamp}")
+
+class LatestMotionService(SHCDeviceService):
+    @property
+    def latestMotionDetected(self) -> str:
+        return self.state["latestMotionDetected"]
+
+    def summary(self):
+        super().summary()
+        print(f"    latestMotionDetected     : {self.latestMotionDetected}")
+
+class AirQualityLevelService(SHCDeviceService):
+    class RatingState(Enum):
+        GOOD = "GOOD"
+        MEDIUM = "MEDIUM"
+        BAD = "BAD"
+    
+    @property
+    def combinedRating(self) -> RatingState:
+        return self.RatingState(self.state["combinedRating"])
+
+    @property
+    def description(self) -> str:
+        return self.state["description"]
+
+    @property
+    def temperature(self) -> int:
+        return self.state["temperature"]
+
+    @property
+    def temperatureRating(self) -> RatingState:
+        return self.RatingState(self.state["temperatureRating"])
+
+    @property
+    def humidity(self) -> int:
+        return self.state["humidity"]
+
+    @property
+    def humidityRating(self) -> RatingState:
+        return self.RatingState(self.state["humidityRating"])
+
+    @property
+    def purity(self) -> int:
+        return self.state["purity"]
+
+    @property
+    def purityRating(self) -> str:
+        return self.state["purityRating"]
+
+
+    def summary(self):
+        super().summary()
+        print(f"    combinedRating           : {self.combinedRating}")
+        print(f"    description              : {self.description}")
+        print(f"    temperature              : {self.temperature}")
+        print(f"    temperatureRating        : {self.temperatureRating}")
+        print(f"    humidity                 : {self.humidity}")
+        print(f"    humidityRating           : {self.humidityRating}")
+        print(f"    purity                   : {self.purity}")
+        print(f"    purityRating             : {self.purityRating}")
+
+
+class SurveillanceAlarmService(SHCDeviceService):
+    class SurveillanceAlarmState(Enum):
+        ALARM_OFF = "ALARM_OFF"
+
+    @property
+    def value(self) -> SurveillanceAlarmState:
+        return self.SurveillanceAlarmState(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    value                    : {self.value}")
+
+class SmokeDetectionControlService(SHCDeviceService):
+    def summary(self):
+        super().summary()
+        print(f"    not yet implemented!")
+
+class BatteryLevelService(SHCDeviceService):
+    def summary(self):
+        super().summary()
+        print(f"    not yet implemented!")
 
 SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "RoomClimateControl": RoomClimateControlService,
@@ -340,8 +453,15 @@ SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "CameraLight": CameraLightService,
                    "PrivacyMode": PrivacyModeService,
                    "CameraNotification": CameraNotificationService,
-                   "IntrusionDetectionControl": IntrusionDetectionControlService}
-# Todo: implement BatteryLevelService
+                   "IntrusionDetectionControl": IntrusionDetectionControlService,
+                   "Keypad": KeypadService,
+                   "LatestMotion": LatestMotionService,
+                   "AirQualityLevel": AirQualityLevelService,
+                   "SurveillanceAlarm": SurveillanceAlarmService,
+                   }
+
+                #    "SmokeDetectionControl": SmokeDetectionControlService,
+                #    "BatteryLevel": BatteryLevelService
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
