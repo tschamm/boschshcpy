@@ -5,7 +5,7 @@ class SHCDeviceService:
     def __init__(self, api: SHCAPI, raw_device_service):
         self._api = api
         self._raw_device_service = raw_device_service
-        self._raw_state = self._raw_device_service["state"]
+        self._raw_state = self._raw_device_service["state"] if "state" in self._raw_device_service else None
 
         self.on_state_changed = None
 
@@ -32,12 +32,11 @@ class SHCDeviceService:
 
     def put_state_element(self, key, value):
         self._api.put_device_service_state(self.device_id, self.id, {"@type": self.state["@type"], key: value})
-
-        # TODO figure out nice logic to replace this with the "true" value. For now, long polling will solve this
-        self.state[key] = value
+        self.short_poll()
 
     def short_poll(self):
         self._raw_device_service = self._api.get_device_service(self.device_id, self.id)
+        self._raw_state = self._raw_device_service["state"] if "state" in self._raw_device_service else None
 
     def process_long_polling_poll_result(self, raw_result):
         assert raw_result["@type"] == "DeviceServiceData"
