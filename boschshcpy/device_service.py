@@ -29,7 +29,7 @@ class SHCDeviceService:
         self._callbacks[entity] = callback
 
     def unsubscribe_callback(self, entity):
-        self._callbacks.pop(entity)
+        self._callbacks.pop(entity, None)
 
     def summary(self):
         print(f"  Device Service: {self.id}")

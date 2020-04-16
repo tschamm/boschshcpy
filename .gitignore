@@ -2,6 +2,7 @@
 build/
 dist/
 boschshcpy.egg-info/
+boschshcpy_dev.egg-info/
 examples/keystore
 __pycache__
 *.pyc
