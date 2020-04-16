@@ -101,6 +101,9 @@ class SHCSession:
         if raw_result["@type"] != "DeviceServiceData":
             # Skipping polling results of type message, device or unknown type
             return
+        if not "state" in raw_result:
+            # Skipping polling results which do not contain a state
+            return
         device_id = raw_result["deviceId"]
         if device_id in self._devices_by_id.keys():
             device = self._devices_by_id[device_id]

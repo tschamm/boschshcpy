@@ -7,7 +7,7 @@ class SHCDeviceService:
         self._raw_device_service = raw_device_service
         self._raw_state = self._raw_device_service["state"] if "state" in self._raw_device_service else None
 
-        self.on_state_changed = None
+        self._callbacks = {}
 
     @property
     def id(self):
@@ -25,6 +25,12 @@ class SHCDeviceService:
     def path(self):
         return self._raw_device_service['path']
 
+    def subscribe_callback(self, entity, callback):
+        self._callbacks[entity] = callback
+
+    def unsubscribe_callback(self, entity):
+        self._callbacks.pop(entity)
+
     def summary(self):
         print(f"  Device Service: {self.id}")
         print(f"    State: {self.state}")
@@ -32,7 +38,6 @@ class SHCDeviceService:
 
     def put_state_element(self, key, value):
         self._api.put_device_service_state(self.device_id, self.id, {"@type": self.state["@type"], key: value})
-        self.short_poll()
 
     def short_poll(self):
         self._raw_device_service = self._api.get_device_service(self.device_id, self.id)
@@ -45,5 +50,5 @@ class SHCDeviceService:
         # Update state
         self._raw_state = raw_result["state"]
 
-        if self.on_state_changed is not None:
-            self.on_state_changed()
+        for callback in self._callbacks:
+            self._callbacks[callback]()

@@ -228,14 +228,14 @@ class ShutterControlService(SHCDeviceService):
     
     def __init__(self, api, raw_device_service):
         super().__init__(api=api, raw_device_service=raw_device_service)
-        self._curr_level = self.state["level"]
+        self._current_level = self.state["level"]
         self._last_level = self.state["level"]
 
     @property
     def value(self) -> State:
-        if self._curr_level != self.level:
-            self._last_level = self._curr_level
-            self._curr_level = self.level
+        if self._current_level != self.level:
+            self._last_level = self._current_level
+            self._current_level = self.level
         if self.state["operationState"] == "MOVING" and self.level < self._last_level:
             return self.State("CLOSING")
         elif self.state["operationState"] == "MOVING" and self.level > self._last_level:
