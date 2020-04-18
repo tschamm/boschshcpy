@@ -261,10 +261,11 @@ class CameraLightService(SHCDeviceService):
     class State(Enum):
         ON = "ON"
         OFF = "OFF"
+        NONE = "NONE"
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        return self.State(self.state["value"] if "value" in self.state else "NONE")
 
     def summary(self):
         super().summary()

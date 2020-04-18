@@ -34,6 +34,9 @@ class SHCSmokeDetector(SHCDevice):
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
         return self._smokedetectorcheck_service.value
+    
+    def smoketest_requested(self):
+        self._smokedetectorcheck_service.put_state_element('value', "SMOKE_TEST_REQUESTED")
 
     def update(self):
         self._alarm_service.short_poll()
