@@ -171,6 +171,13 @@ class SHCSession:
     def scenarios(self) -> typing.Sequence[SHCScenario]:
         return list(self._scenarios_by_id.values())
 
+    @property
+    def scenario_names(self) -> typing.Sequence[str]:
+        scenario_names = []
+        for scenario in self.scenarios:
+            scenario_names.append(scenario.name)
+        return scenario_names
+
     def scenario(self, scenario_id) -> SHCScenario:
         return self._scenarios_by_id[scenario_id]
 
