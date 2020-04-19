@@ -39,6 +39,9 @@ class SHCSession:
         self._polling_thread = None
         self._stop_polling_thread = False
 
+        # Stop polling function
+        self.reset_connection_listener = None
+
     def _enumerate_all(self):
         self._enumerate_devices()
         self._enumerate_rooms()
@@ -75,7 +78,7 @@ class SHCSession:
         raw_information = self._api.get_shcinformation()
         self._shc_information = SHCInformation(api=self._api, raw_information=raw_information)
 
-    def _long_poll(self, wait_seconds=30):
+    def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
             self._poll_id = self.api.long_polling_subscribe()
             logger.debug(f"Subscribed for long poll. Poll id: {self._poll_id}")
@@ -149,24 +152,6 @@ class SHCSession:
             self._poll_id = None
         else:
             raise ValueError("Not polling!")
-
-    def reinitialize(self):
-        reinit_polling = False
-        if self._polling_thread is not None:
-            self.stop_polling()
-            reinit_polling = True
-
-        self._shc_information = None
-
-        self._rooms_by_id = {}
-        self._scenarios_by_id = {}
-        self._devices_by_id = {}
-
-        self._get_information()
-        self._enumerate_all()
-
-        if reinit_polling:
-            self.start_polling()
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
