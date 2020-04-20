@@ -5,7 +5,8 @@ from .device import SHCDevice
 from .models_impl import (SUPPORTED_MODELS, SHCCameraEyes,
                           SHCIntrusionDetectionSystem, SHCShutterContact,
                           SHCShutterControl, SHCSmartPlug, SHCSmokeDetector,
-                          SHCThermostat, SHCUniversalSwitch, SHCMotionDetector)
+                          SHCThermostat, SHCUniversalSwitch, SHCMotionDetector,
+                          SHCTwinguard, build)
 
 logger = logging.getLogger("boschshcpy")
 
@@ -20,22 +21,9 @@ class SHCDeviceHelper:
     def device_init(self, raw_device):
         device_id = raw_device['id']
         device_model = raw_device['deviceModel']
-
-        device = None
-        switcher = {
-            'SWD': lambda: SHCShutterContact(api=self._api, raw_device=raw_device),
-            'BBL': lambda: SHCShutterControl(api=self._api, raw_device=raw_device),
-            'PSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
-            'BSM': lambda: SHCSmartPlug(api=self._api, raw_device=raw_device),
-            'SD': lambda: SHCSmokeDetector(api=self._api, raw_device=raw_device),
-            'TRV': lambda: SHCThermostat(api=self._api, raw_device=raw_device),
-            'MD': lambda: SHCMotionDetector(api=self._api, raw_device=raw_device),
-            'WRC2': lambda: SHCUniversalSwitch(api=self._api, raw_device=raw_device),
-            'CAMERA_EYES': lambda: SHCCameraEyes(api=self._api, raw_device=raw_device),
-            'INTRUSION_DETECTION_SYSTEM': lambda: SHCIntrusionDetectionSystem(api=self._api, raw_device=raw_device),
-        }
-        if device_model in switcher and device_model in SUPPORTED_MODELS:
-            device = switcher[device_model]()
+        device = []
+        if device_model in SUPPORTED_MODELS:
+            device = build(api=self._api, raw_device=raw_device)
             self._devices_by_model[device_model][device_id] = device
         else:
             device = SHCDevice(api=self._api, raw_device=raw_device)
@@ -83,6 +71,12 @@ class SHCDeviceHelper:
         if 'MD' not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model['MD'].values())
+
+    @property
+    def twinguards(self) -> typing.Sequence[SHCTwinguard]:
+        if 'TWINGUARD' not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model['TWINGUARD'].values())
 
     @property
     def universal_switches(self) -> typing.Sequence[SHCUniversalSwitch]:

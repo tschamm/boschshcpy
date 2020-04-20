@@ -315,21 +315,77 @@ class SHCMotionDetector(SHCDevice):
         super().summary()
 
 
+class SHCTwinguard(SHCDevice):
+    from .services_impl import AirQualityLevelService, SmokeDetectorCheckService
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._airqualitylevel_service: AirQualityLevelService = self.device_service('AirQualityLevel')
+        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service('SmokeDetectorCheck')
+
+    @property
+    def combinedrating(self) -> AirQualityLevelService.RatingState:
+        return self._airqualitylevel_service.combinedRating
+
+    @property
+    def temperature(self) -> int:
+        return self._airqualitylevel_service.temperature
+
+    @property
+    def temperatureRating(self) -> AirQualityLevelService.RatingState:
+        return self._airqualitylevel_service.temperatureRating
+
+    @property
+    def humidity(self) -> int:
+        return self._airqualitylevel_service.humidity
+
+    @property
+    def humidityrating(self) -> AirQualityLevelService.RatingState:
+        return self._airqualitylevel_service.humidityRating
+
+    @property
+    def purity(self) -> int:
+        return self._airqualitylevel_service.purity
+
+    @property
+    def purityrating(self) -> str:
+        return self._airqualitylevel_service.purityRating
+
+    @property
+    def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
+        return self._smokedetectorcheck_service.value
+    
+    def smoketest_requested(self):
+        self._smokedetectorcheck_service.put_state_element('value', "SMOKE_TEST_REQUESTED")
+
+    def update(self):
+        self._airqualitylevel_service.short_poll()
+        self._smokedetectorcheck_service.short_poll()
+
+    def summary(self):
+        print(f"TWINGUARD:")
+        super().summary()
+
+
 MODEL_MAPPING = {
-    "SWD": "Door/Window Contact",
-    "BBL": "Shutter Control",
-    "PSM": "Smart Plug",
-    "BSM": "Light Control", # uses same impl as PSM
-    "SD": "Smoke Detector",
-    "CAMERA_EYES": "Security Camera Eyes",
-    "INTRUSION_DETECTION_SYSTEM": "Intrusion Detection System",
-    "TRV": "Thermostat",
-    "WRC2": "Universal Switch",
-    "MD": "Motion Detector",
+    "SWD": SHCShutterContact,
+    "BBL": SHCShutterControl,
+    "PSM": SHCSmartPlug,
+    "BSM": SHCSmartPlug, # uses same impl as PSM
+    "SD": SHCSmokeDetector,
+    "CAMERA_EYES": SHCCameraEyes,
+    "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem,
+    "TRV": SHCThermostat,
+    "WRC2": SHCUniversalSwitch,
+    "MD": SHCMotionDetector,
+    "TWINGUARD": SHCTwinguard,
 }
 # "ROOM_CLIMATE_CONTROL": "Climate Control",
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"
-# "TWINGUARD": "Twinguard"
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
+
+def build(api, raw_device):
+    device_model = raw_device['deviceModel']
+    assert device_model in SUPPORTED_MODELS, "Device model is supported"
+    return MODEL_MAPPING[device_model](api=api, raw_device=raw_device)
