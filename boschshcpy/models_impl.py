@@ -6,10 +6,24 @@ from .services_impl import (CameraLightService,
                             IntrusionDetectionControlService,
                             ShutterContactService, ShutterControlService,
                             TemperatureLevelService, ValveTappetService,
-                            HumidityLevelService)
+                            HumidityLevelService, BatteryLevelService)
 
 
-class SHCSmokeDetector(SHCDevice):
+class SHCBatteryDevice(SHCDevice):
+    from .services_impl import BatteryLevelService
+
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._batterylevel_service = self.device_service('BatteryLevel')
+
+    @property
+    def batterylevel(self) -> BatteryLevelService.State:
+        return self._batterylevel_service.warningLevel
+
+    def update(self):
+        self._batterylevelservice.short_poll()
+
+class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService
 
     class AlarmState(Enum):
@@ -42,6 +56,7 @@ class SHCSmokeDetector(SHCDevice):
     def update(self):
         self._alarm_service.short_poll()
         self._smokedetectorcheck_service.short_poll()
+        super().update()
 
     def summary(self):
         print(f"SD SmokeDetector:")
@@ -114,7 +129,7 @@ class SHCShutterControl(SHCDevice):
         super().summary()
 
 
-class SHCShutterContact(SHCDevice):
+class SHCShutterContact(SHCBatteryDevice):
     from .services_impl import ShutterContactService
     class DeviceClass(Enum):
         GENERIC = "GENERIC"
@@ -133,9 +148,10 @@ class SHCShutterContact(SHCDevice):
     @property
     def state(self) -> ShutterContactService.State:
         return self._service.value
-
+    
     def update(self):
         self._service.short_poll()
+        super().update()
 
     def summary(self):
         print(f"SWD ShutterContact:")
@@ -244,7 +260,7 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         print(f"-IntrusionDetectionSystem-:")
         super().summary()
 
-class SHCThermostat(SHCDevice):
+class SHCThermostat(SHCBatteryDevice):
     from .services_impl import TemperatureLevelService, ValveTappetService, HumidityLevelService
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -268,13 +284,14 @@ class SHCThermostat(SHCDevice):
         self._temperaturelevel_service.short_poll()
         self._humiditylevel_service.short_poll()
         self._valvetappet_service.short_poll()
+        super().update()
 
     def summary(self):
         print(f"TRV Thermostat:")
         super().summary()
 
 
-class SHCUniversalSwitch(SHCDevice):
+class SHCUniversalSwitch(SHCBatteryDevice):
     from .services_impl import KeypadService
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -298,13 +315,14 @@ class SHCUniversalSwitch(SHCDevice):
 
     def update(self):
         self._keypad_service.short_poll()
+        super().update()
 
     def summary(self):
         print(f"WRC2 Universal Switch:")
         super().summary()
 
 
-class SHCMotionDetector(SHCDevice):
+class SHCMotionDetector(SHCBatteryDevice):
     from .services_impl import LatestMotionService
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -316,13 +334,14 @@ class SHCMotionDetector(SHCDevice):
 
     def update(self):
         self._service.short_poll()
+        super().update()
 
     def summary(self):
         print(f"MD Motion Detector:")
         super().summary()
 
 
-class SHCTwinguard(SHCDevice):
+class SHCTwinguard(SHCBatteryDevice):
     from .services_impl import AirQualityLevelService, SmokeDetectorCheckService
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -367,6 +386,7 @@ class SHCTwinguard(SHCDevice):
     def update(self):
         self._airqualitylevel_service.short_poll()
         self._smokedetectorcheck_service.short_poll()
+        super().update()
 
     def summary(self):
         print(f"TWINGUARD:")

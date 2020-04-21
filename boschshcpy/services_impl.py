@@ -443,9 +443,24 @@ class SmokeDetectionControlService(SHCDeviceService):
         print(f"    not yet implemented!")
 
 class BatteryLevelService(SHCDeviceService):
+    class State(Enum):
+        LOW_BATTERY = "LOW_BATTERY"
+        CRITICAL_LOW = "CRITICAL_LOW"
+        OK = "OK"
+
+    @property
+    def warningLevel(self) -> State:
+        print(self._raw_device_service)
+        faults = self._raw_device_service["faults"] if "faults" in self._raw_device_service else None
+        if not faults:
+            return self.State("OK")
+        assert len(faults["entries"]) == 1
+        assert "type" in faults["entries"][0]
+        return self.State(faults["entries"][0]["type"])
+
     def summary(self):
         super().summary()
-        print(f"    not yet implemented!")
+        print(f"    warningLevel             : {self.warningLevel}")
 
 SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "HumidityLevel": HumidityLevelService,
@@ -468,10 +483,10 @@ SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
                    "LatestMotion": LatestMotionService,
                    "AirQualityLevel": AirQualityLevelService,
                    "SurveillanceAlarm": SurveillanceAlarmService,
+                   "BatteryLevel": BatteryLevelService
                    }
 
                 #    "SmokeDetectionControl": SmokeDetectionControlService,
-                #    "BatteryLevel": BatteryLevelService
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
