@@ -12,6 +12,14 @@ class TemperatureLevelService(SHCDeviceService):
         super().summary()
         print(f"    Temperature              : {self.temperature}")
 
+class HumidityLevelService(SHCDeviceService):
+    @property
+    def humidity(self) -> float:
+        return float(self.state["humidity"])
+
+    def summary(self):
+        super().summary()
+        print(f"    Humidity              : {self.humidity}")
 
 class RoomClimateControlService(SHCDeviceService):
     class OperationMode(Enum):
@@ -440,6 +448,7 @@ class BatteryLevelService(SHCDeviceService):
         print(f"    not yet implemented!")
 
 SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
+                   "HumidityLevel": HumidityLevelService,
                    "RoomClimateControl": RoomClimateControlService,
                    "ShutterContact": ShutterContactService,
                    "ValveTappet": ValveTappetService,
