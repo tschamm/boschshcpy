@@ -3,6 +3,7 @@ import sys
 import threading
 import time
 import typing
+import json
 
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
@@ -101,18 +102,21 @@ class SHCSession:
             self.api.long_polling_unsubscribe(self._poll_id)
 
     def _process_long_polling_poll_result(self, raw_result):
-        if raw_result["@type"] != "DeviceServiceData":
-            # Skipping polling results of type message, device or unknown type
+        if raw_result["@type"] == "DeviceServiceData": # Parse DeviceServiceData type
+            device_id = raw_result["deviceId"]
+            if device_id in self._devices_by_id.keys():
+                device = self._devices_by_id[device_id]
+                device.process_long_polling_poll_result(raw_result)
+            else:
+                logger.debug(f"Skipping polling result with unknown device id {device_id}.")
             return
-        if not "state" in raw_result:
-            # Skipping polling results which do not contain a state
+        if raw_result["@type"] == "message": # Parse message type
+            assert "arguments" in raw_result
+            if "deviceServiceDataModel" in raw_result["arguments"]:
+                raw_data_model = json.loads(raw_result["arguments"]["deviceServiceDataModel"])
+                self._process_long_polling_poll_result(raw_data_model)
             return
-        device_id = raw_result["deviceId"]
-        if device_id in self._devices_by_id.keys():
-            device = self._devices_by_id[device_id]
-            device.process_long_polling_poll_result(raw_result)
-        else:
-            logger.debug(f"Skipping polling result with unknown device id {device_id}.")
+        return
     
     def start_polling(self):
         if self._polling_thread is None:

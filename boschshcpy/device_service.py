@@ -45,10 +45,12 @@ class SHCDeviceService:
 
     def process_long_polling_poll_result(self, raw_result):
         assert raw_result["@type"] == "DeviceServiceData"
-        assert raw_result["state"]["@type"] == self.state["@type"]
+        self._raw_device_service = raw_result # Update device service data
 
-        # Update state
-        self._raw_state = raw_result["state"]
+        if "state" in self._raw_device_service:
+            assert raw_result["state"]["@type"] == self.state["@type"]
+        
+            self._raw_state = raw_result["state"] # Update state
 
         for callback in self._callbacks:
             self._callbacks[callback]()

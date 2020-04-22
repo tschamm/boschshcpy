@@ -450,7 +450,6 @@ class BatteryLevelService(SHCDeviceService):
 
     @property
     def warningLevel(self) -> State:
-        print(self._raw_device_service)
         faults = self._raw_device_service["faults"] if "faults" in self._raw_device_service else None
         if not faults:
             return self.State("OK")

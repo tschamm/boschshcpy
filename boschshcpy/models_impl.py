@@ -21,7 +21,7 @@ class SHCBatteryDevice(SHCDevice):
         return self._batterylevel_service.warningLevel
 
     def update(self):
-        self._batterylevelservice.short_poll()
+        self._batterylevel_service.short_poll()
 
 class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService

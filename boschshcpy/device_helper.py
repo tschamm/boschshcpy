@@ -6,7 +6,7 @@ from .models_impl import (SUPPORTED_MODELS, SHCCameraEyes,
                           SHCIntrusionDetectionSystem, SHCShutterContact,
                           SHCShutterControl, SHCSmartPlug, SHCSmokeDetector,
                           SHCThermostat, SHCUniversalSwitch, SHCMotionDetector,
-                          SHCTwinguard, build)
+                          SHCTwinguard, SHCBatteryDevice, build)
 
 logger = logging.getLogger("boschshcpy")
 
