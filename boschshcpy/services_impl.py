@@ -12,6 +12,7 @@ class TemperatureLevelService(SHCDeviceService):
         super().summary()
         print(f"    Temperature              : {self.temperature}")
 
+
 class HumidityLevelService(SHCDeviceService):
     @property
     def humidity(self) -> float:
@@ -20,6 +21,7 @@ class HumidityLevelService(SHCDeviceService):
     def summary(self):
         super().summary()
         print(f"    Humidity              : {self.humidity}")
+
 
 class RoomClimateControlService(SHCDeviceService):
     class OperationMode(Enum):
@@ -57,7 +59,7 @@ class RoomClimateControlService(SHCDeviceService):
     @property
     def low(self) -> bool:
         return self.state["low"]
-    
+
     @low.setter
     def low(self, value: bool):
         self.put_state_element("low", value)
@@ -65,7 +67,7 @@ class RoomClimateControlService(SHCDeviceService):
     @property
     def boost_mode(self) -> bool:
         return self.state["boostMode"]
-    
+
     @boost_mode.setter
     def boost_mode(self, value: bool):
         self.put_state_element("boostMode", value)
@@ -233,7 +235,7 @@ class ShutterControlService(SHCDeviceService):
         CALIBRATING = "CALIBRATING"
         OPENING = "OPENING"
         CLOSING = "CLOSING"
-    
+
     def __init__(self, api, raw_device_service):
         super().__init__(api=api, raw_device_service=raw_device_service)
         self._current_level = self.state["level"]
@@ -264,6 +266,7 @@ class ShutterControlService(SHCDeviceService):
         print(f"    operationState           : {self.value}")
         print(f"    Level                    : {self.level}")
         print(f"    Calibrated               : {self.calibrated}")
+
 
 class CameraLightService(SHCDeviceService):
     class State(Enum):
@@ -318,7 +321,7 @@ class IntrusionDetectionControlService(SHCDeviceService):
     @property
     def value(self) -> State:
         return self.State(self.state["value"])
-    
+
     @property
     def armActivationDelayTime(self) -> int:
         return self.state["armActivationDelayTime"]
@@ -332,6 +335,7 @@ class IntrusionDetectionControlService(SHCDeviceService):
         print(f"    value                    : {self.value}")
         print(f"    armActivationDelayTime   : {self.armActivationDelayTime}")
         print(f"    alarmActivationDelayTime : {self.alarmActivationDelayTime}")
+
 
 class KeypadService(SHCDeviceService):
     class KeyState(Enum):
@@ -349,7 +353,7 @@ class KeypadService(SHCDeviceService):
     @property
     def keyName(self) -> KeyState:
         return self.KeyState(self.state["keyName"])
-    
+
     @property
     def eventType(self) -> KeyEvent:
         return self.KeyEvent(self.state["eventType"])
@@ -365,6 +369,7 @@ class KeypadService(SHCDeviceService):
         print(f"    eventType                : {self.eventType}")
         print(f"    eventTimestamp           : {self.eventTimestamp}")
 
+
 class LatestMotionService(SHCDeviceService):
     @property
     def latestMotionDetected(self) -> str:
@@ -374,12 +379,13 @@ class LatestMotionService(SHCDeviceService):
         super().summary()
         print(f"    latestMotionDetected     : {self.latestMotionDetected}")
 
+
 class AirQualityLevelService(SHCDeviceService):
     class RatingState(Enum):
         GOOD = "GOOD"
         MEDIUM = "MEDIUM"
         BAD = "BAD"
-    
+
     @property
     def combinedRating(self) -> RatingState:
         return self.RatingState(self.state["combinedRating"])
@@ -412,7 +418,6 @@ class AirQualityLevelService(SHCDeviceService):
     def purityRating(self) -> str:
         return self.state["purityRating"]
 
-
     def summary(self):
         super().summary()
         print(f"    combinedRating           : {self.combinedRating}")
@@ -437,10 +442,12 @@ class SurveillanceAlarmService(SHCDeviceService):
         super().summary()
         print(f"    value                    : {self.value}")
 
+
 class SmokeDetectionControlService(SHCDeviceService):
     def summary(self):
         super().summary()
         print(f"    not yet implemented!")
+
 
 class BatteryLevelService(SHCDeviceService):
     class State(Enum):
@@ -450,7 +457,11 @@ class BatteryLevelService(SHCDeviceService):
 
     @property
     def warningLevel(self) -> State:
-        faults = self._raw_device_service["faults"] if "faults" in self._raw_device_service else None
+        faults = (
+            self._raw_device_service["faults"]
+            if "faults" in self._raw_device_service
+            else None
+        )
         if not faults:
             return self.State("OK")
         assert len(faults["entries"]) == 1
@@ -461,36 +472,42 @@ class BatteryLevelService(SHCDeviceService):
         super().summary()
         print(f"    warningLevel             : {self.warningLevel}")
 
-SERVICE_MAPPING = {"TemperatureLevel": TemperatureLevelService,
-                   "HumidityLevel": HumidityLevelService,
-                   "RoomClimateControl": RoomClimateControlService,
-                   "ShutterContact": ShutterContactService,
-                   "ValveTappet": ValveTappetService,
-                   "PowerSwitch": PowerSwitchService,
-                   "PowerMeter": PowerMeterService,
-                   "Routing": RoutingService,
-                   "PowerSwitchProgram": PowerSwitchProgramService,
-                   "BinarySwitch": BinarySwitchService,
-                   "SmokeDetectorCheck": SmokeDetectorCheckService,
-                   "Alarm": AlarmService,
-                   "ShutterControl": ShutterControlService,
-                   "CameraLight": CameraLightService,
-                   "PrivacyMode": PrivacyModeService,
-                   "CameraNotification": CameraNotificationService,
-                   "IntrusionDetectionControl": IntrusionDetectionControlService,
-                   "Keypad": KeypadService,
-                   "LatestMotion": LatestMotionService,
-                   "AirQualityLevel": AirQualityLevelService,
-                   "SurveillanceAlarm": SurveillanceAlarmService,
-                   "BatteryLevel": BatteryLevelService
-                   }
 
-                #    "SmokeDetectionControl": SmokeDetectionControlService,
+SERVICE_MAPPING = {
+    "TemperatureLevel": TemperatureLevelService,
+    "HumidityLevel": HumidityLevelService,
+    "RoomClimateControl": RoomClimateControlService,
+    "ShutterContact": ShutterContactService,
+    "ValveTappet": ValveTappetService,
+    "PowerSwitch": PowerSwitchService,
+    "PowerMeter": PowerMeterService,
+    "Routing": RoutingService,
+    "PowerSwitchProgram": PowerSwitchProgramService,
+    "BinarySwitch": BinarySwitchService,
+    "SmokeDetectorCheck": SmokeDetectorCheckService,
+    "Alarm": AlarmService,
+    "ShutterControl": ShutterControlService,
+    "CameraLight": CameraLightService,
+    "PrivacyMode": PrivacyModeService,
+    "CameraNotification": CameraNotificationService,
+    "IntrusionDetectionControl": IntrusionDetectionControlService,
+    "Keypad": KeypadService,
+    "LatestMotion": LatestMotionService,
+    "AirQualityLevel": AirQualityLevelService,
+    "SurveillanceAlarm": SurveillanceAlarmService,
+    "BatteryLevel": BatteryLevelService,
+}
+
+#    "SmokeDetectionControl": SmokeDetectionControlService,
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
 
 def build(api, raw_device_service):
     device_service_id = raw_device_service["id"]
-    assert device_service_id in SUPPORTED_DEVICE_SERVICE_IDS, "Device service is supported"
-    return SERVICE_MAPPING[device_service_id](api=api, raw_device_service=raw_device_service)
+    assert (
+        device_service_id in SUPPORTED_DEVICE_SERVICE_IDS
+    ), "Device service is supported"
+    return SERVICE_MAPPING[device_service_id](
+        api=api, raw_device_service=raw_device_service
+    )

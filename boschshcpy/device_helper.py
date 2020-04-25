@@ -2,11 +2,23 @@ import logging
 import typing
 
 from .device import SHCDevice
-from .models_impl import (SUPPORTED_MODELS, SHCCameraEyes,
-                          SHCIntrusionDetectionSystem, SHCShutterContact,
-                          SHCShutterControl, SHCSmartPlug, SHCSmokeDetector,
-                          SHCThermostat, SHCWallThermostat, SHCUniversalSwitch, SHCMotionDetector,
-                          SHCTwinguard, SHCBatteryDevice, SHCClimateControl, build)
+from .models_impl import (
+    SUPPORTED_MODELS,
+    SHCBatteryDevice,
+    SHCCameraEyes,
+    SHCClimateControl,
+    SHCIntrusionDetectionSystem,
+    SHCMotionDetector,
+    SHCShutterContact,
+    SHCShutterControl,
+    SHCSmartPlug,
+    SHCSmokeDetector,
+    SHCThermostat,
+    SHCTwinguard,
+    SHCUniversalSwitch,
+    SHCWallThermostat,
+    build,
+)
 
 logger = logging.getLogger("boschshcpy")
 
@@ -19,8 +31,8 @@ class SHCDeviceHelper:
             self._devices_by_model[model] = {}
 
     def device_init(self, raw_device):
-        device_id = raw_device['id']
-        device_model = raw_device['deviceModel']
+        device_id = raw_device["id"]
+        device_model = raw_device["deviceModel"]
         device = []
         if device_model in SUPPORTED_MODELS:
             device = build(api=self._api, raw_device=raw_device)
@@ -32,78 +44,78 @@ class SHCDeviceHelper:
 
     @property
     def shutter_contacts(self) -> typing.Sequence[SHCShutterContact]:
-        if 'SWD' not in SUPPORTED_MODELS: 
+        if "SWD" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['SWD'].values())
+        return list(self._devices_by_model["SWD"].values())
 
     @property
     def shutter_controls(self) -> typing.Sequence[SHCShutterControl]:
-        if 'BBL' not in SUPPORTED_MODELS:
+        if "BBL" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['BBL'].values())
+        return list(self._devices_by_model["BBL"].values())
 
     @property
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
-        if 'PSM' not in SUPPORTED_MODELS:
+        if "PSM" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['PSM'].values())
+        return list(self._devices_by_model["PSM"].values())
 
     @property
     def light_controls(self) -> typing.Sequence[SHCSmartPlug]:
-        if 'BSM' not in SUPPORTED_MODELS:
+        if "BSM" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['BSM'].values())
+        return list(self._devices_by_model["BSM"].values())
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
-        if 'SD' not in SUPPORTED_MODELS:
+        if "SD" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['SD'].values())
+        return list(self._devices_by_model["SD"].values())
 
     @property
     def climate_controls(self) -> typing.Sequence[SHCClimateControl]:
-        if 'ROOM_CLIMATE_CONTROL' not in SUPPORTED_MODELS:
+        if "ROOM_CLIMATE_CONTROL" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['ROOM_CLIMATE_CONTROL'].values())
+        return list(self._devices_by_model["ROOM_CLIMATE_CONTROL"].values())
 
     @property
     def thermostats(self) -> typing.Sequence[SHCThermostat]:
-        if 'TRV' not in SUPPORTED_MODELS:
+        if "TRV" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['TRV'].values())
+        return list(self._devices_by_model["TRV"].values())
 
     @property
     def wallthermostats(self) -> typing.Sequence[SHCWallThermostat]:
-        if 'THB' not in SUPPORTED_MODELS:
+        if "THB" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['THB'].values())
+        return list(self._devices_by_model["THB"].values())
 
     @property
     def motion_detectors(self) -> typing.Sequence[SHCMotionDetector]:
-        if 'MD' not in SUPPORTED_MODELS:
+        if "MD" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['MD'].values())
+        return list(self._devices_by_model["MD"].values())
 
     @property
     def twinguards(self) -> typing.Sequence[SHCTwinguard]:
-        if 'TWINGUARD' not in SUPPORTED_MODELS:
+        if "TWINGUARD" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['TWINGUARD'].values())
+        return list(self._devices_by_model["TWINGUARD"].values())
 
     @property
     def universal_switches(self) -> typing.Sequence[SHCUniversalSwitch]:
-        if 'WRC2' not in SUPPORTED_MODELS:
+        if "WRC2" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['WRC'].values())
+        return list(self._devices_by_model["WRC"].values())
 
     @property
     def camera_eyes(self) -> typing.Sequence[SHCCameraEyes]:
-        if 'CAMERA_EYES' not in SUPPORTED_MODELS:
+        if "CAMERA_EYES" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['CAMERA_EYES'].values())
+        return list(self._devices_by_model["CAMERA_EYES"].values())
 
     @property
     def intrusion_detection_system(self) -> SHCIntrusionDetectionSystem:
-        if 'INTRUSION_DETECTION_SYSTEM' not in SUPPORTED_MODELS:
+        if "INTRUSION_DETECTION_SYSTEM" not in SUPPORTED_MODELS:
             return None
-        return list(self._devices_by_model['INTRUSION_DETECTION_SYSTEM'].values())[0]
+        return list(self._devices_by_model["INTRUSION_DETECTION_SYSTEM"].values())[0]

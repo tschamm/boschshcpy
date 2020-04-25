@@ -5,6 +5,7 @@ import requests
 
 logger = logging.getLogger("boschshcpy")
 
+
 class JSONRPCError(Exception):
     def __init__(self, code, message):
         super().__init__()
@@ -34,13 +35,18 @@ class SHCAPI:
         # Settings for all API calls
         self._requests_session = requests.Session()
         self._requests_session.cert = (self._certificate, self._key)
-        self._requests_session.headers.update({"api-version": "1.0", "Content-Type": "application/json"})
+        self._requests_session.headers.update(
+            {"api-version": "1.0", "Content-Type": "application/json"}
+        )
         self._requests_session.verify = False
 
         import urllib3
+
         urllib3.disable_warnings()
 
-    def _get_api_result_or_fail(self, api_url, expected_type=None, expected_element_type=None, headers=None):
+    def _get_api_result_or_fail(
+        self, api_url, expected_type=None, expected_element_type=None, headers=None
+    ):
         try:
             result = self._requests_session.get(api_url, headers=headers)
             if not result.ok:
@@ -50,10 +56,10 @@ class SHCAPI:
                 if len(result.content) > 0:
                     result = json.loads(result.content)
                     if expected_type is not None:
-                        assert result['@type'] == expected_type
+                        assert result["@type"] == expected_type
                     if expected_element_type is not None:
                         for result_ in result:
-                            assert result_['@type'] == expected_element_type
+                            assert result_["@type"] == expected_element_type
 
                     return result
                 else:
@@ -83,7 +89,9 @@ class SHCAPI:
         print(f"Body: {result.request.body}")
         print(f"Headers: {result.request.headers}")
         print(f"URL: {result.request.url}")
-        raise ValueError(f"API call returned non-OK result (code {result.status_code})!: {result.content}")
+        raise ValueError(
+            f"API call returned non-OK result (code {result.status_code})!: {result.content}"
+        )
 
     # API calls here
     def get_shcinformation(self):
@@ -120,13 +128,15 @@ class SHCAPI:
             {
                 "jsonrpc": "2.0",
                 "method": "RE/subscribe",
-                "params": ["com/bosch/sh/remote/*", None]
+                "params": ["com/bosch/sh/remote/*", None],
             }
         ]
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(result[0]['error']['code'], result[0]['error']['message'])
+            raise JSONRPCError(
+                result[0]["error"]["code"], result[0]["error"]["message"]
+            )
         else:
             return result[0]["result"]
 
@@ -135,27 +145,25 @@ class SHCAPI:
             {
                 "jsonrpc": "2.0",
                 "method": "RE/longPoll",
-                "params": [poll_id, wait_seconds]
+                "params": [poll_id, wait_seconds],
             }
         ]
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(result[0]['error']['code'], result[0]['error']['message'])
+            raise JSONRPCError(
+                result[0]["error"]["code"], result[0]["error"]["message"]
+            )
         else:
             return result[0]["result"]
 
     def long_polling_unsubscribe(self, poll_id):
-        data = [
-            {
-                "jsonrpc": "2.0",
-                "method": "RE/unsubscribe",
-                "params": [poll_id]
-            }
-        ]
+        data = [{"jsonrpc": "2.0", "method": "RE/unsubscribe", "params": [poll_id]}]
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(result[0]['error']['code'], result[0]['error']['message'])
+            raise JSONRPCError(
+                result[0]["error"]["code"], result[0]["error"]["message"]
+            )
         else:
             return result[0]["result"]

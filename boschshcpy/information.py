@@ -18,11 +18,19 @@ class SHCInformation:
 
     @property
     def updateState(self) -> UpdateState:
-        return self.UpdateState(self._raw_information["updateState"] if self._raw_information else "NO_UPDATE_AVAILABLE")
+        return self.UpdateState(
+            self._raw_information["updateState"]
+            if self._raw_information
+            else "NO_UPDATE_AVAILABLE"
+        )
 
     @property
     def connectivityVersion(self):
-        return self._raw_information["connectivityVersion"] if self._raw_information else "n/a"
+        return (
+            self._raw_information["connectivityVersion"]
+            if self._raw_information
+            else "n/a"
+        )
 
     def summary(self):
         print(f"Information:")

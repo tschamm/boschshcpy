@@ -1,9 +1,8 @@
+import json
 import logging
-import sys
 import threading
 import time
 import typing
-import json
 
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
@@ -17,9 +16,11 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key, enumerate = True):
+    def __init__(self, controller_ip: str, certificate, key, enumerate=True):
         # API
-        self._api = SHCAPI(controller_ip=controller_ip, certificate=certificate, key=key)
+        self._api = SHCAPI(
+            controller_ip=controller_ip, certificate=certificate, key=key
+        )
         self._device_helper = SHCDeviceHelper(self._api)
 
         # Subscription status
@@ -35,7 +36,8 @@ class SHCSession:
 
         self._get_information()
 
-        if enumerate: self._enumerate_all()
+        if enumerate:
+            self._enumerate_all()
 
         self._polling_thread = None
         self._stop_polling_thread = False
@@ -53,12 +55,16 @@ class SHCSession:
         raw_devices = self._api.get_devices()
 
         for raw_device in raw_devices:
-            device_id = raw_device['id']
+            device_id = raw_device["id"]
 
-            if set(raw_device['deviceServiceIds']).isdisjoint(SUPPORTED_DEVICE_SERVICE_IDS):
-                logger.debug(f"Skipping device id {device_id} which has no services that are supported by this library")
+            if set(raw_device["deviceServiceIds"]).isdisjoint(
+                SUPPORTED_DEVICE_SERVICE_IDS
+            ):
+                logger.debug(
+                    f"Skipping device id {device_id} which has no services that are supported by this library"
+                )
                 continue
-            
+
             self._devices_by_id[device_id] = self._device_helper.device_init(raw_device)
 
     def _enumerate_rooms(self):
@@ -77,7 +83,9 @@ class SHCSession:
 
     def _get_information(self):
         raw_information = self._api.get_shcinformation()
-        self._shc_information = SHCInformation(api=self._api, raw_information=raw_information)
+        self._shc_information = SHCInformation(
+            api=self._api, raw_information=raw_information
+        )
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
@@ -92,7 +100,9 @@ class SHCSession:
         except JSONRPCError as json_rpc_error:
             if json_rpc_error.code == -32001:
                 self._poll_id = None
-                logger.warning(f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time...")
+                logger.warning(
+                    f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
+                )
                 return False
             else:
                 raise json_rpc_error
@@ -102,33 +112,42 @@ class SHCSession:
             self.api.long_polling_unsubscribe(self._poll_id)
 
     def _process_long_polling_poll_result(self, raw_result):
-        if raw_result["@type"] == "DeviceServiceData": # Parse DeviceServiceData type
+        if raw_result["@type"] == "DeviceServiceData":  # Parse DeviceServiceData type
             device_id = raw_result["deviceId"]
             if device_id in self._devices_by_id.keys():
                 device = self._devices_by_id[device_id]
                 device.process_long_polling_poll_result(raw_result)
             else:
-                logger.debug(f"Skipping polling result with unknown device id {device_id}.")
+                logger.debug(
+                    f"Skipping polling result with unknown device id {device_id}."
+                )
             return
-        if raw_result["@type"] == "message": # Parse message type
+        if raw_result["@type"] == "message":  # Parse message type
             assert "arguments" in raw_result
             if "deviceServiceDataModel" in raw_result["arguments"]:
-                raw_data_model = json.loads(raw_result["arguments"]["deviceServiceDataModel"])
+                raw_data_model = json.loads(
+                    raw_result["arguments"]["deviceServiceDataModel"]
+                )
                 self._process_long_polling_poll_result(raw_data_model)
             return
         return
-    
+
     def start_polling(self):
         if self._polling_thread is None:
+
             def polling_thread_main():
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
-                            logging.warning("_long_poll returned False. Waiting 1 second.")
+                            logging.warning(
+                                "_long_poll returned False. Waiting 1 second."
+                            )
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
-                        logging.info("Stopping polling thread after expected runtime error.")
+                        logging.info(
+                            "Stopping polling thread after expected runtime error."
+                        )
                         logging.info(f"Error description: {err}. {err.args}")
                         logging.info(f"Attempting unsubscribe...")
                         try:
@@ -137,10 +156,14 @@ class SHCSession:
                             logging.info(f"Unsubscribe unsuccessful: {ex}")
 
                     except Exception as ex:
-                        logging.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
+                        logging.error(
+                            f"Error in polling thread: {ex}. Waiting 15 seconds."
+                        )
                         time.sleep(15.0)
 
-            self._polling_thread = threading.Thread(target=polling_thread_main, name="SHCPollingThread")
+            self._polling_thread = threading.Thread(
+                target=polling_thread_main, name="SHCPollingThread"
+            )
             self._polling_thread.start()
 
         else:
@@ -188,7 +211,7 @@ class SHCSession:
     @property
     def information(self) -> SHCInformation:
         return self._shc_information
-    
+
     @property
     def api(self):
         return self._api

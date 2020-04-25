@@ -19,7 +19,9 @@ class SHCScenario:
         return self._raw_scenario["name"]
 
     def trigger(self):
-        return self._api._post_api_or_fail(f"{self._api._api_root}/scenarios/{self.id}/triggers", "")
+        return self._api._post_api_or_fail(
+            f"{self._api._api_root}/scenarios/{self.id}/triggers", ""
+        )
 
     def summary(self):
         print(f"scenario: {self.id}")

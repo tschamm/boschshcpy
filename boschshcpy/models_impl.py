@@ -1,12 +1,16 @@
 from enum import Enum
 
 from .device import SHCDevice
-from .device_service import SHCDeviceService
-from .services_impl import (CameraLightService,
-                            IntrusionDetectionControlService,
-                            ShutterContactService, ShutterControlService,
-                            TemperatureLevelService, ValveTappetService,
-                            HumidityLevelService, BatteryLevelService)
+from .services_impl import (
+    BatteryLevelService,
+    CameraLightService,
+    HumidityLevelService,
+    IntrusionDetectionControlService,
+    ShutterContactService,
+    ShutterControlService,
+    TemperatureLevelService,
+    ValveTappetService,
+)
 
 
 class SHCBatteryDevice(SHCDevice):
@@ -14,7 +18,7 @@ class SHCBatteryDevice(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._batterylevel_service = self.device_service('BatteryLevel')
+        self._batterylevel_service = self.device_service("BatteryLevel")
 
     @property
     def batterylevel(self) -> BatteryLevelService.State:
@@ -22,6 +26,7 @@ class SHCBatteryDevice(SHCDevice):
 
     def update(self):
         self._batterylevel_service.short_poll()
+
 
 class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService
@@ -34,9 +39,10 @@ class SHCSmokeDetector(SHCBatteryDevice):
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._alarm_service: AlarmService = self.device_service('Alarm')
+        self._alarm_service: AlarmService = self.device_service("Alarm")
         self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
-            'SmokeDetectorCheck')
+            "SmokeDetectorCheck"
+        )
 
     @property
     def alarmstate(self) -> AlarmService.State:
@@ -44,14 +50,16 @@ class SHCSmokeDetector(SHCBatteryDevice):
 
     @alarmstate.setter
     def alarmstate(self, state: AlarmState):
-        self._alarm_service.put_state_element('state', state.name)
+        self._alarm_service.put_state_element("state", state.name)
 
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
         return self._smokedetectorcheck_service.value
-    
+
     def smoketest_requested(self):
-        self._smokedetectorcheck_service.put_state_element('value', "SMOKE_TEST_REQUESTED")
+        self._smokedetectorcheck_service.put_state_element(
+            "value", "SMOKE_TEST_REQUESTED"
+        )
 
     def update(self):
         self._alarm_service.short_poll()
@@ -64,14 +72,18 @@ class SHCSmokeDetector(SHCBatteryDevice):
 
 
 class SHCSmartPlug(SHCDevice):
-    from .services_impl import PowerSwitchService, PowerMeterService, PowerSwitchProgramService
+    from .services_impl import (
+        PowerSwitchService,
+        PowerMeterService,
+        PowerSwitchProgramService,
+    )
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._powerswitch_service = self.device_service('PowerSwitch')
-        self._powerswitchprogram_service = self.device_service('PowerSwitchProgram')
-        self._powermeter_service = self.device_service('PowerMeter')
+        self._powerswitch_service = self.device_service("PowerSwitch")
+        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+        self._powermeter_service = self.device_service("PowerMeter")
 
     @property
     def state(self) -> PowerSwitchService.State:
@@ -79,7 +91,9 @@ class SHCSmartPlug(SHCDevice):
 
     @state.setter
     def state(self, state: bool):
-        self._powerswitch_service.put_state_element('switchState', "ON" if state else "OFF")
+        self._powerswitch_service.put_state_element(
+            "switchState", "ON" if state else "OFF"
+        )
 
     @property
     def energyconsumption(self) -> float:
@@ -104,7 +118,7 @@ class SHCShutterControl(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device=raw_device)
-        self._service: ShutterControlService = self.device_service('ShutterControl')
+        self._service: ShutterControlService = self.device_service("ShutterControl")
 
     @property
     def level(self) -> float:
@@ -112,10 +126,12 @@ class SHCShutterControl(SHCDevice):
 
     @level.setter
     def level(self, level):
-        self._service.put_state_element('level', level)
+        self._service.put_state_element("level", level)
 
     def stop(self):
-        self._service.put_state_element('operationState', ShutterControlService.State.STOPPED.name)
+        self._service.put_state_element(
+            "operationState", ShutterControlService.State.STOPPED.name
+        )
 
     @property
     def operation_state(self) -> ShutterControlService.State:
@@ -131,6 +147,7 @@ class SHCShutterControl(SHCDevice):
 
 class SHCShutterContact(SHCBatteryDevice):
     from .services_impl import ShutterContactService
+
     class DeviceClass(Enum):
         GENERIC = "GENERIC"
         ENTRANCE_DOOR = "ENTRANCE_DOOR"
@@ -139,7 +156,7 @@ class SHCShutterContact(SHCBatteryDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._service = self.device_service('ShutterContact')
+        self._service = self.device_service("ShutterContact")
 
     @property
     def device_class(self) -> DeviceClass:
@@ -148,7 +165,7 @@ class SHCShutterContact(SHCBatteryDevice):
     @property
     def state(self) -> ShutterContactService.State:
         return self._service.value
-    
+
     def update(self):
         self._service.short_poll()
         super().update()
@@ -159,15 +176,18 @@ class SHCShutterContact(SHCBatteryDevice):
 
 
 class SHCCameraEyes(SHCDevice):
-    from .services_impl import CameraLightService, CameraNotificationService, PrivacyModeService
+    from .services_impl import (
+        CameraLightService,
+        CameraNotificationService,
+        PrivacyModeService,
+    )
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._privacymode_service = self.device_service('PrivacyMode')
-        self._cameranotification_service = self.device_service(
-            'CameraNotification')
-        self._cameralight_service = self.device_service('CameraLight')
+        self._privacymode_service = self.device_service("PrivacyMode")
+        self._cameranotification_service = self.device_service("CameraNotification")
+        self._cameralight_service = self.device_service("CameraLight")
 
     @property
     def privacymode(self) -> PrivacyModeService.State:
@@ -176,7 +196,8 @@ class SHCCameraEyes(SHCDevice):
     @privacymode.setter
     def privacymode(self, state: bool):
         self._privacymode_service.put_state_element(
-            'value', "ENABLED" if state else "DISABLED")
+            "value", "ENABLED" if state else "DISABLED"
+        )
 
     @property
     def cameranotification(self) -> CameraNotificationService.State:
@@ -185,7 +206,8 @@ class SHCCameraEyes(SHCDevice):
     @cameranotification.setter
     def cameranotification(self, state: bool):
         self._cameranotification_service.put_state_element(
-            'value', "ENABLED" if state else "DISABLED")
+            "value", "ENABLED" if state else "DISABLED"
+        )
 
     @property
     def cameralight(self) -> CameraLightService.State:
@@ -193,8 +215,7 @@ class SHCCameraEyes(SHCDevice):
 
     @cameralight.setter
     def cameralight(self, state: bool):
-        self._cameralight_service.put_state_element(
-            'value', "ON" if state else "OFF")
+        self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
 
     def update(self):
         self._cameralight_service.short_poll()
@@ -211,7 +232,7 @@ class SHCIntrusionDetectionSystem(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._service = self.device_service('IntrusionDetectionControl')
+        self._service = self.device_service("IntrusionDetectionControl")
 
     def disarm(self):
         self.alarmstate = IntrusionDetectionControlService.State.SYSTEM_DISARMED
@@ -226,7 +247,7 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
             return
 
-        self._service.put_state_element('armActivationDelayTime', seconds)
+        self._service.put_state_element("armActivationDelayTime", seconds)
 
     def arm_instant(self):
         if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
@@ -247,7 +268,7 @@ class SHCIntrusionDetectionSystem(SHCDevice):
 
     @alarmstate.setter
     def alarmstate(self, state: IntrusionDetectionControlService.State):
-        self._service.put_state_element('value', state.name)
+        self._service.put_state_element("value", state.name)
 
     @property
     def armActivationDelayTime(self):
@@ -260,12 +281,14 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         print(f"-IntrusionDetectionSystem-:")
         super().summary()
 
+
 class SHCThermostat(SHCBatteryDevice):
     from .services_impl import TemperatureLevelService, ValveTappetService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._temperaturelevel_service = self.device_service('TemperatureLevel')
-        self._valvetappet_service = self.device_service('ValveTappet')
+        self._temperaturelevel_service = self.device_service("TemperatureLevel")
+        self._valvetappet_service = self.device_service("ValveTappet")
 
     @property
     def position(self) -> int:
@@ -284,12 +307,14 @@ class SHCThermostat(SHCBatteryDevice):
         print(f"TRV Thermostat:")
         super().summary()
 
+
 class SHCClimateControl(SHCDevice):
     from .services_impl import RoomClimateControlService, TemperatureLevelService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._temperaturelevel_service = self.device_service('TemperatureLevel')
-        self._roomclimatecontrol_service = self.device_service('RoomClimateControl')
+        self._temperaturelevel_service = self.device_service("TemperatureLevel")
+        self._roomclimatecontrol_service = self.device_service("RoomClimateControl")
 
     @property
     def setpoint_temperature(self) -> float:
@@ -312,12 +337,14 @@ class SHCClimateControl(SHCDevice):
         print(f"ROOM_CLIMATE_CONTROL:")
         super().summary()
 
+
 class SHCWallThermostat(SHCBatteryDevice):
     from .services_impl import TemperatureLevelService, HumidityLevelService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._temperaturelevel_service = self.device_service('TemperatureLevel')
-        self._humiditylevel_service = self.device_service('HumidityLevel')
+        self._temperaturelevel_service = self.device_service("TemperatureLevel")
+        self._humiditylevel_service = self.device_service("HumidityLevel")
 
     @property
     def temperature(self) -> float:
@@ -339,9 +366,10 @@ class SHCWallThermostat(SHCBatteryDevice):
 
 class SHCUniversalSwitch(SHCBatteryDevice):
     from .services_impl import KeypadService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._keypad_service = self.device_service('Keypad')
+        self._keypad_service = self.device_service("Keypad")
 
     @property
     def keycode(self) -> int:
@@ -370,9 +398,10 @@ class SHCUniversalSwitch(SHCBatteryDevice):
 
 class SHCMotionDetector(SHCBatteryDevice):
     from .services_impl import LatestMotionService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._service = self.device_service('LatestMotion')
+        self._service = self.device_service("LatestMotion")
 
     @property
     def latestmotion(self) -> str:
@@ -389,10 +418,15 @@ class SHCMotionDetector(SHCBatteryDevice):
 
 class SHCTwinguard(SHCBatteryDevice):
     from .services_impl import AirQualityLevelService, SmokeDetectorCheckService
+
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._airqualitylevel_service: AirQualityLevelService = self.device_service('AirQualityLevel')
-        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service('SmokeDetectorCheck')
+        self._airqualitylevel_service: AirQualityLevelService = self.device_service(
+            "AirQualityLevel"
+        )
+        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
+            "SmokeDetectorCheck"
+        )
 
     @property
     def combinedrating(self) -> AirQualityLevelService.RatingState:
@@ -429,9 +463,11 @@ class SHCTwinguard(SHCBatteryDevice):
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
         return self._smokedetectorcheck_service.value
-    
+
     def smoketest_requested(self):
-        self._smokedetectorcheck_service.put_state_element('value', "SMOKE_TEST_REQUESTED")
+        self._smokedetectorcheck_service.put_state_element(
+            "value", "SMOKE_TEST_REQUESTED"
+        )
 
     def update(self):
         self._airqualitylevel_service.short_poll()
@@ -447,7 +483,7 @@ MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "BBL": SHCShutterControl,
     "PSM": SHCSmartPlug,
-    "BSM": SHCSmartPlug, # uses same impl as PSM
+    "BSM": SHCSmartPlug,  # uses same impl as PSM
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
     "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem,
@@ -463,7 +499,8 @@ MODEL_MAPPING = {
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
 
+
 def build(api, raw_device):
-    device_model = raw_device['deviceModel']
+    device_model = raw_device["deviceModel"]
     assert device_model in SUPPORTED_MODELS, "Device model is supported"
     return MODEL_MAPPING[device_model](api=api, raw_device=raw_device)
