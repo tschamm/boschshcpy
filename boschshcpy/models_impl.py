@@ -261,16 +261,63 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         super().summary()
 
 class SHCThermostat(SHCBatteryDevice):
-    from .services_impl import TemperatureLevelService, ValveTappetService, HumidityLevelService
+    from .services_impl import TemperatureLevelService, ValveTappetService
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
         self._temperaturelevel_service = self.device_service('TemperatureLevel')
-        self._humiditylevel_service = self.device_service('HumidityLevel')
         self._valvetappet_service = self.device_service('ValveTappet')
 
     @property
     def position(self) -> int:
         return self._valvetappet_service.position
+
+    @property
+    def temperature(self) -> float:
+        return self._temperaturelevel_service.temperature
+
+    def update(self):
+        self._temperaturelevel_service.short_poll()
+        self._valvetappet_service.short_poll()
+        super().update()
+
+    def summary(self):
+        print(f"TRV Thermostat:")
+        super().summary()
+
+class SHCClimateControl(SHCDevice):
+    from .services_impl import RoomClimateControlService, TemperatureLevelService
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._temperaturelevel_service = self.device_service('TemperatureLevel')
+        self._roomclimatecontrol_service = self.device_service('RoomClimateControl')
+
+    @property
+    def setpoint_temperature(self) -> float:
+        return self._roomclimatecontrol_service.setpoint_temperature
+
+    @setpoint_temperature.setter
+    def setpoint_temperature(self, temperature: float):
+        self._roomclimatecontrol_service.setpoint_temperature = temperature
+
+    @property
+    def temperature(self) -> float:
+        return self._temperaturelevel_service.temperature
+
+    def update(self):
+        self._temperaturelevel_service.short_poll()
+        self._roomclimatecontrol_service.short_poll()
+        super().update()
+
+    def summary(self):
+        print(f"ROOM_CLIMATE_CONTROL:")
+        super().summary()
+
+class SHCWallThermostat(SHCBatteryDevice):
+    from .services_impl import TemperatureLevelService, HumidityLevelService
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._temperaturelevel_service = self.device_service('TemperatureLevel')
+        self._humiditylevel_service = self.device_service('HumidityLevel')
 
     @property
     def temperature(self) -> float:
@@ -283,11 +330,10 @@ class SHCThermostat(SHCBatteryDevice):
     def update(self):
         self._temperaturelevel_service.short_poll()
         self._humiditylevel_service.short_poll()
-        self._valvetappet_service.short_poll()
         super().update()
 
     def summary(self):
-        print(f"TRV Thermostat:")
+        print(f"THB Wall Thermostat:")
         super().summary()
 
 
@@ -353,6 +399,10 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._airqualitylevel_service.combinedRating
 
     @property
+    def description(self) -> str:
+        return self._airqualitylevel_service.description
+
+    @property
     def temperature(self) -> int:
         return self._airqualitylevel_service.temperature
 
@@ -401,12 +451,13 @@ MODEL_MAPPING = {
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
     "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem,
+    "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
+    "THB": SHCWallThermostat,
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "TWINGUARD": SHCTwinguard,
 }
-# "ROOM_CLIMATE_CONTROL": "Climate Control",
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"
 

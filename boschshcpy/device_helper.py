@@ -5,8 +5,8 @@ from .device import SHCDevice
 from .models_impl import (SUPPORTED_MODELS, SHCCameraEyes,
                           SHCIntrusionDetectionSystem, SHCShutterContact,
                           SHCShutterControl, SHCSmartPlug, SHCSmokeDetector,
-                          SHCThermostat, SHCUniversalSwitch, SHCMotionDetector,
-                          SHCTwinguard, SHCBatteryDevice, build)
+                          SHCThermostat, SHCWallThermostat, SHCUniversalSwitch, SHCMotionDetector,
+                          SHCTwinguard, SHCBatteryDevice, SHCClimateControl, build)
 
 logger = logging.getLogger("boschshcpy")
 
@@ -61,10 +61,22 @@ class SHCDeviceHelper:
         return list(self._devices_by_model['SD'].values())
 
     @property
+    def climate_controls(self) -> typing.Sequence[SHCClimateControl]:
+        if 'ROOM_CLIMATE_CONTROL' not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model['ROOM_CLIMATE_CONTROL'].values())
+
+    @property
     def thermostats(self) -> typing.Sequence[SHCThermostat]:
         if 'TRV' not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model['TRV'].values())
+
+    @property
+    def wallthermostats(self) -> typing.Sequence[SHCWallThermostat]:
+        if 'THB' not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model['THB'].values())
 
     @property
     def motion_detectors(self) -> typing.Sequence[SHCMotionDetector]:
