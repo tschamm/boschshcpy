@@ -20,6 +20,7 @@ It supports both long and short polling. The following device services are imple
 * ```PrivacyMode```
 * ```CameraNotification```
 * ```IntrusionDetectionControl```
+* ```Thermostat```
 
 The following device models are implemented, using the above services:
 
