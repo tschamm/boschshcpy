@@ -473,6 +473,20 @@ class BatteryLevelService(SHCDeviceService):
         print(f"    warningLevel             : {self.warningLevel}")
 
 
+class ThermostatService(SHCDeviceService):
+    class State(Enum):
+        ON = "ON"
+        OFF = "OFF"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["childLock"])
+
+    def summary(self):
+        super().summary()
+        print(f"    childLock                : {self.value}")
+
+
 SERVICE_MAPPING = {
     "TemperatureLevel": TemperatureLevelService,
     "HumidityLevel": HumidityLevelService,
@@ -496,6 +510,7 @@ SERVICE_MAPPING = {
     "AirQualityLevel": AirQualityLevelService,
     "SurveillanceAlarm": SurveillanceAlarmService,
     "BatteryLevel": BatteryLevelService,
+    "Thermostat": ThermostatService,
 }
 
 #    "SmokeDetectionControl": SmokeDetectionControlService,
