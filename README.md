@@ -5,6 +5,7 @@ The API documentation is available [here](https://github.com/BoschSmartHome/bosc
 It supports both long and short polling. The following device services are implemented:
 
 * ```TemperatureLevel```
+* ```HumidityLevel```
 * ```RoomClimateControl```
 * ```ShutterContact```
 * ```ValveTappet```
@@ -20,6 +21,11 @@ It supports both long and short polling. The following device services are imple
 * ```PrivacyMode```
 * ```CameraNotification```
 * ```IntrusionDetectionControl```
+* ```Keypad```
+* ```LatestMotion```
+* ```AirQualityLevel```
+* ```SurveillanceAlarm```
+* ```BatteryLevel```
 * ```Thermostat```
 
 The following device models are implemented, using the above services:
@@ -27,9 +33,16 @@ The following device models are implemented, using the above services:
 * ```ShutterContact```
 * ```ShutterControl```
 * ```SmartPlug```
+* ```LightControl```
 * ```SmokeDetector```
 * ```CameraEyes```
-* ```-IntrusionDetectionSystem-```
+* ```IntrusionDetectionSystem```
+* ```RoomClimateControl```
+* ```Thermostat```
+* ```WallThermostat```
+* ```UniversalSwitch```
+* ```MotionDetector```
+* ```Twinguard```
 
 ## Example
 
