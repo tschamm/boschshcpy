@@ -416,13 +416,16 @@ class SHCMotionDetector(SHCBatteryDevice):
         super().summary()
 
 
-class SHCTwinguard(SHCSmokeDetector):
-    from .services_impl import AirQualityLevelService
+class SHCTwinguard(SHCBatteryDevice):
+    from .services_impl import AirQualityLevelService, SmokeDetectorCheckService
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
         self._airqualitylevel_service: AirQualityLevelService = self.device_service(
             "AirQualityLevel"
+        )
+        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
+            "SmokeDetectorCheck"
         )
 
     @property
@@ -457,8 +460,18 @@ class SHCTwinguard(SHCSmokeDetector):
     def purityrating(self) -> str:
         return self._airqualitylevel_service.purityRating
 
+    @property
+    def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
+        return self._smokedetectorcheck_service.value
+
+    def smoketest_requested(self):
+        self._smokedetectorcheck_service.put_state_element(
+            "value", "SMOKE_TEST_REQUESTED"
+        )
+
     def update(self):
         self._airqualitylevel_service.short_poll()
+        self._smokedetectorcheck_service.short_poll()
         super().update()
 
     def summary(self):
