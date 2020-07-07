@@ -45,10 +45,10 @@ class SHCAPI:
         urllib3.disable_warnings()
 
     def _get_api_result_or_fail(
-        self, api_url, expected_type=None, expected_element_type=None, headers=None
+        self, api_url, expected_type=None, expected_element_type=None, headers=None, timeout=30
     ):
         try:
-            result = self._requests_session.get(api_url, headers=headers)
+            result = self._requests_session.get(api_url, headers=headers, timeout=timeout)
             if not result.ok:
                 self._process_nok_result(result)
 
@@ -67,8 +67,8 @@ class SHCAPI:
         except requests.exceptions.SSLError as e:
             raise Exception(f"API call returned SSLError: {e}.")
 
-    def _put_api_or_fail(self, api_url, body):
-        result = self._requests_session.put(api_url, data=json.dumps(body))
+    def _put_api_or_fail(self, api_url, body, timeout=30):
+        result = self._requests_session.put(api_url, data=json.dumps(body), timeout=timeout)
         if not result.ok:
             self._process_nok_result(result)
         if len(result.content) > 0:
@@ -76,8 +76,8 @@ class SHCAPI:
         else:
             return {}
 
-    def _post_api_or_fail(self, api_url, body):
-        result = self._requests_session.post(api_url, data=json.dumps(body))
+    def _post_api_or_fail(self, api_url, body, timeout=30):
+        result = self._requests_session.post(api_url, data=json.dumps(body), timeout=timeout)
         if not result.ok:
             self._process_nok_result(result)
         if len(result.content) > 0:
@@ -148,7 +148,7 @@ class SHCAPI:
                 "params": [poll_id, wait_seconds],
             }
         ]
-        result = self._post_api_or_fail(self._rpc_root, data)
+        result = self._post_api_or_fail(self._rpc_root, data, wait_seconds + 5)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(

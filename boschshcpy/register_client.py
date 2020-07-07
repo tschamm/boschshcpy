@@ -26,9 +26,9 @@ class SHCRegisterClient:
 
         urllib3.disable_warnings()
 
-    def _post_api_or_fail(self, body):
+    def _post_api_or_fail(self, body, timeout=30):
         try:
-            result = self._requests_session.post(self._url, data=json.dumps(body))
+            result = self._requests_session.post(self._url, data=json.dumps(body), timeout=timeout)
             if not result.ok:
                 self._process_nok_result(result)
             if len(result.content) > 0:
