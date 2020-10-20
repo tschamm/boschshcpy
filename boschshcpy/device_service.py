@@ -40,10 +40,13 @@ class SHCDeviceService:
         print(f"    State: {self.state}")
         print(f"    Path:  {self.path}")
 
-    def put_state_element(self, key, value):
+    def put_state(self, key_value_pairs):
         self._api.put_device_service_state(
-            self.device_id, self.id, {"@type": self.state["@type"], key: value}
+            self.device_id, self.id, {"@type": self.state["@type"], **key_value_pairs}
         )
+
+    def put_state_element(self, key, value):
+        self.put_state({key: value})
 
     def short_poll(self):
         self._raw_device_service = self._api.get_device_service(self.device_id, self.id)
