@@ -431,12 +431,12 @@ class AirQualityLevelService(SHCDeviceService):
 
 
 class SurveillanceAlarmService(SHCDeviceService):
-    class SurveillanceAlarmState(Enum):
+    class State(Enum):
         ALARM_OFF = "ALARM_OFF"
 
     @property
-    def value(self) -> SurveillanceAlarmState:
-        return self.SurveillanceAlarmState(self.state["value"])
+    def value(self) -> State:
+        return self.State(self.state["value"])
 
     def summary(self):
         super().summary()

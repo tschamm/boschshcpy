@@ -7,7 +7,7 @@ from .services_impl import (
     HumidityLevelService,
     IntrusionDetectionControlService,
     ShutterContactService,
-    ShutterControlService,
+    ShutterControlService, SurveillanceAlarmService,
     TemperatureLevelService,
     ValveTappetService,
 )
@@ -487,6 +487,27 @@ class SHCTwinguard(SHCBatteryDevice):
         print(f"TWINGUARD:")
         super().summary()
 
+class SHCSmokeDetectionSystem(SHCDevice):
+    from .services_impl import SurveillanceAlarmService
+
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+        self._surveillancealarm_service = self.device_service("SurveillanceAlarm")
+        # self._smokedetectioncontrol_service = self.device_service("SmokeDetectionControl")
+
+    @property
+    def alarm(self) -> SurveillanceAlarmService.State:
+        return self._surveillancealarm_service.value
+
+    def update(self):
+        self._surveillancealarm_service.short_poll()
+        # self._smokedetectioncontrol_service.short_poll()
+        super().update()
+
+    def summary(self):
+        print(f"SMOKE_DETECTION_SYSTEM:")
+        super().summary()
+
 
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
@@ -502,6 +523,7 @@ MODEL_MAPPING = {
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "TWINGUARD": SHCTwinguard,
+    "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
 }
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"
