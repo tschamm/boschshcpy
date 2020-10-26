@@ -16,7 +16,7 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key, enumerate=True):
+    def __init__(self, controller_ip: str, certificate, key, lazy=False):
         # API
         self._api = SHCAPI(
             controller_ip=controller_ip, certificate=certificate, key=key
@@ -34,9 +34,7 @@ class SHCSession:
         self._scenarios_by_id = {}
         self._devices_by_id = {}
 
-        self._get_information()
-
-        if enumerate:
+        if not lazy:
             self._enumerate_all()
 
         self._polling_thread = None
@@ -48,10 +46,10 @@ class SHCSession:
         self._callback = None
 
     def _enumerate_all(self):
+        self._get_information()
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
-        self._get_information()
 
     def _enumerate_devices(self):
         raw_devices = self._api.get_devices()
@@ -221,6 +219,8 @@ class SHCSession:
 
     @property
     def information(self) -> SHCInformation:
+        if self._shc_information is None:
+            self._get_information()
         return self._shc_information
 
     @property
