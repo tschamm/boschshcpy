@@ -103,6 +103,15 @@ class SHCAPI:
             return None
         return result
 
+    def get_publicinformation(self):
+        api_url = f"{self._api_root}/public/information"
+        try:
+            result = self._get_api_result_or_fail(api_url)
+        except Exception as e:
+            logging.error(f"Failed to get public information from SHC controller: {e}")
+            return None
+        return result
+
     def get_rooms(self):
         api_url = f"{self._api_root}/rooms"
         return self._get_api_result_or_fail(api_url, expected_element_type="room")

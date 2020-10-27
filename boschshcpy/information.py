@@ -1,5 +1,5 @@
 from enum import Enum
-
+from getmac import get_mac_address
 
 class SHCInformation:
     class UpdateState(Enum):
@@ -32,8 +32,13 @@ class SHCInformation:
             else "n/a"
         )
 
+    @property
+    def macAddress(self):
+        return get_mac_address(ip=self._api._controller_ip)
+
     def summary(self):
         print(f"Information:")
         print(f"  SW Version         : {self.version}")
         print(f"  State              : {self.updateState}")
         print(f"  connectivityVersion: {self.connectivityVersion}")
+        print(f"  mac address        : {self.macAddress}")
