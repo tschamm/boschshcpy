@@ -83,6 +83,8 @@ class SHCSession:
 
     def _get_information(self):
         raw_information = self._api.get_shcinformation()
+        if raw_information is None:
+            return
         self._shc_information = SHCInformation(
             api=self._api, raw_information=raw_information
         )
@@ -219,8 +221,10 @@ class SHCSession:
 
     @property
     def information(self) -> SHCInformation:
-        if self._shc_information is None:
-            self._get_information()
+        return self._shc_information
+
+    def acquire_information(self) -> SHCInformation:
+        self._get_information()
         return self._shc_information
 
     @property

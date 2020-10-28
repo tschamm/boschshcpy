@@ -14,23 +14,15 @@ class SHCInformation:
 
     @property
     def version(self):
-        return self._raw_information["version"] if self._raw_information else "n/a"
+        return self._raw_information["version"]
 
     @property
     def updateState(self) -> UpdateState:
-        return self.UpdateState(
-            self._raw_information["updateState"]
-            if self._raw_information
-            else "NO_UPDATE_AVAILABLE"
-        )
+        return self.UpdateState(self._raw_information["updateState"])
 
     @property
     def connectivityVersion(self):
-        return (
-            self._raw_information["connectivityVersion"]
-            if self._raw_information
-            else "n/a"
-        )
+        return self._raw_information["connectivityVersion"]
 
     @property
     def macAddress(self):
