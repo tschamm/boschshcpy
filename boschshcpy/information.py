@@ -15,6 +15,7 @@ class SHCInformation:
     def __init__(self, api, raw_information):
         self._api = api
         self._raw_information = raw_information
+        self._mac_address = get_mac(host=self._api._controller_ip)
 
     @property
     def version(self):
@@ -30,14 +31,17 @@ class SHCInformation:
 
     @property
     def macAddress(self):
+        return self._mac_address
+
+    def getMacAddress(self):
         return get_mac(host=self._api._controller_ip)
 
     def summary(self):
         print(f"Information:")
-        print(f"  SW Version         : {self.version}")
-        print(f"  State              : {self.updateState}")
+        print(f"  SW-Version         : {self.version}")
+        print(f"  updateState        : {self.updateState}")
         print(f"  connectivityVersion: {self.connectivityVersion}")
-        print(f"  mac address        : {self.macAddress}")
+        print(f"  macAddress         : {self.macAddress}")
 
 def get_mac(host):
     """Get the mac address of the given host."""
