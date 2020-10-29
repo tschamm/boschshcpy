@@ -86,9 +86,9 @@ class SHCAPI:
             return {}
 
     def _process_nok_result(self, result):
-        print(f"Body: {result.request.body}")
-        print(f"Headers: {result.request.headers}")
-        print(f"URL: {result.request.url}")
+        logging.error(f"Body: {result.request.body}")
+        logging.error(f"Headers: {result.request.headers}")
+        logging.error(f"URL: {result.request.url}")
         raise ValueError(
             f"API call returned non-OK result (code {result.status_code})!: {result.content}"
         )

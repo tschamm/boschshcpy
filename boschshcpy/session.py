@@ -112,6 +112,8 @@ class SHCSession:
     def _maybe_unsubscribe(self):
         if self._poll_id is not None:
             self.api.long_polling_unsubscribe(self._poll_id)
+            logger.debug(f"Unsubscribed from long poll w/ poll id {self._poll_id}")
+            self._poll_id = None
 
     def _process_long_polling_poll_result(self, raw_result):
         if raw_result["@type"] == "DeviceServiceData":  # Parse DeviceServiceData type
@@ -176,6 +178,7 @@ class SHCSession:
 
     def stop_polling(self):
         if self._polling_thread is not None:
+            logger.debug(f"Unsubscribing from long poll")
             self._stop_polling_thread = True
             self._polling_thread.join()
 

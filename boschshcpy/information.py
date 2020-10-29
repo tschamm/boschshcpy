@@ -1,5 +1,9 @@
 from enum import Enum
+import logging
 from getmac import get_mac_address
+
+logger = logging.getLogger("boschshcpy")
+
 
 class SHCInformation:
     class UpdateState(Enum):
@@ -26,7 +30,7 @@ class SHCInformation:
 
     @property
     def macAddress(self):
-        return get_mac_address(ip=self._api._controller_ip)
+        return get_mac(host=self._api._controller_ip)
 
     def summary(self):
         print(f"Information:")
@@ -34,3 +38,14 @@ class SHCInformation:
         print(f"  State              : {self.updateState}")
         print(f"  connectivityVersion: {self.connectivityVersion}")
         print(f"  mac address        : {self.macAddress}")
+
+def get_mac(host):
+    """Get the mac address of the given host."""
+    try:
+        mac_address = get_mac_address(ip=host)
+        if not mac_address:
+            mac_address=get_mac_address(hostname = host)
+    except Exception as err:  # pylint: disable=broad-except
+        logging.error("Unable to get mac address: %s", err)
+        mac_address=None
+    return mac_address
