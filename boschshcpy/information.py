@@ -65,6 +65,10 @@ class SHCInformation:
     def macAddress(self):
         return self._mac_address
 
+    @property
+    def name(self):
+        return self._name
+
     def filter(self, devices):
         info: ServiceInfo
         for info in devices.values():
