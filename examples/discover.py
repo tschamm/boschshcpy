@@ -1,15 +1,28 @@
-from zeroconf import ServiceBrowser, Zeroconf
+from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 import Crypto.Hash.SHA256
 
 class MyListener:
+
+    def filter(self, info: ServiceInfo):
+        if "Bosch SHC" in info.name: 
+            print (info)
+            print (f"SHC Device found!")
+            print (f"Name: {info.get_name()}")
+            server_epos = info.server.find('.local.')
+            if server_epos > -1:
+                print (f"server: {info.server[:server_epos]}")
+
+        # print("Service %s added, service info: %s" % (name, info))
+
+    def update_service(self, arg0, arg1, arg2):
+        return
 
     def remove_service(self, zeroconf, type, name):
         print("Service %s removed" % (name,))
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
-        if "Bosch SHC" in name: print ("SHC Device found!")
-        print("Service %s added, service info: %s" % (name, info))
+        self.filter(info)
 
 
 zeroconf = Zeroconf()
