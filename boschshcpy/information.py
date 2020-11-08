@@ -1,34 +1,42 @@
-from boschshcpy import device
 from enum import Enum
-import time
+from zeroconf import Error as ZeroconfError, ServiceStateChange, ServiceBrowser, ServiceInfo, IPVersion, current_time_millis
 import logging
 
-from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo, IPVersion
+import time, socket
 
 logger = logging.getLogger("boschshcpy")
 
 class SHCListener:
-    def __init__(self) -> None:
+    """SHC Listener for Zeroconf browser updates."""
+
+    def __init__(self, zeroconf, callback) -> None:
+        """Initialize SHC Listener."""
         self.shc_services = {}
+        self.waiting = True
 
-    def update_service(self, arg0, arg1, arg2):
+        ServiceBrowser(zeroconf, "_http._tcp.local.", handlers=[self.service_update])
+        current_millis = current_time_millis()
+        while (self.waiting and current_time_millis() - current_millis < 10000): # Give zeroconf some time to respond
+            time.sleep(0.1)
+        callback(self.shc_services)
+
+    def service_update(self, zeroconf, service_type, name, state_change):
+        """Service state changed."""
+
+        if state_change != ServiceStateChange.Added:
+            return
+
+        try:
+            service_info = zeroconf.get_service_info(service_type, name)
+        except ZeroconfError:
+            logger.exception("Failed to get info for device %s", name)
+            return
+
+        if service_info and service_info.name.startswith("Bosch SHC"):
+            self.waiting = False
+
+        self.shc_services[name] = service_info
         return
-
-    def remove_service(self, zeroconf, type, name):
-        self.shc_services[name] = None
-
-    def add_service(self, zeroconf, type, name):
-        info = zeroconf.get_service_info(type, name)
-        self.shc_services[name] = info
-
-def discover_shc_devices():
-    zeroconf = Zeroconf()
-    listener = SHCListener()
-    browser = ServiceBrowser(zeroconf, "_http._tcp.local.", listener)
-    time.sleep(3) # We have to give zeroconf services time to respond
-    zeroconf.close()
-
-    return listener.shc_services
 
 
 class SHCInformation:
@@ -38,16 +46,14 @@ class SHCInformation:
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
 
-    def __init__(self, api, raw_information):
+    def __init__(self, api, raw_information, zeroconf):
         self._api = api
         self._raw_information = raw_information
-
+        self._mac_address = None
         self._name = None
-        self._mac_address = None        
-        self.filter(discover_shc_devices())
 
-        if self._mac_address is None or self._name is None:
-            logger.error("Unable to discover SHC device!")
+        if zeroconf is not None:
+            self._listener = SHCListener(zeroconf, self.filter)
 
     @property
     def version(self):
@@ -62,18 +68,18 @@ class SHCInformation:
         return self._raw_information["connectivityVersion"]
 
     @property
-    def macAddress(self):
-        return self._mac_address
-
-    @property
     def name(self):
         return self._name
 
-    def filter(self, devices):
+    @property
+    def mac_address(self):
+        return self._mac_address
+
+    def filter(self, service_info):
         info: ServiceInfo
-        for info in devices.values():
+        for info in service_info.values():
             if "Bosch SHC" in info.name: 
-                if self._api._controller_ip in info.parsed_addresses(IPVersion.V4Only):
+                if socket.gethostbyname(self._api.controller_ip) in info.parsed_addresses(IPVersion.V4Only):
                     self._mac_address = info.name[info.name.find('[')+1:info.name.find(']')]
                     server_pos = info.server.find('.local.')
                     if server_pos > -1:
@@ -84,5 +90,5 @@ class SHCInformation:
         print(f"  SW-Version         : {self.version}")
         print(f"  updateState        : {self.updateState}")
         print(f"  connectivityVersion: {self.connectivityVersion}")
-        print(f"  macAddress         : {self.macAddress}")
-        print(f"  name               : {self._name}")
+        print(f"  macAddress         : {self.mac_address}")
+        print(f"  name               : {self.name}")

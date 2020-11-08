@@ -44,6 +44,10 @@ class SHCAPI:
 
         urllib3.disable_warnings()
 
+    @property
+    def controller_ip(self):
+        return self._controller_ip
+
     def _get_api_result_or_fail(
         self, api_url, expected_type=None, expected_element_type=None, headers=None, timeout=30
     ):

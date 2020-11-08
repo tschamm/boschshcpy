@@ -16,7 +16,7 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key, lazy=False):
+    def __init__(self, controller_ip: str, certificate, key, lazy=False, zeroconf=None):
         # API
         self._api = SHCAPI(
             controller_ip=controller_ip, certificate=certificate, key=key
@@ -28,6 +28,7 @@ class SHCSession:
 
         # SHC Information
         self._shc_information = None
+        self._zeroconf = zeroconf
 
         # All devices
         self._rooms_by_id = {}
@@ -46,7 +47,7 @@ class SHCSession:
         self._callback = None
 
     def _enumerate_all(self):
-        self._get_information()
+        self.authenticate()
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
@@ -80,14 +81,6 @@ class SHCSession:
             scenario_id = raw_scenario["id"]
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
-
-    def _get_information(self):
-        raw_information = self._api.get_shcinformation()
-        if raw_information is None:
-            return
-        self._shc_information = SHCInformation(
-            api=self._api, raw_information=raw_information
-        )
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
@@ -222,12 +215,18 @@ class SHCSession:
     def scenario(self, scenario_id) -> SHCScenario:
         return self._scenarios_by_id[scenario_id]
 
+    def authenticate(self, zeroconf=None):
+        raw_information = self._api.get_shcinformation()
+        if raw_information is None:
+            return False
+
+        self._shc_information = SHCInformation(
+            api=self._api, raw_information=raw_information, zeroconf=zeroconf if zeroconf else self._zeroconf
+        )
+        return True
+
     @property
     def information(self) -> SHCInformation:
-        return self._shc_information
-
-    def acquire_information(self) -> SHCInformation:
-        self._get_information()
         return self._shc_information
 
     @property

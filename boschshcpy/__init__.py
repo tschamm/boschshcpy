@@ -17,3 +17,4 @@ from .device_helper import (
 )
 from .scenario import SHCScenario
 from .session import SHCSession
+from .information import SHCInformation
