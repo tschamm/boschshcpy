@@ -1,7 +1,8 @@
 from enum import Enum
+from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError
 from zeroconf import Error as ZeroconfError, ServiceStateChange, ServiceBrowser, ServiceInfo, IPVersion, current_time_millis
-import logging
 
+import logging
 import time, socket
 
 logger = logging.getLogger("boschshcpy")
@@ -75,15 +76,26 @@ class SHCInformation:
     def mac_address(self):
         return self._mac_address
 
-    def filter(self, service_info):
-        info: ServiceInfo
+    def filter(self, service_info: ServiceInfo):
+        mac_address = None
+        name = None
+
+        try:
+            host_ip = socket.gethostbyname(self._api.controller_ip)
+        except Exception as e:
+            raise SHCConnectionError
+
         for info in service_info.values():
             if "Bosch SHC" in info.name: 
-                if socket.gethostbyname(self._api.controller_ip) in info.parsed_addresses(IPVersion.V4Only):
-                    self._mac_address = info.name[info.name.find('[')+1:info.name.find(']')]
+                if host_ip in info.parsed_addresses(IPVersion.V4Only):
+                    mac_address = info.name[info.name.find('[')+1:info.name.find(']')]
                     server_pos = info.server.find('.local.')
                     if server_pos > -1:
-                        self._name = info.server[:server_pos]
+                        name = info.server[:server_pos]
+        if mac_address is None or name is None:
+            raise SHCmDNSError
+        self._mac_address = mac_address
+        self._name = name
 
     def summary(self):
         print(f"Information:")
