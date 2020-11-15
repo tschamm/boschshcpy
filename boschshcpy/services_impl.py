@@ -322,9 +322,18 @@ class IntrusionDetectionControlService(SHCDeviceService):
         SYSTEM_ARMED = "SYSTEM_ARMED"
         MUTE_ALARM = "MUTE_ALARM"
 
+    class Profile(Enum):
+        FULL_PROTECTION = 0
+        PARTIAL_PROTECTION = 1
+        CUSTOM_PROTECTION = 2
+
     @property
     def value(self) -> State:
         return self.State(self.state["value"])
+
+    @property
+    def activeProfile(self) -> Profile:
+        return self.Profile(int(self.state["activeProfile"]))
 
     @property
     def armActivationDelayTime(self) -> int:
@@ -337,6 +346,7 @@ class IntrusionDetectionControlService(SHCDeviceService):
     def summary(self):
         super().summary()
         print(f"    value                    : {self.value}")
+        print(f"    activeProfile            : {self.activeProfile}")
         print(f"    armActivationDelayTime   : {self.armActivationDelayTime}")
         print(f"    alarmActivationDelayTime : {self.alarmActivationDelayTime}")
 

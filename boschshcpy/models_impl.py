@@ -241,13 +241,13 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         self.full_arm()
 
     def full_arm(self):
-        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": "0"})
+        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": IntrusionDetectionControlService.Profile.FULL_PROTECTION.value})
 
     def partial_arm(self):
-        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": "1"})
+        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": IntrusionDetectionControlService.Profile.PARTIAL_PROTECTION.value})
 
     def custom_arm(self):
-        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": "2"})
+        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": IntrusionDetectionControlService.Profile.CUSTOM_PROTECTION.value})
 
     def mute_alarm(self):
         self.alarmstate = IntrusionDetectionControlService.State.MUTE_ALARM
@@ -278,6 +278,10 @@ class SHCIntrusionDetectionSystem(SHCDevice):
     @alarmstate.setter
     def alarmstate(self, state: IntrusionDetectionControlService.State):
         self._service.put_state_element("value", state.name)
+
+    @property
+    def alarmprofile(self) -> IntrusionDetectionControlService.Profile:
+        return self._service.activeProfile
 
     @property
     def armActivationDelayTime(self):
