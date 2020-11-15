@@ -74,6 +74,8 @@ intrusion_control = session.device_helper.intrusion_detection_system
 intrusion_control.arm_instant()
 ```
 
+To get a list of all devices, rooms and scenarios, see [apisummary.py Example](examples/apisummary.py)
+
 ## Usage guide
 
 Before accessing the Bosch Smart Home Controller, a client must be registered on the controller. For this a valid cert/key pair must be provided to the controller. To start the client registration, press and hold the button on the controller until the led starts flashing. More information [here](https://github.com/BoschSmartHome/bosch-shc-api-docs/tree/master/postman#register-a-new-client-to-the-bosch-smart-home-controller)

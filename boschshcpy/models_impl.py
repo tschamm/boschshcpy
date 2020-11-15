@@ -238,7 +238,7 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         self.alarmstate = IntrusionDetectionControlService.State.SYSTEM_DISARMED
 
     def arm(self):
-        self.fully_arm()
+        self.full_arm()
 
     def full_arm(self):
         self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": "0"})
