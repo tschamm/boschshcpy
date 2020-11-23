@@ -8,6 +8,7 @@ from .models_impl import (
     SHCCameraEyes,
     SHCClimateControl,
     SHCIntrusionDetectionSystem,
+    SHCLight,
     SHCMotionDetector,
     SHCShutterContact,
     SHCShutterControl,
@@ -119,3 +120,10 @@ class SHCDeviceHelper:
         if "INTRUSION_DETECTION_SYSTEM" not in SUPPORTED_MODELS:
             return None
         return list(self._devices_by_model["INTRUSION_DETECTION_SYSTEM"].values())[0]
+
+    @property
+    def ledvance_lights(self) -> typing.Sequence[SHCLight]:
+        if "LEDVANCE_LIGHT" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["LEDVANCE_LIGHT"].values())
+

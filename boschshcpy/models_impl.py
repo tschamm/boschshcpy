@@ -2,7 +2,8 @@ from enum import Enum
 
 from .device import SHCDevice
 from .services_impl import (
-    BatteryLevelService,
+    BatteryLevelService, 
+    BinarySwitchService,
     CameraLightService,
     HumidityLevelService,
     IntrusionDetectionControlService,
@@ -109,7 +110,7 @@ class SHCSmartPlug(SHCDevice):
         self._powermeter_service.short_poll()
 
     def summary(self):
-        print(f"PSM SmartPlug:")
+        print(f"PSM/BSM SmartPlug:")
         super().summary()
 
 
@@ -496,7 +497,7 @@ class SHCSmokeDetectionSystem(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._surveillancealarm_service = self.device_service("SurveillanceAlarm")
+        self._surveillancealarm_service: SurveillanceAlarmService = self.device_service("SurveillanceAlarm")
         # self._smokedetectioncontrol_service = self.device_service("SmokeDetectionControl")
 
     @property
@@ -510,6 +511,33 @@ class SHCSmokeDetectionSystem(SHCDevice):
 
     def summary(self):
         print(f"SMOKE_DETECTION_SYSTEM:")
+        super().summary()
+
+class SHCLight(SHCDevice):
+    from .services_impl import (
+        BinarySwitchService,
+    )
+
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+
+        self._binaryswitch_service: BinarySwitchService = self.device_service("BinarySwitch")
+
+    @property
+    def state(self) -> bool:
+        return self._binaryswitch_service.value
+
+    @state.setter
+    def state(self, state: bool):
+        self._binaryswitch_service.put_state_element(
+            "on", True if state else False
+        )
+
+    def update(self):
+        self._binaryswitch_service.short_poll()
+
+    def summary(self):
+        print(f"LEDVANCE Light:")
         super().summary()
 
 
@@ -528,6 +556,7 @@ MODEL_MAPPING = {
     "MD": SHCMotionDetector,
     "TWINGUARD": SHCTwinguard,
     "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
+    "LEDVANCE_LIGHT": SHCLight,
 }
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"

@@ -5,6 +5,7 @@ from .device_helper import (
     SHCClimateControl,
     SHCDeviceHelper,
     SHCIntrusionDetectionSystem,
+    SHCLight,
     SHCMotionDetector,
     SHCShutterContact,
     SHCShutterControl,

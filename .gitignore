@@ -10,3 +10,4 @@ __pycache__
 .pydevproject
 .vscode/settings.json
 .env
+*.pem
