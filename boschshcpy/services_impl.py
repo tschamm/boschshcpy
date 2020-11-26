@@ -210,6 +210,25 @@ class MultiLevelSwitchService(SHCDeviceService):
         super().summary()
         print(f"    multiLevelSwitchState    : {self.value}")
 
+class HueColorTemperatureService(SHCDeviceService):
+    @property
+    def value(self) -> int:
+        return self.state["colorTemperature"]
+
+    @property
+    def min_value(self) -> int:
+        return self.state["colorTemperatureRange"]["minCt"]
+
+    @property
+    def max_value(self) -> int:
+        return self.state["colorTemperatureRange"]["maxCt"]
+
+    def summary(self):
+        super().summary()
+        print(f"    colorTemperature         : {self.value}")
+        print(f"    minColorTemperature      : {self.min_value}")
+        print(f"    maxColorTemperature      : {self.max_value}")
+
 
 class SmokeDetectorCheckService(SHCDeviceService):
     class State(Enum):
@@ -531,6 +550,7 @@ SERVICE_MAPPING = {
     "PowerSwitchProgram": PowerSwitchProgramService,
     "BinarySwitch": BinarySwitchService,
     "MultiLevelSwitch": MultiLevelSwitchService,
+    "HueColorTemperature": HueColorTemperatureService,
     "SmokeDetectorCheck": SmokeDetectorCheckService,
     "Alarm": AlarmService,
     "ShutterControl": ShutterControlService,

@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, Flag, auto
 
 from .device import SHCDevice
 from .services_impl import (
@@ -516,14 +516,26 @@ class SHCSmokeDetectionSystem(SHCDevice):
 class SHCLight(SHCDevice):
     from .services_impl import (
         BinarySwitchService,
-        MultiLevelSwitchService
+        MultiLevelSwitchService,
+        HueColorTemperatureService
     )
+    
+    class Capabilities(Flag):
+        BRIGHTNESS = auto()
+        COLOR = auto()
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
         self._binaryswitch_service: BinarySwitchService = self.device_service("BinarySwitch")
-        self._multilevelswitch_service: MultiLevelSwitchService = self.device_service("MultiLevelSwitch")
+        self._multilevelswitch_service = self.device_service("MultiLevelSwitch")
+        self._huecolortemperature_service = self.device_service("HueColorTemperature")
+
+        self._capabilities = self.Capabilities(0)
+        if self._multilevelswitch_service:
+            self._capabilities |= self.Capabilities.BRIGHTNESS
+        if self._huecolortemperature_service:
+            self._capabilities |= self.Capabilities.COLOR
 
     @property
     def state(self) -> bool:
@@ -537,20 +549,60 @@ class SHCLight(SHCDevice):
 
     @property
     def brightness(self) -> int:
-        return self._multilevelswitch_service.value
+        if (self._capabilities & self.Capabilities.BRIGHTNESS) == self.Capabilities.BRIGHTNESS:
+            return self._multilevelswitch_service.value
+        return 0
 
-    @state.setter
+    @brightness.setter
     def brightness(self, state: int):
-        self._multilevelswitch_service.put_state_element(
-            "level", state
-        )
+        if (self._capabilities & self.Capabilities.BRIGHTNESS) == self.Capabilities.BRIGHTNESS:
+            self._multilevelswitch_service.put_state_element(
+                "level", state
+            )
+
+    @property
+    def color(self) -> int:
+        if (self._capabilities & self.Capabilities.COLOR) == self.Capabilities.COLOR:
+            return self._huecolortemperature_service.value
+        return 0
+
+    @color.setter
+    def color(self, state: int):
+        if (self._capabilities & self.Capabilities.COLOR) == self.Capabilities.COLOR:
+            self._huecolortemperature_service.put_state_element(
+                "colorTemperature", state
+            )
+   
+    @property
+    def min_color_temperature(self) -> int:
+        if (self._capabilities & self.Capabilities.COLOR) == self.Capabilities.COLOR:
+            return self._huecolortemperature_service.min_value
+        return 0
+
+    @property
+    def max_color_temperature(self) -> int:
+        if (self._capabilities & self.Capabilities.COLOR) == self.Capabilities.COLOR:
+            return self._huecolortemperature_service.max_value
+        return 0
+
+    @property
+    def supports_brightness(self) -> bool:
+        return (self._capabilities & self.Capabilities.BRIGHTNESS) == self.Capabilities.BRIGHTNESS
+
+    @property
+    def supports_color(self) -> bool:
+        return (self._capabilities & self.Capabilities.COLOR) == self.Capabilities.COLOR
 
     def update(self):
         self._binaryswitch_service.short_poll()
-        self._multilevelswitch_service.short_poll()
+        if (self._capabilities & self.Capabilities.BRIGHTNESS) == self.Capabilities.BRIGHTNESS:
+            self._multilevelswitch_service.short_poll()
+        if (self._capabilities & self.Capabilities.COLOR) == self.Capabilities.COLOR:
+            self._huecolortemperature_service.short_poll()
 
     def summary(self):
-        print(f"LEDVANCE Light:")
+        print(f"HUE/LEDVANCE Light:")
+        print(f"  Capabilities               : {self._capabilities}")
         super().summary()
 
 
@@ -570,6 +622,7 @@ MODEL_MAPPING = {
     "TWINGUARD": SHCTwinguard,
     "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
     "LEDVANCE_LIGHT": SHCLight,
+    "HUE_LIGHT": SHCLight,
 }
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"

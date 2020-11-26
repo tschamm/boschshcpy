@@ -72,7 +72,7 @@ class SHCDevice:
         return set(self._device_services_by_id.keys())
 
     def device_service(self, device_service_id):
-        return self._device_services_by_id[device_service_id]
+        return self._device_services_by_id[device_service_id] if device_service_id in self._device_services_by_id else None
 
     def summary(self):
         print(f"Device: {self.id}")

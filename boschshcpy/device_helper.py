@@ -127,3 +127,9 @@ class SHCDeviceHelper:
             return []
         return list(self._devices_by_model["LEDVANCE_LIGHT"].values())
 
+    @property
+    def hue_lights(self) -> typing.Sequence[SHCLight]:
+        if "HUE_LIGHT" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["HUE_LIGHT"].values())
+
