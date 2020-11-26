@@ -201,6 +201,16 @@ class BinarySwitchService(SHCDeviceService):
         print(f"    switchState              : {self.value}")
 
 
+class MultiLevelSwitchService(SHCDeviceService):
+    @property
+    def value(self) -> int:
+        return self.state["level"]
+
+    def summary(self):
+        super().summary()
+        print(f"    multiLevelSwitchState    : {self.value}")
+
+
 class SmokeDetectorCheckService(SHCDeviceService):
     class State(Enum):
         NONE = "NONE"
@@ -520,6 +530,7 @@ SERVICE_MAPPING = {
     "Routing": RoutingService,
     "PowerSwitchProgram": PowerSwitchProgramService,
     "BinarySwitch": BinarySwitchService,
+    "MultiLevelSwitch": MultiLevelSwitchService,
     "SmokeDetectorCheck": SmokeDetectorCheckService,
     "Alarm": AlarmService,
     "ShutterControl": ShutterControlService,

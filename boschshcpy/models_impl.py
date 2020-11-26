@@ -516,12 +516,14 @@ class SHCSmokeDetectionSystem(SHCDevice):
 class SHCLight(SHCDevice):
     from .services_impl import (
         BinarySwitchService,
+        MultiLevelSwitchService
     )
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
         self._binaryswitch_service: BinarySwitchService = self.device_service("BinarySwitch")
+        self._multilevelswitch_service: MultiLevelSwitchService = self.device_service("MultiLevelSwitch")
 
     @property
     def state(self) -> bool:
@@ -533,8 +535,19 @@ class SHCLight(SHCDevice):
             "on", True if state else False
         )
 
+    @property
+    def brightness(self) -> int:
+        return self._multilevelswitch_service.value
+
+    @state.setter
+    def brightness(self, state: int):
+        self._multilevelswitch_service.put_state_element(
+            "level", state
+        )
+
     def update(self):
         self._binaryswitch_service.short_poll()
+        self._multilevelswitch_service.short_poll()
 
     def summary(self):
         print(f"LEDVANCE Light:")
