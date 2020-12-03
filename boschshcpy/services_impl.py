@@ -229,6 +229,29 @@ class HueColorTemperatureService(SHCDeviceService):
         print(f"    minColorTemperature      : {self.min_value}")
         print(f"    maxColorTemperature      : {self.max_value}")
 
+class HSBColorActuatorService(SHCDeviceService):
+    @property
+    def value(self) -> int:
+        return self.state["rgb"]
+
+    @property
+    def gamut(self) -> str:
+        return self.state["gamut"]
+
+    @property
+    def min_value(self) -> int:
+        return self.state["colorTemperatureRange"]["minCt"]
+
+    @property
+    def max_value(self) -> int:
+        return self.state["colorTemperatureRange"]["maxCt"]
+
+    def summary(self):
+        super().summary()
+        print(f"    rgb                      : {self.value}")
+        print(f"    gamut                    : {self.gamut}")
+        print(f"    minColorTemperature      : {self.min_value}")
+        print(f"    maxColorTemperature      : {self.max_value}")
 
 class SmokeDetectorCheckService(SHCDeviceService):
     class State(Enum):
@@ -537,33 +560,50 @@ class ThermostatService(SHCDeviceService):
         super().summary()
         print(f"    childLock                : {self.value}")
 
+class CommunicationQualityService(SHCDeviceService):
+    class State(Enum):
+        GOOD = "GOOD"
+        MEDIUM = "MEDIUM"
+        BAD = "BAD"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["quality"])
+
+    def summary(self):
+        super().summary()
+        print(f"    quality                  : {self.value}")
+
 
 SERVICE_MAPPING = {
-    "TemperatureLevel": TemperatureLevelService,
-    "HumidityLevel": HumidityLevelService,
-    "RoomClimateControl": RoomClimateControlService,
-    "ShutterContact": ShutterContactService,
-    "ValveTappet": ValveTappetService,
-    "PowerSwitch": PowerSwitchService,
-    "PowerMeter": PowerMeterService,
-    "Routing": RoutingService,
-    "PowerSwitchProgram": PowerSwitchProgramService,
-    "BinarySwitch": BinarySwitchService,
-    "MultiLevelSwitch": MultiLevelSwitchService,
-    "HueColorTemperature": HueColorTemperatureService,
-    "SmokeDetectorCheck": SmokeDetectorCheckService,
+    "AirQualityLevel": AirQualityLevelService,
     "Alarm": AlarmService,
-    "ShutterControl": ShutterControlService,
+    "BatteryLevel": BatteryLevelService,
+    "BinarySwitch": BinarySwitchService,
     "CameraLight": CameraLightService,
-    "PrivacyMode": PrivacyModeService,
     "CameraNotification": CameraNotificationService,
+    "CommunicationQuality": CommunicationQualityService,
+    "HSBColorActuator": HSBColorActuatorService,
+    "HueColorTemperature": HueColorTemperatureService,
+    "HumidityLevel": HumidityLevelService,
     "IntrusionDetectionControl": IntrusionDetectionControlService,
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
-    "AirQualityLevel": AirQualityLevelService,
+    "MultiLevelSwitch": MultiLevelSwitchService,
+    "PowerMeter": PowerMeterService,
+    "PowerSwitch": PowerSwitchService,
+    "PowerSwitchProgram": PowerSwitchProgramService,
+    "PrivacyMode": PrivacyModeService,
+    "RoomClimateControl": RoomClimateControlService,
+    "Routing": RoutingService,
+    "ShutterContact": ShutterContactService,
+    "ShutterControl": ShutterControlService,
+    "SmokeDetectorCheck": SmokeDetectorCheckService,
     "SurveillanceAlarm": SurveillanceAlarmService,
-    "BatteryLevel": BatteryLevelService,
+    "TemperatureLevel": TemperatureLevelService,
     "Thermostat": ThermostatService,
+    "ValveTappet": ValveTappetService,
 }
 
 #    "SmokeDetectionControl": SmokeDetectionControlService,

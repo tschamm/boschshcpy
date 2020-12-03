@@ -82,6 +82,7 @@ class SHCDevice:
         print(f"  Room          : {self.room_id}")
         print(f"  Serial        : {self.serial}")
         print(f"  Profile       : {self.profile}")
+        print(f"  Status        : {self.status}")
         for device_service in self.device_services:
             device_service.summary()
 
