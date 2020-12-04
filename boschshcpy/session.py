@@ -200,7 +200,10 @@ class SHCSession:
         return list(self._rooms_by_id.values())
 
     def room(self, room_id) -> SHCRoom:
-        return self._rooms_by_id[room_id]
+        if room_id is not None:
+            return self._rooms_by_id[room_id]
+
+        return SHCRoom(self.api, {"id": "n/a", "name": "n/a", "iconId": "0"})
 
     @property
     def scenarios(self) -> typing.Sequence[SHCScenario]:
