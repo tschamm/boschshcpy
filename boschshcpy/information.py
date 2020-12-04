@@ -33,10 +33,11 @@ class SHCListener:
             logger.exception("Failed to get info for device %s", name)
             return
 
-        if service_info and service_info.name.startswith("Bosch SHC"):
-            self.waiting = False
+        if service_info is not None:
+            if service_info.name.startswith("Bosch SHC"):
+                self.waiting = False
+            self.shc_services[name] = service_info
 
-        self.shc_services[name] = service_info
         return
 
 
@@ -86,7 +87,7 @@ class SHCInformation:
             raise SHCConnectionError
 
         for info in service_info.values():
-            if "Bosch SHC" in info.name: 
+            if "Bosch SHC" in info.name:
                 if host_ip in info.parsed_addresses(IPVersion.V4Only):
                     mac_address = info.name[info.name.find('[')+1:info.name.find(']')]
                     server_pos = info.server.find('.local.')
