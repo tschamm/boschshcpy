@@ -7,7 +7,7 @@ import typing
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
-from .exceptions import SHCAuthenticationError
+from .exceptions import SHCAuthenticationError, SHCmDNSError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -224,14 +224,24 @@ class SHCSession:
         if raw_information is None:
             raise SHCAuthenticationError
 
-        self._shc_information = SHCInformation(
-            api=self._api, raw_information=raw_information, zeroconf=self._zeroconf
-        )
+        try:
+            self._shc_information = SHCInformation(
+                api=self._api, raw_information=raw_information, zeroconf=self._zeroconf
+            )
+        except SHCmDNSError:
+            self._shc_information = SHCInformation(
+                api=self._api, raw_information=raw_information
+            )
 
     def mdns_info(self) -> SHCInformation:
-        return SHCInformation(
-            api=self._api, raw_information=None, zeroconf=self._zeroconf
-        )
+        try:
+            return SHCInformation(
+                api=self._api, raw_information=None, zeroconf=self._zeroconf
+            )
+        except SHCmDNSError:
+            return SHCInformation(
+                api=self._api, raw_information=None
+            )
 
     @property
     def information(self) -> SHCInformation:

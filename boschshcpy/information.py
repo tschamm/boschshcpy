@@ -1,6 +1,7 @@
 from enum import Enum
 from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError
 from zeroconf import Error as ZeroconfError, ServiceStateChange, ServiceBrowser, ServiceInfo, IPVersion, current_time_millis
+from getmac import get_mac_address
 
 import logging
 import time, socket
@@ -56,6 +57,8 @@ class SHCInformation:
 
         if zeroconf is not None:
             self._listener = SHCListener(zeroconf, self.filter)
+        else:
+            self.get_mac(self._api.controller_ip)
 
     @property
     def version(self):
@@ -97,6 +100,20 @@ class SHCInformation:
             raise SHCmDNSError
         self._mac_address = mac_address
         self._name = name
+
+    def get_mac(self, host):
+        """Get the mac address of the given host."""
+        try:
+            mac_address = get_mac_address(ip=host)
+            if not mac_address:
+                mac_address=get_mac_address(hostname = host)
+        except Exception as err:  # pylint: disable=broad-except
+            logger.exception("Unable to get mac address: %s", err)
+            mac_address=None
+        if mac_address is None:
+            raise SHCmDNSError
+        self._mac_address = mac_address
+        self._name = host
 
     def summary(self):
         print(f"Information:")
