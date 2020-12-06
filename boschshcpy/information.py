@@ -98,7 +98,7 @@ class SHCInformation:
                         name = info.server[:server_pos]
         if mac_address is None or name is None:
             raise SHCmDNSError
-        self._mac_address = mac_address
+        self._mac_address = format_mac(mac_address)
         self._name = name
 
     def get_mac(self, host):
@@ -112,7 +112,7 @@ class SHCInformation:
             mac_address=None
         if mac_address is None:
             raise SHCmDNSError
-        self._mac_address = mac_address
+        self._mac_address = format_mac(mac_address)
         self._name = host
 
     def summary(self):
@@ -122,3 +122,25 @@ class SHCInformation:
         print(f"  connectivityVersion: {self.connectivityVersion}")
         print(f"  macAddress         : {self.mac_address}")
         print(f"  name               : {self.name}")
+
+def format_mac(mac: str) -> str:
+    """
+    Format the mac address string. 
+    Helper function from homeassistant.helpers.device_registry.py
+    """
+    to_test = mac
+
+    if len(to_test) == 17 and to_test.count("-") == 5:
+        return to_test.lower()
+
+    if len(to_test) == 17 and to_test.count(":") == 5:
+        to_test = to_test.replace(":", "")
+    elif len(to_test) == 14 and to_test.count(".") == 2:
+        to_test = to_test.replace(".", "")
+
+    if len(to_test) == 12:
+        # no - included
+        return "-".join(to_test.lower()[i : i + 2] for i in range(0, 12, 2))
+
+    # Not sure how formatted, return original
+    return mac
