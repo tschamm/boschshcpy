@@ -49,7 +49,7 @@ class SHCInformation:
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
 
-    def __init__(self, api, raw_information, zeroconf):
+    def __init__(self, api, raw_information, zeroconf = None):
         self._api = api
         self._raw_information = raw_information
         self._mac_address = None
