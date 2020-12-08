@@ -419,7 +419,7 @@ class SHCMotionDetector(SHCBatteryDevice):
 
     @property
     def latestmotion(self) -> str:
-        return self._service.latestMotion
+        return self._service.latestMotionDetected
 
     def update(self):
         self._service.short_poll()
