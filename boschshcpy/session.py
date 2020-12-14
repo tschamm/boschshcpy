@@ -53,21 +53,28 @@ class SHCSession:
         self._enumerate_rooms()
         self._enumerate_scenarios()
 
+    def _add_device(self, raw_device):
+        device_id = raw_device["id"]
+
+        if set(raw_device["deviceServiceIds"]).isdisjoint(
+            SUPPORTED_DEVICE_SERVICE_IDS
+        ):
+            logger.debug(
+                f"Skipping device id {device_id} which has no services that are supported by this library"
+            )
+            return
+
+        self._devices_by_id[device_id] = self._device_helper.device_init(raw_device)
+
+    def _update_device(self, raw_device):
+        device_id = raw_device["id"]
+        self._devices_by_id[device_id].update_raw_information(raw_device)
+
     def _enumerate_devices(self):
         raw_devices = self._api.get_devices()
 
         for raw_device in raw_devices:
-            device_id = raw_device["id"]
-
-            if set(raw_device["deviceServiceIds"]).isdisjoint(
-                SUPPORTED_DEVICE_SERVICE_IDS
-            ):
-                logger.debug(
-                    f"Skipping device id {device_id} which has no services that are supported by this library"
-                )
-                continue
-
-            self._devices_by_id[device_id] = self._device_helper.device_init(raw_device)
+            self._add_device(raw_device)
 
     def _enumerate_rooms(self):
         raw_rooms = self._api.get_rooms()
@@ -130,6 +137,22 @@ class SHCSession:
             return
         if raw_result["@type"] == "scenarioTriggered":  # Parse scenarioTriggered type
             self._callback(raw_result["id"], raw_result["name"], raw_result["lastTimeTriggered"])
+            return
+        if raw_result["@type"] == "device":  # Parse device type
+            device_id = raw_result["id"]
+            if device_id in self._devices_by_id.keys():
+                if "deleted" in raw_result and raw_result["deleted"] == True: # Device deleted
+                    # inform on deleted device before removing device
+                    logger.debug("Deleting device with id %s", device_id)
+                    self._devices_by_id.pop(device_id, None)
+                else: # Update device asset information of device
+                    logger.debug("Updating device with id %s", device_id)
+                    self._update_device(raw_result)
+                    # inform on updated device
+            else: # New device registered
+                logger.debug("Found new device with id %s", device_id)
+                self._add_device(raw_result)
+                # inform on new device
             return
         return
 

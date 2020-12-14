@@ -26,3 +26,5 @@ class SHCAuthenticationError(Exception):
 class SHCmDNSError(Exception):
     """Error to indicate a mDNS problem."""
 
+class SHCException(Exception):
+    """Generic SHC exception."""

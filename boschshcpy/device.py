@@ -2,6 +2,7 @@ import logging
 import typing
 
 from .device_service import SHCDeviceService
+from .exceptions import SHCException
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS, build
 
 logger = logging.getLogger("boschshcpy")
@@ -26,6 +27,11 @@ class SHCDevice:
             device_service = build(self._api, raw_device_service_data)
 
             self._device_services_by_id[device_service_id] = device_service
+
+    def update_raw_information(self, raw_device):
+        if self._raw_device["id"] != raw_device["id"]:
+            raise SHCException("Error due to mismatching device ids!")
+        self._raw_device = raw_device
 
     @property
     def root_device_id(self):
