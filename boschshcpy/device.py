@@ -13,6 +13,7 @@ class SHCDevice:
         self._api = api
         self._raw_device = raw_device
 
+        self._callbacks = {}
         self._device_services_by_id = {}
         self._enumerate_services()
 
@@ -27,11 +28,6 @@ class SHCDevice:
             device_service = build(self._api, raw_device_service_data)
 
             self._device_services_by_id[device_service_id] = device_service
-
-    def update_raw_information(self, raw_device):
-        if self._raw_device["id"] != raw_device["id"]:
-            raise SHCException("Error due to mismatching device ids!")
-        self._raw_device = raw_device
 
     @property
     def root_device_id(self):
@@ -68,6 +64,10 @@ class SHCDevice:
     @property
     def status(self):
         return self._raw_device["status"]
+    
+    @property
+    def deleted(self):
+        return True if "deleted" in self._raw_device and self._raw_device["deleted"] == True else False
 
     @property
     def device_services(self) -> typing.Sequence[SHCDeviceService]:
@@ -76,6 +76,20 @@ class SHCDevice:
     @property
     def device_service_ids(self) -> typing.Set[str]:
         return set(self._device_services_by_id.keys())
+
+    def subscribe_callback(self, entity, callback):
+        self._callbacks[entity] = callback
+
+    def unsubscribe_callback(self, entity):
+        self._callbacks.pop(entity, None)
+
+    def update_raw_information(self, raw_device):
+        if self._raw_device["id"] != raw_device["id"]:
+            raise SHCException("Error due to mismatching device ids!")
+        self._raw_device = raw_device
+
+        for callback in self._callbacks:
+            self._callbacks[callback]()
 
     def device_service(self, device_service_id):
         return self._device_services_by_id[device_service_id] if device_service_id in self._device_services_by_id else None

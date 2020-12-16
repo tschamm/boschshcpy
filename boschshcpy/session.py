@@ -141,14 +141,11 @@ class SHCSession:
         if raw_result["@type"] == "device":  # Parse device type
             device_id = raw_result["id"]
             if device_id in self._devices_by_id.keys():
+                self._update_device(raw_result)
                 if "deleted" in raw_result and raw_result["deleted"] == True: # Device deleted
-                    # inform on deleted device before removing device
+                    # inform on deleted device
                     logger.debug("Deleting device with id %s", device_id)
                     self._devices_by_id.pop(device_id, None)
-                else: # Update device asset information of device
-                    logger.debug("Updating device with id %s", device_id)
-                    self._update_device(raw_result)
-                    # inform on updated device
             else: # New device registered
                 logger.debug("Found new device with id %s", device_id)
                 self._add_device(raw_result)
@@ -177,7 +174,7 @@ class SHCSession:
                         try:
                             self._maybe_unsubscribe()
                         except Exception as ex:
-                            logging.info(f"Unsubscribe unsuccessful: {ex}")
+                            logging.info(f"Unsubscribe not successful: {ex}")
 
                     except Exception as ex:
                         logging.error(
@@ -205,10 +202,10 @@ class SHCSession:
         else:
             raise ValueError("Not polling!")
 
-    def subscribe_callback(self, callback):
+    def subscribe_scenario_callback(self, callback):
         self._callback = callback
 
-    def unsubscribe_callback(self):
+    def unsubscribe_scenario_callback(self):
         self._callback = None
 
     @property
