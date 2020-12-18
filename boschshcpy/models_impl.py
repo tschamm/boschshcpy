@@ -339,6 +339,34 @@ class SHCClimateControl(SHCDevice):
         self._roomclimatecontrol_service.setpoint_temperature = temperature
 
     @property
+    def operation_mode(self) -> RoomClimateControlService.OperationMode:
+        return self._roomclimatecontrol_service.operation_mode
+
+    @operation_mode.setter
+    def operation_mode(self, mode: RoomClimateControlService.OperationMode):
+        self._roomclimatecontrol_service.operation_mode = mode
+
+    @property
+    def boost_mode(self) -> bool:
+        return self._roomclimatecontrol_service.boost_mode
+
+    @boost_mode.setter
+    def boost_mode(self, value: bool):
+        self._roomclimatecontrol_service.boost_mode = value
+
+    @property
+    def supports_boost_mode(self) -> bool:
+        return self._roomclimatecontrol_service.supports_boost_mode
+
+    @property
+    def low(self) -> bool:
+        return self._roomclimatecontrol_service.low
+
+    @low.setter
+    def low(self, value: bool):
+        self._roomclimatecontrol_service.low = value
+
+    @property
     def temperature(self) -> float:
         return self._temperaturelevel_service.temperature
 
