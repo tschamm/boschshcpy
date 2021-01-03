@@ -6,13 +6,13 @@ from zeroconf import Zeroconf
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-import boschshcpy
+from boschshcpy import SHCSession, SHCDeviceHelper
 
 # logging.basicConfig(level=logging.DEBUG)
 
 # Create session with additional zeroconf info
 zeroconf = Zeroconf()
-session = boschshcpy.SHCSession(
+session = SHCSession(
     controller_ip="192.168.1.6", certificate='../keystore/dev-cert.pem', key='../keystore/dev-key.pem', zeroconf=zeroconf)
 
 session.information.summary()

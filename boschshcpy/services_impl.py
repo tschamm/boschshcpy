@@ -6,9 +6,9 @@ from .device_service import SHCDeviceService
 class TemperatureLevelService(SHCDeviceService):
     @property
     def temperature(self) -> float:
-        if not self.state: 
-            return 0.
-        return float(self.state["temperature"] if "temperature" in self.state else 0.)
+        if not self.state:
+            return 0.0
+        return float(self.state["temperature"] if "temperature" in self.state else 0.0)
 
     def summary(self):
         super().summary()
@@ -18,9 +18,9 @@ class TemperatureLevelService(SHCDeviceService):
 class HumidityLevelService(SHCDeviceService):
     @property
     def humidity(self) -> float:
-        if not self.state: 
-            return 0.
-        return float(self.state["humidity"] if "humidity" in self.state else 0.)
+        if not self.state:
+            return 0.0
+        return float(self.state["humidity"] if "humidity" in self.state else 0.0)
 
     def summary(self):
         super().summary()
@@ -221,6 +221,7 @@ class MultiLevelSwitchService(SHCDeviceService):
         super().summary()
         print(f"    multiLevelSwitchState    : {self.value}")
 
+
 class HueColorTemperatureService(SHCDeviceService):
     @property
     def value(self) -> int:
@@ -239,6 +240,7 @@ class HueColorTemperatureService(SHCDeviceService):
         print(f"    colorTemperature         : {self.value}")
         print(f"    minColorTemperature      : {self.min_value}")
         print(f"    maxColorTemperature      : {self.max_value}")
+
 
 class HSBColorActuatorService(SHCDeviceService):
     @property
@@ -263,6 +265,7 @@ class HSBColorActuatorService(SHCDeviceService):
         print(f"    gamut                    : {self.gamut}")
         print(f"    minColorTemperature      : {self.min_value}")
         print(f"    maxColorTemperature      : {self.max_value}")
+
 
 class SmokeDetectorCheckService(SHCDeviceService):
     class State(Enum):
@@ -425,25 +428,25 @@ class KeypadService(SHCDeviceService):
 
     @property
     def keyCode(self) -> int:
-        if not self.state: 
+        if not self.state:
             return 0
         return self.state["keyCode"] if "keyCode" in self.state else 0
 
     @property
     def keyName(self) -> KeyState:
-        if not self.state: 
+        if not self.state:
             return None
         return self.KeyState(self.state["keyName"])
 
     @property
     def eventType(self) -> KeyEvent:
-        if not self.state: 
+        if not self.state:
             return None
         return self.KeyEvent(self.state["eventType"])
 
     @property
     def eventTimestamp(self) -> int:
-        if not self.state: 
+        if not self.state:
             return 0
         return self.state["eventTimestamp"]
 
@@ -543,9 +546,7 @@ class BatteryLevelService(SHCDeviceService):
     @property
     def warningLevel(self) -> State:
         faults = (
-            self._raw_device_service["faults"]
-            if "faults" in self._raw_device_service
-            else None
+            self._raw_device_service["faults"] if "faults" in self._raw_device_service else None
         )
         if not faults:
             return self.State("OK")
@@ -570,6 +571,7 @@ class ThermostatService(SHCDeviceService):
     def summary(self):
         super().summary()
         print(f"    childLock                : {self.value}")
+
 
 class CommunicationQualityService(SHCDeviceService):
     class State(Enum):
@@ -624,9 +626,5 @@ SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
 def build(api, raw_device_service):
     device_service_id = raw_device_service["id"]
-    assert (
-        device_service_id in SUPPORTED_DEVICE_SERVICE_IDS
-    ), "Device service is supported"
-    return SERVICE_MAPPING[device_service_id](
-        api=api, raw_device_service=raw_device_service
-    )
+    assert device_service_id in SUPPORTED_DEVICE_SERVICE_IDS, "Device service is supported"
+    return SERVICE_MAPPING[device_service_id](api=api, raw_device_service=raw_device_service)

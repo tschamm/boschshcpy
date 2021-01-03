@@ -16,8 +16,7 @@ from .device_helper import (
     SHCUniversalSwitch,
     SHCWallThermostat,
 )
+from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCmDNSError
+from .information import SHCInformation
 from .scenario import SHCScenario
 from .session import SHCSession
-from .information import SHCInformation
-
-from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCmDNSError

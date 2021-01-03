@@ -22,9 +22,7 @@ class SHCDevice:
             if device_service_id not in SUPPORTED_DEVICE_SERVICE_IDS:
                 continue
 
-            raw_device_service_data = self._api.get_device_service(
-                self.id, device_service_id
-            )
+            raw_device_service_data = self._api.get_device_service(self.id, device_service_id)
             device_service = build(self._api, raw_device_service_data)
 
             self._device_services_by_id[device_service_id] = device_service
@@ -64,10 +62,12 @@ class SHCDevice:
     @property
     def status(self):
         return self._raw_device["status"]
-    
+
     @property
     def deleted(self):
-        return True if "deleted" in self._raw_device and self._raw_device["deleted"] == True else False
+        return (
+            True if "deleted" in self._raw_device and self._raw_device["deleted"] == True else False
+        )
 
     @property
     def child_device_ids(self):
@@ -100,7 +100,11 @@ class SHCDevice:
             self._callbacks[callback]()
 
     def device_service(self, device_service_id):
-        return self._device_services_by_id[device_service_id] if device_service_id in self._device_services_by_id else None
+        return (
+            self._device_services_by_id[device_service_id]
+            if device_service_id in self._device_services_by_id
+            else None
+        )
 
     def summary(self):
         print(f"Device: {self.id}")

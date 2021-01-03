@@ -2,13 +2,14 @@ from enum import Enum, Flag, auto
 
 from .device import SHCDevice
 from .services_impl import (
-    BatteryLevelService, 
+    BatteryLevelService,
     BinarySwitchService,
     CameraLightService,
     HumidityLevelService,
     IntrusionDetectionControlService,
     ShutterContactService,
-    ShutterControlService, SurveillanceAlarmService,
+    ShutterControlService,
+    SurveillanceAlarmService,
     TemperatureLevelService,
     ValveTappetService,
 )
@@ -58,9 +59,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
         return self._smokedetectorcheck_service.value
 
     def smoketest_requested(self):
-        self._smokedetectorcheck_service.put_state_element(
-            "value", "SMOKE_TEST_REQUESTED"
-        )
+        self._smokedetectorcheck_service.put_state_element("value", "SMOKE_TEST_REQUESTED")
 
     def update(self):
         self._alarm_service.short_poll()
@@ -73,11 +72,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
 
 
 class SHCSmartPlug(SHCDevice):
-    from .services_impl import (
-        PowerSwitchService,
-        PowerMeterService,
-        PowerSwitchProgramService,
-    )
+    from .services_impl import PowerMeterService, PowerSwitchProgramService, PowerSwitchService
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -92,9 +87,7 @@ class SHCSmartPlug(SHCDevice):
 
     @state.setter
     def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
+        self._powerswitch_service.put_state_element("switchState", "ON" if state else "OFF")
 
     @property
     def energyconsumption(self) -> float:
@@ -130,9 +123,7 @@ class SHCShutterControl(SHCDevice):
         self._service.put_state_element("level", level)
 
     def stop(self):
-        self._service.put_state_element(
-            "operationState", ShutterControlService.State.STOPPED.name
-        )
+        self._service.put_state_element("operationState", ShutterControlService.State.STOPPED.name)
 
     @property
     def operation_state(self) -> ShutterControlService.State:
@@ -177,11 +168,7 @@ class SHCShutterContact(SHCBatteryDevice):
 
 
 class SHCCameraEyes(SHCDevice):
-    from .services_impl import (
-        CameraLightService,
-        CameraNotificationService,
-        PrivacyModeService,
-    )
+    from .services_impl import CameraLightService, CameraNotificationService, PrivacyModeService
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -196,9 +183,7 @@ class SHCCameraEyes(SHCDevice):
 
     @privacymode.setter
     def privacymode(self, state: bool):
-        self._privacymode_service.put_state_element(
-            "value", "ENABLED" if state else "DISABLED"
-        )
+        self._privacymode_service.put_state_element("value", "ENABLED" if state else "DISABLED")
 
     @property
     def cameranotification(self) -> CameraNotificationService.State:
@@ -242,13 +227,28 @@ class SHCIntrusionDetectionSystem(SHCDevice):
         self.full_arm()
 
     def full_arm(self):
-        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": IntrusionDetectionControlService.Profile.FULL_PROTECTION.value})
+        self._service.put_state(
+            {
+                "value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name,
+                "activeProfile": IntrusionDetectionControlService.Profile.FULL_PROTECTION.value,
+            }
+        )
 
     def partial_arm(self):
-        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": IntrusionDetectionControlService.Profile.PARTIAL_PROTECTION.value})
+        self._service.put_state(
+            {
+                "value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name,
+                "activeProfile": IntrusionDetectionControlService.Profile.PARTIAL_PROTECTION.value,
+            }
+        )
 
     def custom_arm(self):
-        self._service.put_state({"value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name, "activeProfile": IntrusionDetectionControlService.Profile.CUSTOM_PROTECTION.value})
+        self._service.put_state(
+            {
+                "value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name,
+                "activeProfile": IntrusionDetectionControlService.Profile.CUSTOM_PROTECTION.value,
+            }
+        )
 
     def mute_alarm(self):
         self.alarmstate = IntrusionDetectionControlService.State.MUTE_ALARM
@@ -385,7 +385,7 @@ class SHCClimateControl(SHCDevice):
 
 
 class SHCWallThermostat(SHCBatteryDevice):
-    from .services_impl import TemperatureLevelService, HumidityLevelService
+    from .services_impl import HumidityLevelService, TemperatureLevelService
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
@@ -511,9 +511,7 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._smokedetectorcheck_service.value
 
     def smoketest_requested(self):
-        self._smokedetectorcheck_service.put_state_element(
-            "value", "SMOKE_TEST_REQUESTED"
-        )
+        self._smokedetectorcheck_service.put_state_element("value", "SMOKE_TEST_REQUESTED")
 
     def update(self):
         self._airqualitylevel_service.short_poll()
@@ -524,12 +522,15 @@ class SHCTwinguard(SHCBatteryDevice):
         print(f"TWINGUARD:")
         super().summary()
 
+
 class SHCSmokeDetectionSystem(SHCDevice):
     from .services_impl import SurveillanceAlarmService
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._surveillancealarm_service: SurveillanceAlarmService = self.device_service("SurveillanceAlarm")
+        self._surveillancealarm_service: SurveillanceAlarmService = self.device_service(
+            "SurveillanceAlarm"
+        )
         # self._smokedetectioncontrol_service = self.device_service("SmokeDetectionControl")
 
     @property
@@ -545,14 +546,15 @@ class SHCSmokeDetectionSystem(SHCDevice):
         print(f"SMOKE_DETECTION_SYSTEM:")
         super().summary()
 
+
 class SHCLight(SHCDevice):
     from .services_impl import (
         BinarySwitchService,
-        MultiLevelSwitchService,
+        HSBColorActuatorService,
         HueColorTemperatureService,
-        HSBColorActuatorService
+        MultiLevelSwitchService,
     )
-    
+
     class Capabilities(Flag):
         BRIGHTNESS = auto()
         COLOR_TEMP = auto()
@@ -580,9 +582,7 @@ class SHCLight(SHCDevice):
 
     @state.setter
     def state(self, state: bool):
-        self._binaryswitch_service.put_state_element(
-            "on", True if state else False
-        )
+        self._binaryswitch_service.put_state_element("on", True if state else False)
 
     @property
     def brightness(self) -> int:
@@ -593,9 +593,7 @@ class SHCLight(SHCDevice):
     @brightness.setter
     def brightness(self, state: int):
         if (self._capabilities & self.Capabilities.BRIGHTNESS) == self.Capabilities.BRIGHTNESS:
-            self._multilevelswitch_service.put_state_element(
-                "level", state
-            )
+            self._multilevelswitch_service.put_state_element("level", state)
 
     @property
     def color(self) -> int:
@@ -606,10 +604,8 @@ class SHCLight(SHCDevice):
     @color.setter
     def color(self, state: int):
         if (self._capabilities & self.Capabilities.COLOR_TEMP) == self.Capabilities.COLOR_TEMP:
-            self._huecolortemperature_service.put_state_element(
-                "colorTemperature", state
-            )
-   
+            self._huecolortemperature_service.put_state_element("colorTemperature", state)
+
     @property
     def rgb(self) -> int:
         if (self._capabilities & self.Capabilities.COLOR_HSB) == self.Capabilities.COLOR_HSB:
@@ -619,10 +615,8 @@ class SHCLight(SHCDevice):
     @rgb.setter
     def rgb(self, state: int):
         if (self._capabilities & self.Capabilities.COLOR_HSB) == self.Capabilities.COLOR_HSB:
-            self._hsbcoloractuator_service.put_state_element(
-                "rgb", state
-            )
-   
+            self._hsbcoloractuator_service.put_state_element("rgb", state)
+
     @property
     def min_color_temperature(self) -> int:
         if (self._capabilities & self.Capabilities.COLOR_TEMP) == self.Capabilities.COLOR_TEMP:

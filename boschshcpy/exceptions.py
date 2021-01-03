@@ -17,14 +17,18 @@ class JSONRPCError(Exception):
     def __str__(self):
         return f"JSONRPCError (code: {self.code}, message: {self.message})"
 
+
 class SHCConnectionError(Exception):
     """Error to indicate a connection problem."""
+
 
 class SHCAuthenticationError(Exception):
     """Error to indicate an authentication problem."""
 
+
 class SHCmDNSError(Exception):
     """Error to indicate a mDNS problem."""
+
 
 class SHCException(Exception):
     """Generic SHC exception."""

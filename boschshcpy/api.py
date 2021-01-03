@@ -49,7 +49,12 @@ class SHCAPI:
         return self._controller_ip
 
     def _get_api_result_or_fail(
-        self, api_url, expected_type=None, expected_element_type=None, headers=None, timeout=30
+        self,
+        api_url,
+        expected_type=None,
+        expected_element_type=None,
+        headers=None,
+        timeout=30,
     ):
         try:
             result = self._requests_session.get(api_url, headers=headers, timeout=timeout)
@@ -147,9 +152,7 @@ class SHCAPI:
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(
-                result[0]["error"]["code"], result[0]["error"]["message"]
-            )
+            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
         else:
             return result[0]["result"]
 
@@ -164,9 +167,7 @@ class SHCAPI:
         result = self._post_api_or_fail(self._rpc_root, data, wait_seconds + 5)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(
-                result[0]["error"]["code"], result[0]["error"]["message"]
-            )
+            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
         else:
             return result[0]["result"]
 
@@ -175,8 +176,6 @@ class SHCAPI:
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(
-                result[0]["error"]["code"], result[0]["error"]["message"]
-            )
+            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
         else:
             return result[0]["result"]

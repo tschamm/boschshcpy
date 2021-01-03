@@ -1,12 +1,16 @@
-from enum import Enum
-from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError
-from zeroconf import Error as ZeroconfError, ServiceStateChange, ServiceBrowser, ServiceInfo, IPVersion, current_time_millis
-from getmac import get_mac_address
-
 import logging
-import time, socket
+import socket
+import time
+from enum import Enum
+
+from getmac import get_mac_address
+from zeroconf import Error as ZeroconfError
+from zeroconf import IPVersion, ServiceBrowser, ServiceInfo, ServiceStateChange, current_time_millis
+
+from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError
 
 logger = logging.getLogger("boschshcpy")
+
 
 class SHCListener:
     """SHC Listener for Zeroconf browser updates."""
@@ -18,7 +22,9 @@ class SHCListener:
 
         ServiceBrowser(zeroconf, "_http._tcp.local.", handlers=[self.service_update])
         current_millis = current_time_millis()
-        while (self.waiting and current_time_millis() - current_millis < 10000): # Give zeroconf some time to respond
+        while (
+            self.waiting and current_time_millis() - current_millis < 10000
+        ):  # Give zeroconf some time to respond
             time.sleep(0.1)
         callback(self.shc_services)
 
@@ -49,7 +55,7 @@ class SHCInformation:
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
 
-    def __init__(self, api, raw_information, zeroconf = None):
+    def __init__(self, api, raw_information, zeroconf=None):
         self._api = api
         self._raw_information = raw_information
         self._mac_address = None
@@ -92,8 +98,8 @@ class SHCInformation:
         for info in service_info.values():
             if "Bosch SHC" in info.name:
                 if host_ip in info.parsed_addresses(IPVersion.V4Only):
-                    mac_address = info.name[info.name.find('[')+1:info.name.find(']')]
-                    server_pos = info.server.find('.local.')
+                    mac_address = info.name[info.name.find("[") + 1 : info.name.find("]")]
+                    server_pos = info.server.find(".local.")
                     if server_pos > -1:
                         name = info.server[:server_pos]
         if mac_address is None or name is None:
@@ -106,10 +112,10 @@ class SHCInformation:
         try:
             mac_address = get_mac_address(ip=host)
             if not mac_address:
-                mac_address=get_mac_address(hostname = host)
+                mac_address = get_mac_address(hostname=host)
         except Exception as err:  # pylint: disable=broad-except
             logger.exception("Unable to get mac address: %s", err)
-            mac_address=None
+            mac_address = None
         if mac_address is None:
             raise SHCmDNSError
         self._mac_address = format_mac(mac_address)
@@ -123,9 +129,10 @@ class SHCInformation:
         print(f"  macAddress         : {self.mac_address}")
         print(f"  name               : {self.name}")
 
+
 def format_mac(mac: str) -> str:
     """
-    Format the mac address string. 
+    Format the mac address string.
     Helper function from homeassistant.helpers.device_registry.py
     """
     to_test = mac

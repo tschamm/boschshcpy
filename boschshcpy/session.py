@@ -19,9 +19,7 @@ logger = logging.getLogger("boschshcpy")
 class SHCSession:
     def __init__(self, controller_ip: str, certificate, key, lazy=False, zeroconf=None):
         # API
-        self._api = SHCAPI(
-            controller_ip=controller_ip, certificate=certificate, key=key
-        )
+        self._api = SHCAPI(controller_ip=controller_ip, certificate=certificate, key=key)
         self._device_helper = SHCDeviceHelper(self._api)
 
         # Subscription status
@@ -56,9 +54,7 @@ class SHCSession:
     def _add_device(self, raw_device):
         device_id = raw_device["id"]
 
-        if set(raw_device["deviceServiceIds"]).isdisjoint(
-            SUPPORTED_DEVICE_SERVICE_IDS
-        ):
+        if set(raw_device["deviceServiceIds"]).isdisjoint(SUPPORTED_DEVICE_SERVICE_IDS):
             logger.debug(
                 f"Skipping device id {device_id} which has no services that are supported by this library"
             )
@@ -123,16 +119,12 @@ class SHCSession:
                 device = self._devices_by_id[device_id]
                 device.process_long_polling_poll_result(raw_result)
             else:
-                logger.debug(
-                    f"Skipping polling result with unknown device id {device_id}."
-                )
+                logger.debug(f"Skipping polling result with unknown device id {device_id}.")
             return
         if raw_result["@type"] == "message":  # Parse message type
             assert "arguments" in raw_result
             if "deviceServiceDataModel" in raw_result["arguments"]:
-                raw_data_model = json.loads(
-                    raw_result["arguments"]["deviceServiceDataModel"]
-                )
+                raw_data_model = json.loads(raw_result["arguments"]["deviceServiceDataModel"])
                 self._process_long_polling_poll_result(raw_data_model)
             return
         if raw_result["@type"] == "scenarioTriggered":  # Parse scenarioTriggered type
@@ -142,11 +134,11 @@ class SHCSession:
             device_id = raw_result["id"]
             if device_id in self._devices_by_id.keys():
                 self._update_device(raw_result)
-                if "deleted" in raw_result and raw_result["deleted"] == True: # Device deleted
+                if "deleted" in raw_result and raw_result["deleted"] == True:  # Device deleted
                     # inform on deleted device
                     logger.debug("Deleting device with id %s", device_id)
                     self._devices_by_id.pop(device_id, None)
-            else: # New device registered
+            else:  # New device registered
                 logger.debug("Found new device with id %s", device_id)
                 self._add_device(raw_result)
                 # inform on new device
@@ -160,15 +152,11 @@ class SHCSession:
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
-                            logging.warning(
-                                "_long_poll returned False. Waiting 1 second."
-                            )
+                            logging.warning("_long_poll returned False. Waiting 1 second.")
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
-                        logging.info(
-                            "Stopping polling thread after expected runtime error."
-                        )
+                        logging.info("Stopping polling thread after expected runtime error.")
                         logging.info(f"Error description: {err}. {err.args}")
                         logging.info(f"Attempting unsubscribe...")
                         try:
@@ -177,9 +165,7 @@ class SHCSession:
                             logging.info(f"Unsubscribe not successful: {ex}")
 
                     except Exception as ex:
-                        logging.error(
-                            f"Error in polling thread: {ex}. Waiting 15 seconds."
-                        )
+                        logging.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
                         time.sleep(15.0)
 
             self._polling_thread = threading.Thread(
@@ -249,19 +235,13 @@ class SHCSession:
                 api=self._api, raw_information=raw_information, zeroconf=self._zeroconf
             )
         except SHCmDNSError:
-            self._shc_information = SHCInformation(
-                api=self._api, raw_information=raw_information
-            )
+            self._shc_information = SHCInformation(api=self._api, raw_information=raw_information)
 
     def mdns_info(self) -> SHCInformation:
         try:
-            return SHCInformation(
-                api=self._api, raw_information=None, zeroconf=self._zeroconf
-            )
+            return SHCInformation(api=self._api, raw_information=None, zeroconf=self._zeroconf)
         except SHCmDNSError:
-            return SHCInformation(
-                api=self._api, raw_information=None
-            )
+            return SHCInformation(api=self._api, raw_information=None)
 
     @property
     def information(self) -> SHCInformation:
