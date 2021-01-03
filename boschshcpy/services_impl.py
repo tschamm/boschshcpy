@@ -120,9 +120,20 @@ class ShutterContactService(SHCDeviceService):
 
 
 class ValveTappetService(SHCDeviceService):
+    class State(Enum):
+        VALVE_ADAPTION_SUCCESSFUL = "VALVE_ADAPTION_SUCCESSFUL"
+        VALVE_ADAPTION_IN_PROGRESS = "VALVE_ADAPTION_IN_PROGRESS"
+        RANGE_TOO_BIG = "RANGE_TOO_BIG"
+        RUN_TO_START_POSITION = "RUN_TO_START_POSITION"
+        IN_START_POSITION = "IN_START_POSITION"
+
     @property
     def position(self) -> int:
         return int(self.state["position"])
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
 
     def summary(self):
         super().summary()

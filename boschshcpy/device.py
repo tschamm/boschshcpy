@@ -70,6 +70,14 @@ class SHCDevice:
         return True if "deleted" in self._raw_device and self._raw_device["deleted"] == True else False
 
     @property
+    def child_device_ids(self):
+        return self._raw_device["childDeviceIds"] if "childDeviceIds" in self._raw_device else None
+
+    @property
+    def parent_device_id(self):
+        return self._raw_device["parentDeviceId"] if "parentDeviceId" in self._raw_device else None
+
+    @property
     def device_services(self) -> typing.Sequence[SHCDeviceService]:
         return list(self._device_services_by_id.values())
 
@@ -103,6 +111,8 @@ class SHCDevice:
         print(f"  Serial        : {self.serial}")
         print(f"  Profile       : {self.profile}")
         print(f"  Status        : {self.status}")
+        print(f"  ParentDevice  : {self.parent_device_id}")
+        print(f"  ChildDevices  : {self.child_device_ids}")
         for device_service in self.device_services:
             device_service.summary()
 

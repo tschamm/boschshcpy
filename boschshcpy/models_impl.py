@@ -309,6 +309,10 @@ class SHCThermostat(SHCBatteryDevice):
         return self._valvetappet_service.position
 
     @property
+    def valvestate(self) -> ValveTappetService.State:
+        return self._valvetappet_service.value
+
+    @property
     def temperature(self) -> float:
         return self._temperaturelevel_service.temperature
 
