@@ -27,6 +27,8 @@ It supports both long and short polling. The following device services are imple
 * ```SurveillanceAlarm```
 * ```BatteryLevel```
 * ```Thermostat```
+* ```WaterLeakageSensor```
+* ```WaterLeakageSensorTilt```
 
 The following device models are implemented, using the above services:
 
