@@ -18,6 +18,7 @@ from .models_impl import (
     SHCTwinguard,
     SHCUniversalSwitch,
     SHCWallThermostat,
+    SHCWaterLeakageSensor,
     build,
 )
 
@@ -132,3 +133,9 @@ class SHCDeviceHelper:
         if "HUE_LIGHT" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["HUE_LIGHT"].values())
+
+    @property
+    def water_leakage_detectors(self) -> typing.Sequence[SHCWaterLeakageSensor]:
+        if "WATER_LEAKAGE_SENSOR" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["WATER_LEAKAGE_SENSOR"].values())
