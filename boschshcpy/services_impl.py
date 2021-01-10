@@ -589,6 +589,50 @@ class CommunicationQualityService(SHCDeviceService):
         print(f"    quality                  : {self.value}")
 
 
+class WaterLeakageSensorService(SHCDeviceService):
+    class State(Enum):
+        LEAKAGE_DETECTED = "LEAKAGE_DETECTED"
+        NO_LEAKAGE = "NO_LEAKAGE"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["state"])
+
+    def summary(self):
+        super().summary()
+        print(f"    waterLeakageSensorState  : {self.value}")
+
+
+class WaterLeakageSensorTiltService(SHCDeviceService):
+    class State(Enum):
+        ENABLED = "ENABLED"
+        DISABLED = "DISABLED"
+
+    @property
+    def pushNotificationState(self) -> State:
+        return self.State(self.state["pushNotificationState"])
+
+    @property
+    def acousticSignalState(self) -> State:
+        return self.State(self.state["acousticSignalState"])
+
+    def summary(self):
+        super().summary()
+        print(f"    pushNotificationState    : {self.pushNotificationState}")
+        print(f"    acousticSignalState      : {self.acousticSignalState}")
+
+
+class WaterLeakageSensorCheckService(SHCDeviceService):
+    @property
+    def value(self) -> str:
+        return self.state["result"]
+
+    def summary(self):
+        print(self.state)
+        super().summary()
+        print(f"    waterLeakageSensorCheck  : {self.value}")
+
+
 SERVICE_MAPPING = {
     "AirQualityLevel": AirQualityLevelService,
     "Alarm": AlarmService,
@@ -617,6 +661,9 @@ SERVICE_MAPPING = {
     "TemperatureLevel": TemperatureLevelService,
     "Thermostat": ThermostatService,
     "ValveTappet": ValveTappetService,
+    "WaterLeakageSensor": WaterLeakageSensorService,
+    "WaterLeakageSensorTilt": WaterLeakageSensorTiltService,
+    "WaterLeakageSensorCheck": WaterLeakageSensorCheckService,
 }
 
 #    "SmokeDetectionControl": SmokeDetectionControlService,

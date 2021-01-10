@@ -12,6 +12,9 @@ from .services_impl import (
     SurveillanceAlarmService,
     TemperatureLevelService,
     ValveTappetService,
+    WaterLeakageSensorService,
+    WaterLeakageSensorTiltService,
+    WaterLeakageSensorCheckService
 )
 
 
@@ -660,6 +663,41 @@ class SHCLight(SHCDevice):
         super().summary()
 
 
+class SHCWaterLeakageSensor(SHCBatteryDevice):
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+
+        self._leakage_service: WaterLeakageSensorService = self.device_service("WaterLeakageSensor")
+        self._tilt_service: WaterLeakageSensorTiltService = self.device_service("WaterLeakageSensorTilt")
+        self._sensor_check_service: WaterLeakageSensorCheckService = self.device_service("WaterLeakageSensorCheck")
+
+    @property
+    def leakage_state(self) -> WaterLeakageSensorService.State:
+        return self._leakage_service.value
+
+    @property
+    def acoustic_signal_state(self) -> WaterLeakageSensorTiltService.State:
+        return self._tilt_service.acousticSignalState
+
+    @property
+    def push_notification_state(self) -> WaterLeakageSensorTiltService.State:
+        return self._tilt_service.pushNotificationState
+
+    @property
+    def sensor_check_state(self) -> str:
+        return self._sensor_check_service.value
+
+    def update(self):
+        self._leakage_service.short_poll()
+        self._tilt_service.short_poll()
+        self._sensor_check_service.short_poll()
+        super().update()
+
+    def summary(self):
+        print(f"WATER_LEAKAGE_SENSOR:")
+        super().summary()
+
+
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "BBL": SHCShutterControl,
@@ -677,6 +715,7 @@ MODEL_MAPPING = {
     "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
     "LEDVANCE_LIGHT": SHCLight,
     "HUE_LIGHT": SHCLight,
+    "WATER_LEAKAGE_SENSOR": SHCWaterLeakageSensor
 }
 # "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
 # "CAMERA_360": "Security Camera 360"
