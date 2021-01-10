@@ -623,12 +623,9 @@ class WaterLeakageSensorTiltService(SHCDeviceService):
 
 
 class WaterLeakageSensorCheckService(SHCDeviceService):
-    class State(Enum):
-        NONE = "NONE"
-
     @property
-    def value(self) -> State:
-        return self.State(self.state["result"])
+    def value(self) -> str:
+        return self.state["result"]
 
     def summary(self):
         print(self.state)

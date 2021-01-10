@@ -684,7 +684,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         return self._tilt_service.pushNotificationState
 
     @property
-    def sensor_check_state(self) -> WaterLeakageSensorCheckService.State:
+    def sensor_check_state(self) -> str:
         return self._sensor_check_service.value
 
     def update(self):
@@ -694,7 +694,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"SD WaterLeakageSensor:")
+        print(f"WATER_LEAKAGE_SENSOR:")
         super().summary()
 
 
