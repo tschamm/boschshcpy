@@ -45,6 +45,7 @@ The following device models are implemented, using the above services:
 * ```UniversalSwitch```
 * ```MotionDetector```
 * ```Twinguard```
+* ```WaterLeakageSensor```
 
 ## Example
 
