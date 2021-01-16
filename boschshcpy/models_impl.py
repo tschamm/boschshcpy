@@ -478,19 +478,19 @@ class SHCTwinguard(SHCBatteryDevice):
         )
 
     @property
-    def combinedrating(self) -> AirQualityLevelService.RatingState:
-        return self._airqualitylevel_service.combinedRating
-
-    @property
     def description(self) -> str:
         return self._airqualitylevel_service.description
+
+    @property
+    def combined_rating(self) -> AirQualityLevelService.RatingState:
+        return self._airqualitylevel_service.combinedRating
 
     @property
     def temperature(self) -> int:
         return self._airqualitylevel_service.temperature
 
     @property
-    def temperatureRating(self) -> AirQualityLevelService.RatingState:
+    def temperature_rating(self) -> AirQualityLevelService.RatingState:
         return self._airqualitylevel_service.temperatureRating
 
     @property
@@ -498,7 +498,7 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._airqualitylevel_service.humidity
 
     @property
-    def humidityrating(self) -> AirQualityLevelService.RatingState:
+    def humidity_rating(self) -> AirQualityLevelService.RatingState:
         return self._airqualitylevel_service.humidityRating
 
     @property
@@ -506,7 +506,7 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._airqualitylevel_service.purity
 
     @property
-    def purityrating(self) -> str:
+    def purity_rating(self) -> AirQualityLevelService.RatingState:
         return self._airqualitylevel_service.purityRating
 
     @property

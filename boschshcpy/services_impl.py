@@ -503,8 +503,8 @@ class AirQualityLevelService(SHCDeviceService):
         return self.state["purity"]
 
     @property
-    def purityRating(self) -> str:
-        return self.state["purityRating"]
+    def purityRating(self) -> RatingState:
+        return self.RatingState(self.state["purityRating"])
 
     def summary(self):
         super().summary()
