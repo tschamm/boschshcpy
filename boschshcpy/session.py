@@ -128,7 +128,8 @@ class SHCSession:
                 self._process_long_polling_poll_result(raw_data_model)
             return
         if raw_result["@type"] == "scenarioTriggered":  # Parse scenarioTriggered type
-            self._callback(raw_result["id"], raw_result["name"], raw_result["lastTimeTriggered"])
+            if self._callback is not None:
+                self._callback(raw_result["id"], raw_result["name"], raw_result["lastTimeTriggered"])
             return
         if raw_result["@type"] == "device":  # Parse device type
             device_id = raw_result["id"]

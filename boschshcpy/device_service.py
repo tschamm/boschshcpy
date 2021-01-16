@@ -58,7 +58,6 @@ class SHCDeviceService:
 
         if "state" in self._raw_device_service:
             assert raw_result["state"]["@type"] == self.state["@type"]
-
             self._raw_state = raw_result["state"]  # Update state
 
         for callback in self._callbacks:
