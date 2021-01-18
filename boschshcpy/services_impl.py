@@ -6,8 +6,6 @@ from .device_service import SHCDeviceService
 class TemperatureLevelService(SHCDeviceService):
     @property
     def temperature(self) -> float:
-        if not self.state:
-            return 0.0
         return float(self.state["temperature"] if "temperature" in self.state else 0.0)
 
     def summary(self):
@@ -18,8 +16,6 @@ class TemperatureLevelService(SHCDeviceService):
 class HumidityLevelService(SHCDeviceService):
     @property
     def humidity(self) -> float:
-        if not self.state:
-            return 0.0
         return float(self.state["humidity"] if "humidity" in self.state else 0.0)
 
     def summary(self):
@@ -428,25 +424,23 @@ class KeypadService(SHCDeviceService):
 
     @property
     def keyCode(self) -> int:
-        if not self.state:
-            return 0
         return self.state["keyCode"] if "keyCode" in self.state else 0
 
     @property
     def keyName(self) -> KeyState:
-        if not self.state:
+        if not "keyName" in self.state:
             return None
         return self.KeyState(self.state["keyName"])
 
     @property
     def eventType(self) -> KeyEvent:
-        if not self.state:
+        if not "eventType" in self.state:
             return None
         return self.KeyEvent(self.state["eventType"])
 
     @property
     def eventTimestamp(self) -> int:
-        if not self.state:
+        if not "eventTimestamp" in self.state:
             return 0
         return self.state["eventTimestamp"]
 

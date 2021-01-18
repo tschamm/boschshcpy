@@ -6,7 +6,7 @@ class SHCDeviceService:
         self._api = api
         self._raw_device_service = raw_device_service
         self._raw_state = (
-            self._raw_device_service["state"] if "state" in self._raw_device_service else None
+            self._raw_device_service["state"] if "state" in self._raw_device_service else []
         )
 
         self._callbacks = {}
@@ -49,7 +49,7 @@ class SHCDeviceService:
     def short_poll(self):
         self._raw_device_service = self._api.get_device_service(self.device_id, self.id)
         self._raw_state = (
-            self._raw_device_service["state"] if "state" in self._raw_device_service else None
+            self._raw_device_service["state"] if "state" in self._raw_device_service else []
         )
 
     def process_long_polling_poll_result(self, raw_result):
@@ -60,5 +60,5 @@ class SHCDeviceService:
             assert raw_result["state"]["@type"] == self.state["@type"]
             self._raw_state = raw_result["state"]  # Update state
 
-        for callback in self._callbacks:
-            self._callbacks[callback]()
+            for callback in self._callbacks:
+                self._callbacks[callback]()
