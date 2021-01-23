@@ -36,7 +36,7 @@ class SHCAPI:
         self._requests_session = requests.Session()
         self._requests_session.cert = (self._certificate, self._key)
         self._requests_session.headers.update(
-            {"api-version": "1.0", "Content-Type": "application/json"}
+            {"api-version": "2.1", "Content-Type": "application/json"}
         )
         self._requests_session.verify = False
 
