@@ -39,8 +39,8 @@ class SHCSmokeDetector(SHCBatteryDevice):
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._alarm_service: AlarmService = self.device_service("Alarm")
-        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
+        self._alarm_service = self.device_service("Alarm")
+        self._smokedetectorcheck_service = self.device_service(
             "SmokeDetectorCheck"
         )
 
@@ -110,7 +110,7 @@ class SHCShutterControl(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device=raw_device)
-        self._service: ShutterControlService = self.device_service("ShutterControl")
+        self._service = self.device_service("ShutterControl")
 
     @property
     def level(self) -> float:
@@ -138,19 +138,13 @@ class SHCShutterControl(SHCDevice):
 class SHCShutterContact(SHCBatteryDevice):
     from .services_impl import ShutterContactService
 
-    class DeviceClass(Enum):
-        GENERIC = "GENERIC"
-        ENTRANCE_DOOR = "ENTRANCE_DOOR"
-        REGULAR_WINDOW = "REGULAR_WINDOW"
-        FRENCH_WINDOW = "FRENCH_WINDOW"
-
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
         self._service = self.device_service("ShutterContact")
 
     @property
-    def device_class(self) -> DeviceClass:
-        return self.DeviceClass(self.profile)
+    def device_class(self) -> str:
+        return self.profile
 
     @property
     def state(self) -> ShutterContactService.State:
@@ -465,10 +459,10 @@ class SHCTwinguard(SHCBatteryDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._airqualitylevel_service: AirQualityLevelService = self.device_service(
+        self._airqualitylevel_service = self.device_service(
             "AirQualityLevel"
         )
-        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(
+        self._smokedetectorcheck_service = self.device_service(
             "SmokeDetectorCheck"
         )
 
@@ -526,7 +520,7 @@ class SHCSmokeDetectionSystem(SHCDevice):
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
-        self._surveillancealarm_service: SurveillanceAlarmService = self.device_service(
+        self._surveillancealarm_service = self.device_service(
             "SurveillanceAlarm"
         )
         # self._smokedetectioncontrol_service = self.device_service("SmokeDetectionControl")
@@ -561,7 +555,7 @@ class SHCLight(SHCDevice):
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._binaryswitch_service: BinarySwitchService = self.device_service("BinarySwitch")
+        self._binaryswitch_service = self.device_service("BinarySwitch")
         self._multilevelswitch_service = self.device_service("MultiLevelSwitch")
         self._huecolortemperature_service = self.device_service("HueColorTemperature")
         self._hsbcoloractuator_service = self.device_service("HSBColorActuator")
@@ -662,9 +656,9 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._leakage_service: WaterLeakageSensorService = self.device_service("WaterLeakageSensor")
-        self._tilt_service: WaterLeakageSensorTiltService = self.device_service("WaterLeakageSensorTilt")
-        self._sensor_check_service: WaterLeakageSensorCheckService = self.device_service("WaterLeakageSensorCheck")
+        self._leakage_service = self.device_service("WaterLeakageSensor")
+        self._tilt_service = self.device_service("WaterLeakageSensorTilt")
+        self._sensor_check_service = self.device_service("WaterLeakageSensorCheck")
 
     @property
     def leakage_state(self) -> WaterLeakageSensorService.State:

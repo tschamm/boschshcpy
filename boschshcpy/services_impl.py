@@ -515,6 +515,8 @@ class AirQualityLevelService(SHCDeviceService):
 class SurveillanceAlarmService(SHCDeviceService):
     class State(Enum):
         ALARM_OFF = "ALARM_OFF"
+        ALARM_ON = "ALARM_ON"
+        ALARM_MUTED = "ALARM_MUTED"
 
     @property
     def value(self) -> State:
