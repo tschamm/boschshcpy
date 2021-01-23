@@ -36,11 +36,6 @@ class SHCBatteryDevice(SHCDevice):
 class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService
 
-    class AlarmState(Enum):
-        INTRUSION_ALARM_ON_REQUESTED = "INTRUSION_ALARM_ON_REQUESTED"
-        INTRUSION_ALARM_OFF_REQUESTED = "INTRUSION_ALARM_OFF_REQUESTED"
-        MUTE_SECONDARY_ALARM_REQUESTED = "MUTE_SECONDARY_ALARM_REQUESTED"
-
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
@@ -54,8 +49,8 @@ class SHCSmokeDetector(SHCBatteryDevice):
         return self._alarm_service.value
 
     @alarmstate.setter
-    def alarmstate(self, state: AlarmState):
-        self._alarm_service.put_state_element("value", state.name)
+    def alarmstate(self, state: str):
+        self._alarm_service.put_state_element("value", state)
 
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
