@@ -369,7 +369,6 @@ class SHCClimateControl(SHCDevice):
     def update(self):
         self._temperaturelevel_service.short_poll()
         self._roomclimatecontrol_service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"ROOM_CLIMATE_CONTROL:")
@@ -532,7 +531,6 @@ class SHCSmokeDetectionSystem(SHCDevice):
     def update(self):
         self._surveillancealarm_service.short_poll()
         # self._smokedetectioncontrol_service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"SMOKE_DETECTION_SYSTEM:")
