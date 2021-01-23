@@ -356,7 +356,7 @@ class PrivacyModeService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        return self.State(self.state["value"] if "value" in self.state else "DISABLED")
 
     def summary(self):
         super().summary()
@@ -455,7 +455,7 @@ class KeypadService(SHCDeviceService):
 class LatestMotionService(SHCDeviceService):
     @property
     def latestMotionDetected(self) -> str:
-        return self.state["latestMotionDetected"]
+        return self.state["latestMotionDetected"] if "latestMotionDetected" in self.state else "n/a"
 
     def summary(self):
         super().summary()

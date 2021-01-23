@@ -55,7 +55,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
 
     @alarmstate.setter
     def alarmstate(self, state: AlarmState):
-        self._alarm_service.put_state_element("state", state.name)
+        self._alarm_service.put_state_element("value", state.name)
 
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
