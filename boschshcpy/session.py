@@ -113,6 +113,7 @@ class SHCSession:
             self._poll_id = None
 
     def _process_long_polling_poll_result(self, raw_result):
+        logger.debug(f"Long poll: {raw_result}")
         if raw_result["@type"] == "DeviceServiceData":  # Parse DeviceServiceData type
             device_id = raw_result["deviceId"]
             if device_id in self._devices_by_id.keys():
@@ -153,20 +154,20 @@ class SHCSession:
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
-                            logging.warning("_long_poll returned False. Waiting 1 second.")
+                            logger.warning("_long_poll returned False. Waiting 1 second.")
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
-                        logging.info("Stopping polling thread after expected runtime error.")
-                        logging.info(f"Error description: {err}. {err.args}")
-                        logging.info(f"Attempting unsubscribe...")
+                        logger.info("Stopping polling thread after expected runtime error.")
+                        logger.info(f"Error description: {err}. {err.args}")
+                        logger.info(f"Attempting unsubscribe...")
                         try:
                             self._maybe_unsubscribe()
                         except Exception as ex:
-                            logging.info(f"Unsubscribe not successful: {ex}")
+                            logger.info(f"Unsubscribe not successful: {ex}")
 
                     except Exception as ex:
-                        logging.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
+                        logger.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
                         time.sleep(15.0)
 
             self._polling_thread = threading.Thread(
