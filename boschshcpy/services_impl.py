@@ -76,6 +76,10 @@ class RoomClimateControlService(SHCDeviceService):
     def summer_mode(self) -> bool:
         return self.state["summerMode"]
 
+    @summer_mode.setter
+    def summer_mode(self, value: bool) -> bool:
+        self.put_state_element("summerMode", value)
+
     @property
     def supports_boost_mode(self) -> bool:
         return self.state["supportsBoostMode"]

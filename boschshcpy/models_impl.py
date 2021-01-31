@@ -363,6 +363,14 @@ class SHCClimateControl(SHCDevice):
         self._roomclimatecontrol_service.low = value
 
     @property
+    def summer_mode(self) -> bool:
+        return self._roomclimatecontrol_service.summer_mode
+
+    @summer_mode.setter
+    def summer_mode(self, value: bool):
+        self._roomclimatecontrol_service.summer_mode = value
+
+    @property
     def temperature(self) -> float:
         return self._temperaturelevel_service.temperature
 
