@@ -58,15 +58,12 @@ class SHCDeviceHelper:
 
     @property
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
-        if "PSM" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["PSM"].values())
-
-    @property
-    def light_controls(self) -> typing.Sequence[SHCSmartPlug]:
-        if "BSM" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["BSM"].values())
+        devices = []
+        if "PSM" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["PSM"].values())
+        if "BSM" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["BSM"].values())
+        return devices
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
