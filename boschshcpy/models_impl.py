@@ -405,7 +405,7 @@ class SHCWallThermostat(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"THB Wall Thermostat:")
+        print(f"THB/BWTH Wall Thermostat:")
         super().summary()
 
 
@@ -704,6 +704,7 @@ MODEL_MAPPING = {
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
     "THB": SHCWallThermostat,
+    "BWTH": SHCWallThermostat,  # uses same impl as THB
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "TWINGUARD": SHCTwinguard,

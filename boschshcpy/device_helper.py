@@ -88,9 +88,12 @@ class SHCDeviceHelper:
 
     @property
     def wallthermostats(self) -> typing.Sequence[SHCWallThermostat]:
-        if "THB" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["THB"].values())
+        devices = []
+        if "THB" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["THB"].values())
+        if "BWTH" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["BWTH"].values())
+        return devices
 
     @property
     def motion_detectors(self) -> typing.Sequence[SHCMotionDetector]:
