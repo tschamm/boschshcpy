@@ -542,6 +542,7 @@ class BatteryLevelService(SHCDeviceService):
         LOW_BATTERY = "LOW_BATTERY"
         CRITICAL_LOW = "CRITICAL_LOW"
         OK = "OK"
+        NOT_AVAILABLE = "NOT_AVAILABLE"
 
     @property
     def warningLevel(self) -> State:

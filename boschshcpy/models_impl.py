@@ -26,11 +26,18 @@ class SHCBatteryDevice(SHCDevice):
         self._batterylevel_service = self.device_service("BatteryLevel")
 
     @property
+    def supports_batterylevel(self):
+        return self._batterylevel_service is not None
+
+    @property
     def batterylevel(self) -> BatteryLevelService.State:
-        return self._batterylevel_service.warningLevel
+        if self.supports_batterylevel:
+            return self._batterylevel_service.warningLevel
+        return BatteryLevelService.State.NOT_AVAILABLE
 
     def update(self):
-        self._batterylevel_service.short_poll()
+        if self.supports_batterylevel:
+            self._batterylevel_service.short_poll()
 
 
 class SHCSmokeDetector(SHCBatteryDevice):
