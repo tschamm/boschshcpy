@@ -113,9 +113,9 @@ class SHCAPI:
         return result
 
     def get_publicinformation(self):
-        api_url = f"{self._api_root}/public/information"
+        api_url = f"https://{self._controller_ip}:8446/smarthome/public/information"
         try:
-            result = self._get_api_result_or_fail(api_url)
+            result = self._get_api_result_or_fail(api_url, headers={})
         except Exception as e:
             logging.error(f"Failed to get public information from SHC controller: {e}")
             return None
