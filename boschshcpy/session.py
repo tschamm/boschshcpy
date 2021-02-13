@@ -228,22 +228,18 @@ class SHCSession:
         return self._scenarios_by_id[scenario_id]
 
     def authenticate(self):
-        raw_information = self._api.get_shcinformation()
-        if raw_information is None:
-            raise SHCAuthenticationError
-
         try:
             self._shc_information = SHCInformation(
-                api=self._api, raw_information=raw_information, zeroconf=self._zeroconf
+                api=self._api, zeroconf=self._zeroconf
             )
         except SHCmDNSError:
-            self._shc_information = SHCInformation(api=self._api, raw_information=raw_information)
+            self._shc_information = SHCInformation(api=self._api)
 
     def mdns_info(self) -> SHCInformation:
         try:
-            return SHCInformation(api=self._api, raw_information=None, zeroconf=self._zeroconf)
+            return SHCInformation(api=self._api, zeroconf=self._zeroconf)
         except SHCmDNSError:
-            return SHCInformation(api=self._api, raw_information=None)
+            return SHCInformation(api=self._api)
 
     @property
     def information(self) -> SHCInformation:

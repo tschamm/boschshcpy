@@ -7,7 +7,7 @@ from getmac import get_mac_address
 from zeroconf import Error as ZeroconfError
 from zeroconf import IPVersion, ServiceBrowser, ServiceInfo, ServiceStateChange, current_time_millis
 
-from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError
+from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError, SHCAuthenticationError
 
 logger = logging.getLogger("boschshcpy")
 
@@ -55,43 +55,42 @@ class SHCInformation:
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
 
-    def __init__(self, api, raw_information, zeroconf=None):
+    def __init__(self, api, zeroconf=None):
         self._api = api
-        self._raw_information = raw_information
-        self._mac_address = None
+        self._unique_id = None
         self._name = None
+        self._pub_info = self._api.get_publicinformation()
+        if self._pub_info == None:
+            raise SHCAuthenticationError
 
-        if zeroconf is not None:
-            self._listener = SHCListener(zeroconf, self.filter)
-        else:
-            self.get_mac(self._api.controller_ip)
+        self.get_unique_id(zeroconf)
 
     @property
     def version(self):
-        return self._raw_information["version"]
+        return self._pub_info["softwareUpdateState"]["swInstalledVersion"]
 
     @property
     def updateState(self) -> UpdateState:
-        return self.UpdateState(self._raw_information["updateState"])
+        return self.UpdateState(self._pub_info["softwareUpdateState"]["swUpdateState"])
 
     @property
-    def connectivityVersion(self):
-        return self._raw_information["connectivityVersion"]
+    def shcIpAddress(self):
+        return self._pub_info["shcIpAddress"]
 
     @property
     def name(self):
         return self._name
 
     @property
-    def mac_address(self):
-        return self._mac_address
+    def unique_id(self):
+        return self._unique_id
 
     def filter(self, service_info: ServiceInfo):
         mac_address = None
         name = None
 
         try:
-            host_ip = socket.gethostbyname(self._api.controller_ip)
+            host_ip = socket.gethostbyname(self.shcIpAddress)
         except Exception as e:
             raise SHCConnectionError
 
@@ -104,29 +103,37 @@ class SHCInformation:
                         name = info.server[:server_pos]
         if mac_address is None or name is None:
             raise SHCmDNSError
-        self._mac_address = format_mac(mac_address)
+        self._unique_id = format_mac(mac_address)
         self._name = name
 
     def get_mac(self, host):
         """Get the mac address of the given host."""
-        try:
-            mac_address = get_mac_address(ip=host)
-            if not mac_address:
-                mac_address = get_mac_address(hostname=host)
-        except Exception as err:  # pylint: disable=broad-except
-            logger.exception("Unable to get mac address: %s", err)
-            mac_address = None
-        if mac_address is None:
-            raise SHCmDNSError
-        self._mac_address = format_mac(mac_address)
-        self._name = host
+
+    def get_unique_id(self, zeroconf):
+        if zeroconf is not None:
+            self._listener = SHCListener(zeroconf, self.filter)
+        else:
+            host = self.shcIpAddress
+            try:
+                mac_address = get_mac_address(ip=host)
+                if not mac_address:
+                    mac_address = get_mac_address(hostname=host)
+            except Exception as err:  # pylint: disable=broad-except
+                logger.exception("Unable to get mac address: %s", err)
+                mac_address = None
+            if mac_address is not None:
+                self._unique_id = format_mac(mac_address)
+            else:
+                self._unique_id = host
+                logger.warning("Cannot obtain unique id, using IP address '%s' instead. Please make sure the IP stays the same!", host)
+            self._name = host
 
     def summary(self):
         print(f"Information:")
+        print(f"  shcIpAddress       : {self.shcIpAddress}")
         print(f"  SW-Version         : {self.version}")
-        print(f"  updateState        : {self.updateState}")
-        print(f"  connectivityVersion: {self.connectivityVersion}")
-        print(f"  macAddress         : {self.mac_address}")
+        print(f"  updateState        : {self.updateState.name}")
+        print(f"  uniqueId           : {self.unique_id}")
         print(f"  name               : {self.name}")
 
 
