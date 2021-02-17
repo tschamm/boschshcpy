@@ -26,3 +26,5 @@ for room in session.rooms:
 
 for scenario in session.scenarios:
     scenario.summary()
+
+session.intrusion_system.summary()

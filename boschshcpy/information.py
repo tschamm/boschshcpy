@@ -59,7 +59,7 @@ class SHCInformation:
         self._api = api
         self._unique_id = None
         self._name = None
-        self._pub_info = self._api.get_publicinformation()
+        self._pub_info = self._api.get_public_information()
         if self._pub_info == None:
             raise SHCAuthenticationError
 

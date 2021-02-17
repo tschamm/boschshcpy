@@ -7,6 +7,7 @@ import typing
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
+from .domain_impl import SHCIntrusionDetectionDomain
 from .exceptions import SHCAuthenticationError, SHCmDNSError
 from .information import SHCInformation
 from .room import SHCRoom
@@ -33,6 +34,7 @@ class SHCSession:
         self._rooms_by_id = {}
         self._scenarios_by_id = {}
         self._devices_by_id = {}
+        self._domains_by_id = {}
 
         if not lazy:
             self._enumerate_all()
@@ -50,6 +52,7 @@ class SHCSession:
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
+        self._initialize_domains()
 
     def _add_device(self, raw_device):
         device_id = raw_device["id"]
@@ -85,6 +88,9 @@ class SHCSession:
             scenario_id = raw_scenario["id"]
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
+
+    def _initialize_domains(self):
+        self._domains_by_id["intrusion"] = SHCIntrusionDetectionDomain(self._api, self._api.get_domain_intrusion_detection())
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
@@ -244,6 +250,10 @@ class SHCSession:
     @property
     def information(self) -> SHCInformation:
         return self._shc_information
+
+    @property
+    def intrusion_system(self) -> SHCIntrusionDetectionDomain:
+        return self._domains_by_id["intrusion"]
 
     @property
     def api(self):

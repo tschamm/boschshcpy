@@ -103,7 +103,7 @@ class SHCAPI:
         )
 
     # API calls here
-    def get_shcinformation(self):
+    def get_information(self):
         api_url = f"{self._api_root}/information"
         try:
             result = self._get_api_result_or_fail(api_url)
@@ -112,7 +112,7 @@ class SHCAPI:
             return None
         return result
 
-    def get_publicinformation(self):
+    def get_public_information(self):
         api_url = f"https://{self._controller_ip}:8446/smarthome/public/information"
         try:
             result = self._get_api_result_or_fail(api_url, headers={})
@@ -140,6 +140,19 @@ class SHCAPI:
     def put_device_service_state(self, device_id, service_id, state_update):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         self._put_api_or_fail(api_url, state_update)
+
+    def get_domain_intrusion_detection(self):
+        api_url = f"{self._api_root}/intrusion/states/system"
+        return self._get_api_result_or_fail(api_url, expected_type="systemState")
+    
+    def post_domain_action(self, path, data = None):
+        api_url = f"{self._api_root}/{path}"
+        result = self._post_api_or_fail(api_url, data)
+        assert result[0]["jsonrpc"] == "2.0"
+        if "error" in result[0].keys():
+            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
+        else:
+            return result[0]["result"]
 
     def long_polling_subscribe(self):
         data = [

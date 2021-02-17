@@ -707,7 +707,7 @@ MODEL_MAPPING = {
     "BSM": SHCSmartPlug,  # uses same impl as PSM
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
-    "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem,
+    "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem, # deprecated
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
     "THB": SHCWallThermostat,

@@ -645,7 +645,7 @@ SERVICE_MAPPING = {
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
     "HumidityLevel": HumidityLevelService,
-    "IntrusionDetectionControl": IntrusionDetectionControlService,
+    "IntrusionDetectionControl": IntrusionDetectionControlService, # Deprecated
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
     "MultiLevelSwitch": MultiLevelSwitchService,
