@@ -147,12 +147,7 @@ class SHCAPI:
     
     def post_domain_action(self, path, data = None):
         api_url = f"{self._api_root}/{path}"
-        result = self._post_api_or_fail(api_url, data)
-        assert result[0]["jsonrpc"] == "2.0"
-        if "error" in result[0].keys():
-            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
-        else:
-            return result[0]["result"]
+        self._post_api_or_fail(api_url, data)
 
     def long_polling_subscribe(self):
         data = [

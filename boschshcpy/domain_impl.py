@@ -49,7 +49,7 @@ class SHCIntrusionSystem:
 
     @property
     def device_model(self):
-        return "DOMAINS_INTRUSION_DETECTION"
+        return "IDS"
 
     @property
     def system_availability(self) -> bool:
@@ -147,7 +147,7 @@ class SHCIntrusionSystem:
             self._callbacks[callback]()
 
 MODEL_MAPPING = {
-    "intrusion": SHCIntrusionSystem
+    "IDS": SHCIntrusionSystem
 }
 
 SUPPORTED_DOMAINS = MODEL_MAPPING.keys()
