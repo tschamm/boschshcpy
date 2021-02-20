@@ -2,6 +2,14 @@ from enum import Enum
 from .api import SHCAPI
 
 class SHCIntrusionDetectionDomain:
+    DOMAIN_STATES = {
+        "armingState",
+        "alarmState",
+        "securityGapState",
+        "activeConfigurationProfile",
+        "systemAvailability"
+    }
+
     class ArmingState(Enum):
         SYSTEM_DISARMED = "SYSTEM_DISARMED"
         SYSTEM_ARMED = "SYSTEM_ARMED"
@@ -12,9 +20,18 @@ class SHCIntrusionDetectionDomain:
         ALARM_ON = "ALARM_ON"
         ALARM_MUTED = "ALARM_MUTED"
 
+    class Profile(Enum):
+        FULL_PROTECTION = 0
+        PARTIAL_PROTECTION = 1
+        CUSTOM_PROTECTION = 2
+
     def __init__(self, api: SHCAPI, raw_domain_state):
         self._api = api
-        self._raw_domain_state = raw_domain_state
+        self._raw_system_availability = raw_domain_state["systemAvailability"]
+        self._raw_arming_state = raw_domain_state["armingState"]
+        self._raw_alarm_state = raw_domain_state["alarmState"]
+        self._raw_active_configuration_profile = raw_domain_state["activeConfigurationProfile"]
+        self._raw_security_gap_state = raw_domain_state["securityGapState"]
 
         self._callbacks = {}
 
@@ -24,27 +41,33 @@ class SHCIntrusionDetectionDomain:
 
     @property
     def system_availability(self) -> bool:
-        return self._raw_domain_state["systemAvailability"]["available"]
+        return self._raw_system_availability["available"]
 
     @property
     def arming_state(self) -> ArmingState:
-        return self.ArmingState(self._raw_domain_state["armingState"]["state"])
+        return self.ArmingState(self._raw_arming_state["state"])
+
+    @property
+    def remaining_time_until_armed(self) -> int:
+        if self.arming_state == self.ArmingState.SYSTEM_ARMING:
+            return self._raw_arming_state["remainingTimeUntilArmed"]
+        return 0
 
     @property
     def alarm_state(self) -> AlarmState:
-        return self.AlarmState(self._raw_domain_state["alarmState"]["value"])
+        return self.AlarmState(self._raw_alarm_state["value"])
 
     @property
     def alarm_state_incidents(self):
-        return self._raw_domain_state["alarmState"]["incidents"]
+        return self._raw_alarm_state["incidents"]
 
     @property
-    def active_configuration_profile(self):
-        return self._raw_domain_state["activeConfigurationProfile"]["profileId"]
+    def active_configuration_profile(self) -> Profile:
+        return self.Profile(self._raw_active_configuration_profile["profileId"])
 
     @property
-    def security_gap_state(self):
-        return self._raw_domain_state["securityGapState"]["securityGaps"]
+    def security_gaps(self):
+        return self._raw_security_gap_state["securityGaps"]
 
     def subscribe_callback(self, entity, callback):
         self._callbacks[entity] = callback
@@ -60,7 +83,6 @@ class SHCIntrusionDetectionDomain:
 
     def arm(self):
         result = self._api.post_domain_action("intrusion/action/arm")
-        print(result)
 
     def arm_full_protection(self):
         data = {
@@ -68,7 +90,6 @@ class SHCIntrusionDetectionDomain:
 	        "profileId": "0"
         }
         result = self._api.post_domain_action("intrusion/action/arm", data)
-        print(result)
 
     def arm_partial_protection(self):
         data = {
@@ -76,30 +97,39 @@ class SHCIntrusionDetectionDomain:
 	        "profileId": "1"
         }
         result = self._api.post_domain_action("intrusion/action/arm", data)
-        print(result)
 
     def arm_individual_protection(self):
         data = {
         	"@type": "armRequest",
 	        "profileId": "2"
         }
-        result = self._api.post_domain_action("intrusion/action/arm", data)
-        print(result)
+        self._api.post_domain_action("intrusion/action/arm", data)
 
     def disarm(self):
-        result = self._api.post_domain_action("intrusion/action/disarm")
-        print(result)
+        self._api.post_domain_action("intrusion/action/disarm")
 
     def mute(self):
-        result = self._api.post_domain_action("intrusion/action/mute")
-        print(result)
+        self._api.post_domain_action("intrusion/action/mute")
 
     def short_poll(self):
-        self._raw_domain_state = self._api.get_domain_intrusion_detection()
+        raw_domain_state = self._api.get_domain_intrusion_detection()
+        self._raw_system_availability = raw_domain_state["systemAvailability"]
+        self._raw_arming_state = raw_domain_state["armingState"]
+        self._raw_alarm_state = raw_domain_state["alarmState"]
+        self._raw_active_configuration_profile = raw_domain_state["activeConfigurationProfile"]
+        self._raw_security_gap_state = raw_domain_state["securityGapState"]
 
     def process_long_polling_poll_result(self, raw_result):
-        assert raw_result["@type"] == "systemState"
-        self._raw_domain_state = raw_result  # Update device service data
+        if raw_result["@type"] == "armingState":
+            self._raw_arming_state = raw_result
+        if raw_result["@type"] == "alarmState":
+            self._raw_alarm_state = raw_result
+        if raw_result["@type"] == "systemAvailability":
+            self._raw_system_availability = raw_result
+        if raw_result["@type"] == "activeConfigurationProfile":
+            self._raw_active_configuration_profile = raw_result
+        if raw_result["@type"] == "securityGapState":
+            self._raw_security_gap_state = raw_result
 
         for callback in self._callbacks:
             self._callbacks[callback]()

@@ -120,7 +120,7 @@ class SHCSession:
 
     def _process_long_polling_poll_result(self, raw_result):
         logger.debug(f"Long poll: {raw_result}")
-        if raw_result["@type"] == "DeviceServiceData":  # Parse DeviceServiceData type
+        if raw_result["@type"] == "DeviceServiceData":
             device_id = raw_result["deviceId"]
             if device_id in self._devices_by_id.keys():
                 device = self._devices_by_id[device_id]
@@ -128,17 +128,17 @@ class SHCSession:
             else:
                 logger.debug(f"Skipping polling result with unknown device id {device_id}.")
             return
-        if raw_result["@type"] == "message":  # Parse message type
+        if raw_result["@type"] == "message":
             assert "arguments" in raw_result
             if "deviceServiceDataModel" in raw_result["arguments"]:
                 raw_data_model = json.loads(raw_result["arguments"]["deviceServiceDataModel"])
                 self._process_long_polling_poll_result(raw_data_model)
             return
-        if raw_result["@type"] == "scenarioTriggered":  # Parse scenarioTriggered type
+        if raw_result["@type"] == "scenarioTriggered":
             if self._callback is not None:
                 self._callback(raw_result["id"], raw_result["name"], raw_result["lastTimeTriggered"])
             return
-        if raw_result["@type"] == "device":  # Parse device type
+        if raw_result["@type"] == "device":
             device_id = raw_result["id"]
             if device_id in self._devices_by_id.keys():
                 self._update_device(raw_result)
@@ -150,6 +150,10 @@ class SHCSession:
                 logger.debug("Found new device with id %s", device_id)
                 self._add_device(raw_result)
                 # inform on new device
+            return
+        if raw_result["@type"] in SHCIntrusionDetectionDomain.DOMAIN_STATES:
+            if self._domains_by_id["intrusion"] is not None:
+                self._domains_by_id["intrusion"].process_long_polling_poll_result(raw_result)
             return
         return
 
