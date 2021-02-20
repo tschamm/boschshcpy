@@ -75,7 +75,7 @@ class SHCIntrusionSystem:
 
     @property
     def active_configuration_profile(self) -> Profile:
-        return self.Profile(self._raw_active_configuration_profile["profileId"])
+        return self.Profile(int(self._raw_active_configuration_profile["profileId"]))
 
     @property
     def security_gaps(self):
@@ -94,34 +94,34 @@ class SHCIntrusionSystem:
         print(f"    Alarm State:           {self.alarm_state}")
 
     def arm(self):
-        result = self._api.post_domain_action("intrusion/action/arm")
+        result = self._api.post_domain_action("intrusion/actions/arm")
 
     def arm_full_protection(self):
         data = {
         	"@type": "armRequest",
 	        "profileId": "0"
         }
-        result = self._api.post_domain_action("intrusion/action/arm", data)
+        result = self._api.post_domain_action("intrusion/actions/arm", data)
 
     def arm_partial_protection(self):
         data = {
         	"@type": "armRequest",
 	        "profileId": "1"
         }
-        result = self._api.post_domain_action("intrusion/action/arm", data)
+        result = self._api.post_domain_action("intrusion/actions/arm", data)
 
     def arm_individual_protection(self):
         data = {
         	"@type": "armRequest",
 	        "profileId": "2"
         }
-        self._api.post_domain_action("intrusion/action/arm", data)
+        self._api.post_domain_action("intrusion/actions/arm", data)
 
     def disarm(self):
-        self._api.post_domain_action("intrusion/action/disarm")
+        self._api.post_domain_action("intrusion/actions/disarm")
 
     def mute(self):
-        self._api.post_domain_action("intrusion/action/mute")
+        self._api.post_domain_action("intrusion/actions/mute")
 
     def short_poll(self):
         raw_domain_state = self._api.get_domain_intrusion_detection()
