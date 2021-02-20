@@ -1,7 +1,7 @@
 from enum import Enum
 from .api import SHCAPI
 
-class SHCIntrusionDetectionDomain:
+class SHCIntrusionSystem:
     DOMAIN_STATES = {
         "armingState",
         "alarmState",
@@ -37,7 +37,19 @@ class SHCIntrusionDetectionDomain:
 
     @property
     def id(self):
-        return "Intrusion Detection"
+        return "/intrusion"
+
+    @property
+    def manufacturer(self):
+        return "BOSCH"
+
+    @property
+    def name(self):
+        return "Intrusion Detection System"
+
+    @property
+    def device_model(self):
+        return "DOMAINS_INTRUSION_DETECTION"
 
     @property
     def system_availability(self) -> bool:
@@ -135,7 +147,7 @@ class SHCIntrusionDetectionDomain:
             self._callbacks[callback]()
 
 MODEL_MAPPING = {
-    "intrusion": SHCIntrusionDetectionDomain
+    "intrusion": SHCIntrusionSystem
 }
 
 SUPPORTED_DOMAINS = MODEL_MAPPING.keys()

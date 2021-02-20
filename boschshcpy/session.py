@@ -7,7 +7,7 @@ import typing
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
-from .domain_impl import SHCIntrusionDetectionDomain
+from .domain_impl import SHCIntrusionSystem
 from .exceptions import SHCAuthenticationError, SHCmDNSError
 from .information import SHCInformation
 from .room import SHCRoom
@@ -90,7 +90,7 @@ class SHCSession:
             self._scenarios_by_id[scenario_id] = scenario
 
     def _initialize_domains(self):
-        self._domains_by_id["intrusion"] = SHCIntrusionDetectionDomain(self._api, self._api.get_domain_intrusion_detection())
+        self._domains_by_id["intrusion"] = SHCIntrusionSystem(self._api, self._api.get_domain_intrusion_detection())
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
@@ -151,7 +151,7 @@ class SHCSession:
                 self._add_device(raw_result)
                 # inform on new device
             return
-        if raw_result["@type"] in SHCIntrusionDetectionDomain.DOMAIN_STATES:
+        if raw_result["@type"] in SHCIntrusionSystem.DOMAIN_STATES:
             if self._domains_by_id["intrusion"] is not None:
                 self._domains_by_id["intrusion"].process_long_polling_poll_result(raw_result)
             return
@@ -256,7 +256,7 @@ class SHCSession:
         return self._shc_information
 
     @property
-    def intrusion_system(self) -> SHCIntrusionDetectionDomain:
+    def intrusion_system(self) -> SHCIntrusionSystem:
         return self._domains_by_id["intrusion"]
 
     @property
