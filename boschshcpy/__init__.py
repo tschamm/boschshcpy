@@ -17,7 +17,6 @@ from .device_helper import (
     SHCWallThermostat,
 )
 from .domain_impl import SHCIntrusionSystem
-
 from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCmDNSError
 from .information import SHCInformation
 from .scenario import SHCScenario

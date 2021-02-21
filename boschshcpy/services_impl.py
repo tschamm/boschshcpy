@@ -459,7 +459,11 @@ class KeypadService(SHCDeviceService):
 class LatestMotionService(SHCDeviceService):
     @property
     def latestMotionDetected(self) -> str:
-        return self.state["latestMotionDetected"] if "latestMotionDetected" in self.state else "n/a"
+        return (
+            self.state["latestMotionDetected"]
+            if "latestMotionDetected" in self.state
+            else "n/a"
+        )
 
     def summary(self):
         super().summary()
@@ -547,7 +551,9 @@ class BatteryLevelService(SHCDeviceService):
     @property
     def warningLevel(self) -> State:
         faults = (
-            self._raw_device_service["faults"] if "faults" in self._raw_device_service else None
+            self._raw_device_service["faults"]
+            if "faults" in self._raw_device_service
+            else None
         )
         if not faults:
             return self.State("OK")
@@ -645,7 +651,7 @@ SERVICE_MAPPING = {
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
     "HumidityLevel": HumidityLevelService,
-    "IntrusionDetectionControl": IntrusionDetectionControlService, # Deprecated
+    "IntrusionDetectionControl": IntrusionDetectionControlService,  # Deprecated
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
     "MultiLevelSwitch": MultiLevelSwitchService,
@@ -674,5 +680,9 @@ SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
 def build(api, raw_device_service):
     device_service_id = raw_device_service["id"]
-    assert device_service_id in SUPPORTED_DEVICE_SERVICE_IDS, "Device service is supported"
-    return SERVICE_MAPPING[device_service_id](api=api, raw_device_service=raw_device_service)
+    assert (
+        device_service_id in SUPPORTED_DEVICE_SERVICE_IDS
+    ), "Device service is supported"
+    return SERVICE_MAPPING[device_service_id](
+        api=api, raw_device_service=raw_device_service
+    )

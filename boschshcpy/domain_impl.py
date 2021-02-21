@@ -1,5 +1,7 @@
 from enum import Enum
+
 from .api import SHCAPI
+
 
 class SHCIntrusionSystem:
     DOMAIN_STATES = {
@@ -7,7 +9,7 @@ class SHCIntrusionSystem:
         "alarmState",
         "securityGapState",
         "activeConfigurationProfile",
-        "systemAvailability"
+        "systemAvailability",
     }
 
     class ArmingState(Enum):
@@ -30,7 +32,9 @@ class SHCIntrusionSystem:
         self._raw_system_availability = raw_domain_state["systemAvailability"]
         self._raw_arming_state = raw_domain_state["armingState"]
         self._raw_alarm_state = raw_domain_state["alarmState"]
-        self._raw_active_configuration_profile = raw_domain_state["activeConfigurationProfile"]
+        self._raw_active_configuration_profile = raw_domain_state[
+            "activeConfigurationProfile"
+        ]
         self._raw_security_gap_state = raw_domain_state["securityGapState"]
 
         self._callbacks = {}
@@ -97,24 +101,15 @@ class SHCIntrusionSystem:
         result = self._api.post_domain_action("intrusion/actions/arm")
 
     def arm_full_protection(self):
-        data = {
-        	"@type": "armRequest",
-	        "profileId": "0"
-        }
+        data = {"@type": "armRequest", "profileId": "0"}
         result = self._api.post_domain_action("intrusion/actions/arm", data)
 
     def arm_partial_protection(self):
-        data = {
-        	"@type": "armRequest",
-	        "profileId": "1"
-        }
+        data = {"@type": "armRequest", "profileId": "1"}
         result = self._api.post_domain_action("intrusion/actions/arm", data)
 
     def arm_individual_protection(self):
-        data = {
-        	"@type": "armRequest",
-	        "profileId": "2"
-        }
+        data = {"@type": "armRequest", "profileId": "2"}
         self._api.post_domain_action("intrusion/actions/arm", data)
 
     def disarm(self):
@@ -128,7 +123,9 @@ class SHCIntrusionSystem:
         self._raw_system_availability = raw_domain_state["systemAvailability"]
         self._raw_arming_state = raw_domain_state["armingState"]
         self._raw_alarm_state = raw_domain_state["alarmState"]
-        self._raw_active_configuration_profile = raw_domain_state["activeConfigurationProfile"]
+        self._raw_active_configuration_profile = raw_domain_state[
+            "activeConfigurationProfile"
+        ]
         self._raw_security_gap_state = raw_domain_state["securityGapState"]
 
     def process_long_polling_poll_result(self, raw_result):
@@ -146,9 +143,8 @@ class SHCIntrusionSystem:
         for callback in self._callbacks:
             self._callbacks[callback]()
 
-MODEL_MAPPING = {
-    "IDS": SHCIntrusionSystem
-}
+
+MODEL_MAPPING = {"IDS": SHCIntrusionSystem}
 
 SUPPORTED_DOMAINS = MODEL_MAPPING.keys()
 

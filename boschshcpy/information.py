@@ -5,9 +5,19 @@ from enum import Enum
 
 from getmac import get_mac_address
 from zeroconf import Error as ZeroconfError
-from zeroconf import IPVersion, ServiceBrowser, ServiceInfo, ServiceStateChange, current_time_millis
+from zeroconf import (
+    IPVersion,
+    ServiceBrowser,
+    ServiceInfo,
+    ServiceStateChange,
+    current_time_millis,
+)
 
-from boschshcpy.exceptions import SHCConnectionError, SHCmDNSError, SHCAuthenticationError
+from boschshcpy.exceptions import (
+    SHCAuthenticationError,
+    SHCConnectionError,
+    SHCmDNSError,
+)
 
 logger = logging.getLogger("boschshcpy")
 
@@ -97,7 +107,9 @@ class SHCInformation:
         for info in service_info.values():
             if "Bosch SHC" in info.name:
                 if host_ip in info.parsed_addresses(IPVersion.V4Only):
-                    mac_address = info.name[info.name.find("[") + 1 : info.name.find("]")]
+                    mac_address = info.name[
+                        info.name.find("[") + 1 : info.name.find("]")
+                    ]
                     server_pos = info.server.find(".local.")
                     if server_pos > -1:
                         name = info.server[:server_pos]
@@ -125,7 +137,10 @@ class SHCInformation:
                 self._unique_id = format_mac(mac_address)
             else:
                 self._unique_id = host
-                logger.warning("Cannot obtain unique id, using IP address '%s' instead. Please make sure the IP stays the same!", host)
+                logger.warning(
+                    "Cannot obtain unique id, using IP address '%s' instead. Please make sure the IP stays the same!",
+                    host,
+                )
             self._name = host
 
     def summary(self):

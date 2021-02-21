@@ -20,7 +20,9 @@ logger = logging.getLogger("boschshcpy")
 class SHCSession:
     def __init__(self, controller_ip: str, certificate, key, lazy=False, zeroconf=None):
         # API
-        self._api = SHCAPI(controller_ip=controller_ip, certificate=certificate, key=key)
+        self._api = SHCAPI(
+            controller_ip=controller_ip, certificate=certificate, key=key
+        )
         self._device_helper = SHCDeviceHelper(self._api)
 
         # Subscription status
@@ -90,7 +92,9 @@ class SHCSession:
             self._scenarios_by_id[scenario_id] = scenario
 
     def _initialize_domains(self):
-        self._domains_by_id["IDS"] = SHCIntrusionSystem(self._api, self._api.get_domain_intrusion_detection())
+        self._domains_by_id["IDS"] = SHCIntrusionSystem(
+            self._api, self._api.get_domain_intrusion_detection()
+        )
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
@@ -126,23 +130,33 @@ class SHCSession:
                 device = self._devices_by_id[device_id]
                 device.process_long_polling_poll_result(raw_result)
             else:
-                logger.debug(f"Skipping polling result with unknown device id {device_id}.")
+                logger.debug(
+                    f"Skipping polling result with unknown device id {device_id}."
+                )
             return
         if raw_result["@type"] == "message":
             assert "arguments" in raw_result
             if "deviceServiceDataModel" in raw_result["arguments"]:
-                raw_data_model = json.loads(raw_result["arguments"]["deviceServiceDataModel"])
+                raw_data_model = json.loads(
+                    raw_result["arguments"]["deviceServiceDataModel"]
+                )
                 self._process_long_polling_poll_result(raw_data_model)
             return
         if raw_result["@type"] == "scenarioTriggered":
             if self._callback is not None:
-                self._callback(raw_result["id"], raw_result["name"], raw_result["lastTimeTriggered"])
+                self._callback(
+                    raw_result["id"],
+                    raw_result["name"],
+                    raw_result["lastTimeTriggered"],
+                )
             return
         if raw_result["@type"] == "device":
             device_id = raw_result["id"]
             if device_id in self._devices_by_id.keys():
                 self._update_device(raw_result)
-                if "deleted" in raw_result and raw_result["deleted"] == True:  # Device deleted
+                if (
+                    "deleted" in raw_result and raw_result["deleted"] == True
+                ):  # Device deleted
                     # inform on deleted device
                     logger.debug("Deleting device with id %s", device_id)
                     self._devices_by_id.pop(device_id, None)
@@ -164,11 +178,15 @@ class SHCSession:
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
-                            logger.warning("_long_poll returned False. Waiting 1 second.")
+                            logger.warning(
+                                "_long_poll returned False. Waiting 1 second."
+                            )
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
-                        logger.info("Stopping polling thread after expected runtime error.")
+                        logger.info(
+                            "Stopping polling thread after expected runtime error."
+                        )
                         logger.info(f"Error description: {err}. {err.args}")
                         logger.info(f"Attempting unsubscribe...")
                         try:
@@ -177,7 +195,9 @@ class SHCSession:
                             logger.info(f"Unsubscribe not successful: {ex}")
 
                     except Exception as ex:
-                        logger.error(f"Error in polling thread: {ex}. Waiting 15 seconds.")
+                        logger.error(
+                            f"Error in polling thread: {ex}. Waiting 15 seconds."
+                        )
                         time.sleep(15.0)
 
             self._polling_thread = threading.Thread(

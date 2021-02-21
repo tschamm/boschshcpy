@@ -57,7 +57,9 @@ class SHCAPI:
         timeout=30,
     ):
         try:
-            result = self._requests_session.get(api_url, headers=headers, timeout=timeout)
+            result = self._requests_session.get(
+                api_url, headers=headers, timeout=timeout
+            )
             if not result.ok:
                 self._process_nok_result(result)
 
@@ -77,7 +79,9 @@ class SHCAPI:
             raise Exception(f"API call returned SSLError: {e}.")
 
     def _put_api_or_fail(self, api_url, body, timeout=30):
-        result = self._requests_session.put(api_url, data=json.dumps(body), timeout=timeout)
+        result = self._requests_session.put(
+            api_url, data=json.dumps(body), timeout=timeout
+        )
         if not result.ok:
             self._process_nok_result(result)
         if len(result.content) > 0:
@@ -86,7 +90,9 @@ class SHCAPI:
             return {}
 
     def _post_api_or_fail(self, api_url, body, timeout=30):
-        result = self._requests_session.post(api_url, data=json.dumps(body), timeout=timeout)
+        result = self._requests_session.post(
+            api_url, data=json.dumps(body), timeout=timeout
+        )
         if not result.ok:
             self._process_nok_result(result)
         if len(result.content) > 0:
@@ -144,8 +150,8 @@ class SHCAPI:
     def get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
         return self._get_api_result_or_fail(api_url, expected_type="systemState")
-    
-    def post_domain_action(self, path, data = None):
+
+    def post_domain_action(self, path, data=None):
         api_url = f"{self._api_root}/{path}"
         self._post_api_or_fail(api_url, data)
 
@@ -160,7 +166,9 @@ class SHCAPI:
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
+            raise JSONRPCError(
+                result[0]["error"]["code"], result[0]["error"]["message"]
+            )
         else:
             return result[0]["result"]
 
@@ -175,7 +183,9 @@ class SHCAPI:
         result = self._post_api_or_fail(self._rpc_root, data, wait_seconds + 5)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
+            raise JSONRPCError(
+                result[0]["error"]["code"], result[0]["error"]["message"]
+            )
         else:
             return result[0]["result"]
 
@@ -184,6 +194,8 @@ class SHCAPI:
         result = self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
-            raise JSONRPCError(result[0]["error"]["code"], result[0]["error"]["message"])
+            raise JSONRPCError(
+                result[0]["error"]["code"], result[0]["error"]["message"]
+            )
         else:
             return result[0]["result"]
