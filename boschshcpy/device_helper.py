@@ -6,6 +6,7 @@ from .models_impl import (
     SUPPORTED_MODELS,
     SHCBatteryDevice,
     SHCCameraEyes,
+    SHCCamera360,
     SHCClimateControl,
     SHCIntrusionDetectionSystem,
     SHCLight,
@@ -115,6 +116,12 @@ class SHCDeviceHelper:
         if "CAMERA_EYES" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["CAMERA_EYES"].values())
+
+    @property
+    def camera_360(self) -> typing.Sequence[SHCCamera360]:
+        if "CAMERA_360" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["CAMERA_360"].values())
 
     @property
     def intrusion_detection_system(self) -> SHCIntrusionDetectionSystem:
