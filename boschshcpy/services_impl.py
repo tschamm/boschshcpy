@@ -381,42 +381,6 @@ class CameraNotificationService(SHCDeviceService):
         print(f"    value                    : {self.value}")
 
 
-class IntrusionDetectionControlService(SHCDeviceService):
-    class State(Enum):
-        SYSTEM_DISARMED = "SYSTEM_DISARMED"
-        SYSTEM_ARMING = "SYSTEM_ARMING"
-        SYSTEM_ARMED = "SYSTEM_ARMED"
-        MUTE_ALARM = "MUTE_ALARM"
-
-    class Profile(Enum):
-        FULL_PROTECTION = 0
-        PARTIAL_PROTECTION = 1
-        CUSTOM_PROTECTION = 2
-
-    @property
-    def value(self) -> State:
-        return self.State(self.state["value"])
-
-    @property
-    def activeProfile(self) -> Profile:
-        return self.Profile(int(self.state["activeProfile"]))
-
-    @property
-    def armActivationDelayTime(self) -> int:
-        return self.state["armActivationDelayTime"]
-
-    @property
-    def alarmActivationDelayTime(self) -> int:
-        return self.state["alarmActivationDelayTime"]
-
-    def summary(self):
-        super().summary()
-        print(f"    value                    : {self.value}")
-        print(f"    activeProfile            : {self.activeProfile}")
-        print(f"    armActivationDelayTime   : {self.armActivationDelayTime}")
-        print(f"    alarmActivationDelayTime : {self.alarmActivationDelayTime}")
-
-
 class KeypadService(SHCDeviceService):
     class KeyState(Enum):
         LOWER_BUTTON = "LOWER_BUTTON"
@@ -652,7 +616,6 @@ SERVICE_MAPPING = {
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
     "HumidityLevel": HumidityLevelService,
-    "IntrusionDetectionControl": IntrusionDetectionControlService,  # Deprecated
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
     "MultiLevelSwitch": MultiLevelSwitchService,

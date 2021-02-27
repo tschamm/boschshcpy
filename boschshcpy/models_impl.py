@@ -267,89 +267,6 @@ class SHCCamera360(SHCDevice):
         super().summary()
 
 
-class SHCIntrusionDetectionSystem(SHCDevice):
-    from .services_impl import IntrusionDetectionControlService
-
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
-        self._service = self.device_service("IntrusionDetectionControl")
-
-    def disarm(self):
-        self.alarmstate = IntrusionDetectionControlService.State.SYSTEM_DISARMED
-
-    def arm(self):
-        self.full_arm()
-
-    def full_arm(self):
-        self._service.put_state(
-            {
-                "value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name,
-                "activeProfile": IntrusionDetectionControlService.Profile.FULL_PROTECTION.value,
-            }
-        )
-
-    def partial_arm(self):
-        self._service.put_state(
-            {
-                "value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name,
-                "activeProfile": IntrusionDetectionControlService.Profile.PARTIAL_PROTECTION.value,
-            }
-        )
-
-    def custom_arm(self):
-        self._service.put_state(
-            {
-                "value": IntrusionDetectionControlService.State.SYSTEM_ARMED.name,
-                "activeProfile": IntrusionDetectionControlService.Profile.CUSTOM_PROTECTION.value,
-            }
-        )
-
-    def mute_alarm(self):
-        self.alarmstate = IntrusionDetectionControlService.State.MUTE_ALARM
-
-    def arm_activation_delay(self, seconds):
-        if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
-            return
-
-        self._service.put_state_element("armActivationDelayTime", seconds)
-
-    def arm_instant(self):
-        if self.alarmstate == IntrusionDetectionControlService.State.SYSTEM_ARMING:
-            return
-
-        delay_time = self._service.armActivationDelayTime
-        self.arm_activation_delay(1)
-        self.arm()
-        self.arm_activation_delay(delay_time)
-
-    def trigger(self):
-        # not implemented yet
-        pass
-
-    @property
-    def alarmstate(self) -> IntrusionDetectionControlService.State:
-        return self._service.value
-
-    @alarmstate.setter
-    def alarmstate(self, state: IntrusionDetectionControlService.State):
-        self._service.put_state_element("value", state.name)
-
-    @property
-    def alarmprofile(self) -> IntrusionDetectionControlService.Profile:
-        return self._service.activeProfile
-
-    @property
-    def armActivationDelayTime(self):
-        return self._service.value
-
-    def update(self):
-        self._service.short_poll()
-
-    def summary(self):
-        print(f"-IntrusionDetectionSystem-:")
-        super().summary()
-
-
 class SHCThermostat(SHCBatteryDevice):
     from .services_impl import TemperatureLevelService, ValveTappetService
 
@@ -793,7 +710,6 @@ MODEL_MAPPING = {
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
     "CAMERA_360": SHCCamera360,
-    "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem,  # deprecated
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
     "THB": SHCWallThermostat,
