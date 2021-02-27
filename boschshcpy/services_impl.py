@@ -545,6 +545,7 @@ class BatteryLevelService(SHCDeviceService):
     class State(Enum):
         LOW_BATTERY = "LOW_BATTERY"
         CRITICAL_LOW = "CRITICAL_LOW"
+        CRITICALLY_LOW_BATTERY = "CRITICALLY_LOW_BATTERY"
         OK = "OK"
         NOT_AVAILABLE = "NOT_AVAILABLE"
 
