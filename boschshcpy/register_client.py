@@ -82,7 +82,6 @@ class SHCRegisterClient:
                 .replace("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\r")
                 .replace("-----END CERTIFICATE-----", "\r-----END CERTIFICATE-----")
             )
-            print(certstr)
 
         else:
             if not os.path.exists(certificate):
