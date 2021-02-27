@@ -5,6 +5,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
+import pkg_resources
+
 logger = logging.getLogger("boschshcpy")
 
 
@@ -47,7 +49,7 @@ class SHCAPI:
         self._requests_session.headers.update(
             {"api-version": "2.1", "Content-Type": "application/json"}
         )
-        self._requests_session.verify = 'ca_verification.pem'
+        self._requests_session.verify = pkg_resources.resource_filename('boschshcpy', 'tls_ca_chain.pem')
 
         import urllib3
 
