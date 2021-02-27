@@ -5,8 +5,8 @@ from .device import SHCDevice
 from .models_impl import (
     SUPPORTED_MODELS,
     SHCBatteryDevice,
-    SHCCameraEyes,
     SHCCamera360,
+    SHCCameraEyes,
     SHCClimateControl,
     SHCLight,
     SHCMotionDetector,

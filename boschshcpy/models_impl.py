@@ -226,10 +226,7 @@ class SHCCameraEyes(SHCDevice):
 
 
 class SHCCamera360(SHCDevice):
-    from .services_impl import (
-        CameraNotificationService,
-        PrivacyModeService,
-    )
+    from .services_impl import CameraNotificationService, PrivacyModeService
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)

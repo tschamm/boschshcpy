@@ -1,8 +1,8 @@
 from .device import SHCDevice
 from .device_helper import (
     SHCBatteryDevice,
-    SHCCameraEyes,
     SHCCamera360,
+    SHCCameraEyes,
     SHCClimateControl,
     SHCDeviceHelper,
     SHCLight,
