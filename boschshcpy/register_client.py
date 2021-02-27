@@ -8,6 +8,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
+from .exceptions import SHCRegistrationError, SHCSessionError
 from .generate_cert import generate_certificate
 
 logger = logging.getLogger("boschshcpy")
@@ -58,18 +59,10 @@ class SHCRegisterClient:
             else:
                 return {}
         except requests.exceptions.SSLError as e:
-            logger.error(
-                "An error occured during requests.post(%s): %s. SHC not in pairing mode?"
-                % (self._url, e)
-            )
-            return {}
+            raise SHCRegistrationError(f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts blinking. SSL Error: {e}.")
 
     def _process_nok_result(self, result):
-        logging.error(f"Body: {result.request.body}")
-        logging.error(f"Headers: {result.request.headers}")
-        logging.error(f"URL: {result.request.url}")
-        raise ValueError(
-            f"API call returned non-OK result (code {result.status_code})!: {result.content}"
+        raise SHCSessionError(f"API call returned non-OK result (code {result.status_code})!: {result.content}. Wrong password?"
         )
 
     def register(self, client_id, name, certificate=None):

@@ -19,5 +19,6 @@ from .device_helper import (
 from .domain_impl import SHCIntrusionSystem
 from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCmDNSError
 from .information import SHCInformation
+from .register_client import SHCRegisterClient
 from .scenario import SHCScenario
 from .session import SHCSession

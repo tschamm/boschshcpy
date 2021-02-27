@@ -6,6 +6,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
+from .exceptions import SHCSessionError
+
 logger = logging.getLogger("boschshcpy")
 
 
@@ -117,7 +119,7 @@ class SHCAPI:
         logging.error(f"Body: {result.request.body}")
         logging.error(f"Headers: {result.request.headers}")
         logging.error(f"URL: {result.request.url}")
-        raise ValueError(
+        raise SHCSessionError(
             f"API call returned non-OK result (code {result.status_code})!: {result.content}"
         )
 

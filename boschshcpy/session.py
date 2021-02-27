@@ -8,7 +8,7 @@ from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem
-from .exceptions import SHCAuthenticationError, SHCmDNSError
+from .exceptions import SHCAuthenticationError, SHCmDNSError, SHCSessionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -206,7 +206,7 @@ class SHCSession:
             self._polling_thread.start()
 
         else:
-            raise ValueError("Already polling!")
+            raise SHCSessionError("Already polling!")
 
     def stop_polling(self):
         if self._polling_thread is not None:
@@ -218,7 +218,7 @@ class SHCSession:
             self._polling_thread = None
             self._poll_id = None
         else:
-            raise ValueError("Not polling!")
+            raise SHCSessionError("Not polling!")
 
     def subscribe_scenario_callback(self, callback):
         self._callback = callback

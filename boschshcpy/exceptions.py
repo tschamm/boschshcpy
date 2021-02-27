@@ -25,10 +25,14 @@ class SHCConnectionError(Exception):
 class SHCAuthenticationError(Exception):
     """Error to indicate an authentication problem."""
 
-
 class SHCmDNSError(Exception):
     """Error to indicate a mDNS problem."""
 
+class SHCRegistrationError(Exception):
+    """Error to indicate an error during client registration."""
+
+class SHCSessionError(Exception):
+    """Error to indicate a session problem."""
 
 class SHCException(Exception):
     """Generic SHC exception."""
