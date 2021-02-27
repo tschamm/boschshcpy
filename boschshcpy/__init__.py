@@ -2,6 +2,7 @@ from .device import SHCDevice
 from .device_helper import (
     SHCBatteryDevice,
     SHCCameraEyes,
+    SHCCamera360,
     SHCClimateControl,
     SHCDeviceHelper,
     SHCIntrusionDetectionSystem,

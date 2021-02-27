@@ -226,6 +226,47 @@ class SHCCameraEyes(SHCDevice):
         super().summary()
 
 
+class SHCCamera360(SHCDevice):
+    from .services_impl import (
+        CameraNotificationService,
+        PrivacyModeService,
+    )
+
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+
+        self._privacymode_service = self.device_service("PrivacyMode")
+        self._cameranotification_service = self.device_service("CameraNotification")
+
+    @property
+    def privacymode(self) -> PrivacyModeService.State:
+        return self._privacymode_service.value
+
+    @privacymode.setter
+    def privacymode(self, state: bool):
+        self._privacymode_service.put_state_element(
+            "value", "ENABLED" if state else "DISABLED"
+        )
+
+    @property
+    def cameranotification(self) -> CameraNotificationService.State:
+        return self._cameranotification_service.value
+
+    @cameranotification.setter
+    def cameranotification(self, state: bool):
+        self._cameranotification_service.put_state_element(
+            "value", "ENABLED" if state else "DISABLED"
+        )
+
+    def update(self):
+        self._cameranotification_service.short_poll()
+        self._privacymode_service.short_poll()
+
+    def summary(self):
+        print(f"CAMERA_360 Camera360:")
+        super().summary()
+
+
 class SHCIntrusionDetectionSystem(SHCDevice):
     from .services_impl import IntrusionDetectionControlService
 
@@ -751,6 +792,7 @@ MODEL_MAPPING = {
     "BSM": SHCSmartPlug,  # uses same impl as PSM
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
+    "CAMERA_360": SHCCamera360,
     "INTRUSION_DETECTION_SYSTEM": SHCIntrusionDetectionSystem,  # deprecated
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
