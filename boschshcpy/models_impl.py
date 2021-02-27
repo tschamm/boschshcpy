@@ -6,7 +6,6 @@ from .services_impl import (
     BinarySwitchService,
     CameraLightService,
     HumidityLevelService,
-    IntrusionDetectionControlService,
     ShutterContactService,
     ShutterControlService,
     SurveillanceAlarmService,
