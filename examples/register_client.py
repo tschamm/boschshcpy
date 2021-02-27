@@ -23,7 +23,7 @@ def registering():
         print(f"Cert: {result['cert']}")
         print(f"Key: {result['key']}")
     else:
-        print('No valid token received, did you press client registration button on smart home controller?')
+        print('No valid token received. Did you press client registration button on smart home controller?')
         sys.exit()
 
 if __name__ == "__main__":

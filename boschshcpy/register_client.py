@@ -1,23 +1,24 @@
+import base64
 import json
 import logging
 import os.path
-import base64
-import pkg_resources
 
+import pkg_resources
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-from .generate_cert import generate_selfsigned_cert
+from .generate_cert import generate_certificate
 
 logger = logging.getLogger("boschshcpy")
 
+
 class HostNameIgnoringAdapter(HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = PoolManager(num_pools=connections,
-                                    maxsize=maxsize,
-                                    block=block,
-                                    assert_hostname=False)
+        self.poolmanager = PoolManager(
+            num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
+        )
+
 
 class SHCRegisterClient:
     """ Press and hold the button at the front of the SHC until the lights are blinking before you POST the command. When the SHC is not in pairing mode, there will be a connection error."""
@@ -28,13 +29,18 @@ class SHCRegisterClient:
         self._url = f"https://{self._controller_ip}:8443/smarthome/clients"
 
         # Settings for API call
-        password_base64 = base64.b64encode(password.encode('utf-8'))
+        password_base64 = base64.b64encode(password.encode("utf-8"))
         self._requests_session = requests.Session()
-        self._requests_session.mount('https://', HostNameIgnoringAdapter())
+        self._requests_session.mount("https://", HostNameIgnoringAdapter())
         self._requests_session.headers.update(
-            {"Content-Type": "application/json", "Systempassword": password_base64.decode('utf-8')}
+            {
+                "Content-Type": "application/json",
+                "Systempassword": password_base64.decode("utf-8"),
+            }
         )
-        self._requests_session.verify = pkg_resources.resource_filename('boschshcpy', 'tls_ca_chain.pem')
+        self._requests_session.verify = pkg_resources.resource_filename(
+            "boschshcpy", "tls_ca_chain.pem"
+        )
 
         import urllib3
 
@@ -66,12 +72,12 @@ class SHCRegisterClient:
             f"API call returned non-OK result (code {result.status_code})!: {result.content}"
         )
 
-    def register(self, oss_id, name, certificate=None):
+    def register(self, client_id, name, certificate=None):
         cert = key = None
         if not certificate:
-            cert, key = generate_selfsigned_cert(self._controller_ip, [self._controller_ip])
+            cert, key = generate_certificate(client_id, name)
             certstr = (
-                cert.decode('utf-8')
+                cert.decode("utf-8")
                 .replace("\n", "")
                 .replace("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\r")
                 .replace("-----END CERTIFICATE-----", "\r-----END CERTIFICATE-----")
@@ -88,17 +94,23 @@ class SHCRegisterClient:
                 certstr = (
                     file.read()
                     .replace("\n", "")
-                    .replace("-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\r")
+                    .replace(
+                        "-----BEGIN CERTIFICATE-----", "-----BEGIN CERTIFICATE-----\r"
+                    )
                     .replace("-----END CERTIFICATE-----", "\r-----END CERTIFICATE-----")
                 )
 
         data = {
             "@type": "client",
-            "id": oss_id,
-            "name": "oss_{}".format(name),
+            "id": client_id,
+            "name": f"oss_{name}_Binding",
             "primaryRole": "ROLE_RESTRICTED_CLIENT",
             "certificate": certstr,
         }
 
         result = self._post_api_or_fail(data)
-        return {"token": result["token"], "cert": cert, "key": key} if "token" in result else None
+        return (
+            {"token": result["token"], "cert": cert, "key": key}
+            if "token" in result
+            else None
+        )
