@@ -16,10 +16,12 @@ import boschshcpy
 def registering():
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
     helper = SHCRegisterClient(args.ip_address, args.password)
-    token = helper.register(args.id, args.name, args.access_cert)
+    result = helper.register(args.id, args.name, args.access_cert)
 
-    if token != None:
-        print('successful registered new device with token {}'.format(token))
+    if result != None:
+        print('successful registered new device with token {}'.format(result["token"]))
+        print(f"Cert: {result['cert']}")
+        print(f"Key: {result['key']}")
     else:
         print('No valid token received, did you press client registration button on smart home controller?')
         sys.exit()
@@ -34,7 +36,7 @@ if __name__ == "__main__":
                         help="systempassword was set-up initially in the SHC setup process.")
     parser.add_argument("-ac", "--access_cert",
                         help="Path to access certificat.",
-                        default="keystore/boschshc-cert.pem")
+                        default=None)
     parser.add_argument("-n", "--name",
                         help="Name of the new client user.",
                         default="SHC Api Test")
