@@ -1,6 +1,7 @@
 import json
 import logging
 import os.path
+import base64
 
 import requests
 
@@ -10,15 +11,16 @@ logger = logging.getLogger("boschshcpy")
 class SHCRegisterClient:
     """ Press and hold the button at the front of the SHC until the lights are blinking before you POST the command. When the SHC is not in pairing mode, there will be a connection error."""
 
-    def __init__(self, controller_ip: str, password):
+    def __init__(self, controller_ip: str, password: str):
         """Initializes with IP address and access credentials."""
         self._controller_ip = controller_ip
         self._url = f"https://{self._controller_ip}:8443/smarthome/clients"
 
         # Settings for API call
+        password_base64 = base64.b64encode(password.encode('utf-8'))
         self._requests_session = requests.Session()
         self._requests_session.headers.update(
-            {"Content-Type": "application/json", "Systempassword": password}
+            {"Content-Type": "application/json", "Systempassword": password_base64.decode('utf-8')}
         )
         self._requests_session.verify = False
 

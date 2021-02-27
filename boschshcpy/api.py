@@ -2,6 +2,8 @@ import json
 import logging
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.poolmanager import PoolManager
 
 logger = logging.getLogger("boschshcpy")
 
@@ -23,6 +25,12 @@ class JSONRPCError(Exception):
     def __str__(self):
         return f"JSONRPCError (code: {self.code}, message: {self.message})"
 
+class HostNameIgnoringAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = PoolManager(num_pools=connections,
+                                    maxsize=maxsize,
+                                    block=block,
+                                    assert_hostname=False)
 
 class SHCAPI:
     def __init__(self, controller_ip: str, certificate, key):
@@ -34,11 +42,12 @@ class SHCAPI:
 
         # Settings for all API calls
         self._requests_session = requests.Session()
+        self._requests_session.mount('https://', HostNameIgnoringAdapter())
         self._requests_session.cert = (self._certificate, self._key)
         self._requests_session.headers.update(
             {"api-version": "2.1", "Content-Type": "application/json"}
         )
-        self._requests_session.verify = False
+        self._requests_session.verify = 'ca_verification.pem'
 
         import urllib3
 

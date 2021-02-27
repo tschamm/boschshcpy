@@ -58,7 +58,7 @@ def generate_selfsigned_cert(hostname, ip_addresses=None, key=None):
             alt_names.append(x509.DNSName(addr))
             # ... whereas golang's crypto/tls is stricter, and needs IPAddresses
             # note: older versions of cryptography do not understand ip_address objects
-            alt_names.append(x509.IPAddress(ipaddress.ip_address(addr)))
+            alt_names.append(x509.IPAddress(ip_address(addr)))
 
     san = x509.SubjectAlternativeName(alt_names)
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         sys.exit()
 
     if not os.path.isfile(args.access_cert) or not os.path.isfile(args.access_key):
-        cert, key = generate_selfsigned_cert("boschshcpy")
+        cert, key = generate_selfsigned_cert("boschshcpy", ["192.168.1.6"])
         with open(args.access_cert, 'wb') as writer:
             writer.write(cert)
         with open(args.access_key, 'wb') as writer:

@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-pw", "--password",
-                        help="systempassword - encoded in base64 - which you have set-up initially in the SHC-Setup process.")
+                        help="systempassword was set-up initially in the SHC setup process.")
     parser.add_argument("-ac", "--access_cert",
                         help="Path to access certificat.",
                         default="keystore/boschshc-cert.pem")
