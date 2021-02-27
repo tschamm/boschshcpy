@@ -19,7 +19,7 @@ def generate_certificate(client_id, orgname) -> x509.Certificate:
         ]
     )
 
-    utc_now = datetime.datetime.utcnow()
+    utc_now = datetime.utcnow()
     cert = (
         x509.CertificateBuilder()
         .serial_number(1000)
@@ -27,7 +27,7 @@ def generate_certificate(client_id, orgname) -> x509.Certificate:
         .subject_name(name)
         .public_key(key.public_key())
         .not_valid_before(utc_now)
-        .not_valid_after(utc_now + datetime.timedelta(days=10 * 365))
+        .not_valid_after(utc_now + timedelta(days=10 * 365))
         .add_extension(x509.BasicConstraints(ca=True, path_length=None), True)
         .sign(key, hashes.SHA256(), default_backend())
     )
