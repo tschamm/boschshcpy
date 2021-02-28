@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="boschshcpy",
-    version="0.2.8.dev3",
+    version="0.2.8.dev5",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
@@ -21,7 +21,6 @@ setup(
         'Programming Language :: Python :: 3',
         "License :: OSI Approved :: BSD License"
     ],
-    platform='any',
     python_requires='>=3.7',
     install_requires=['requests>=2.22', 'zeroconf>=0.28.0', 'getmac==0.8.2']
 )
