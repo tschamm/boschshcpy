@@ -117,6 +117,55 @@ class SHCSmartPlug(SHCDevice):
         super().summary()
 
 
+class SHCSmartPlugCompact(SHCDevice):
+    from .services_impl import (
+        PowerMeterService,
+        PowerSwitchProgramService,
+        PowerSwitchService,
+        CommunicationQualityService
+    )
+
+    def __init__(self, api, raw_device):
+        super().__init__(api, raw_device)
+
+        self._powerswitch_service = self.device_service("PowerSwitch")
+        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+        self._powermeter_service = self.device_service("PowerMeter")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+
+    @property
+    def state(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    @state.setter
+    def state(self, state: bool):
+        self._powerswitch_service.put_state_element(
+            "switchState", "ON" if state else "OFF"
+        )
+
+    @property
+    def energyconsumption(self) -> float:
+        return self._powermeter_service.energyconsumption
+
+    @property
+    def powerconsumption(self) -> float:
+        return self._powermeter_service.powerconsumption
+
+    @property
+    def communicationquality(self) -> float:
+        return self._communicationquality_service.value
+
+    def update(self):
+        self._powerswitch_service.short_poll()
+        self._powerswitchprogram_service.short_poll()
+        self._powermeter_service.short_poll()
+        self._communicationquality_service.short_poll()
+
+    def summary(self):
+        print(f"PLUG_COMPACT SmartPlugCompact:")
+        super().summary()
+
+
 class SHCShutterControl(SHCDevice):
     from .services_impl import ShutterControlService
 
@@ -703,6 +752,7 @@ MODEL_MAPPING = {
     "BBL": SHCShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCSmartPlug,  # uses same impl as PSM
+    "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
     "CAMERA_360": SHCCamera360,
