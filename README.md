@@ -35,6 +35,7 @@ The following device models are implemented, using the above services:
 * ```ShutterContact```
 * ```ShutterControl```
 * ```SmartPlug```
+* ```SmartPlugCompact```
 * ```LightControl```
 * ```SmokeDetector```
 * ```CameraEyes```

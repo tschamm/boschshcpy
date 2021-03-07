@@ -10,6 +10,7 @@ from .device_helper import (
     SHCShutterContact,
     SHCShutterControl,
     SHCSmartPlug,
+    SHCSmartPlugCompact,
     SHCSmokeDetector,
     SHCThermostat,
     SHCTwinguard,

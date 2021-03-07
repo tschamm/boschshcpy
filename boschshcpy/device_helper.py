@@ -13,6 +13,7 @@ from .models_impl import (
     SHCShutterContact,
     SHCShutterControl,
     SHCSmartPlug,
+    SHCSmartPlugCompact,
     SHCSmokeDetector,
     SHCThermostat,
     SHCTwinguard,
@@ -64,6 +65,12 @@ class SHCDeviceHelper:
         if "BSM" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["BSM"].values())
         return devices
+
+    @property
+    def smart_plugs_compact(self) -> typing.Sequence[SHCSmartPlugCompact]:
+        if "PLUG_COMPACT" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model['PLUG_COMPACT'].values())
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
