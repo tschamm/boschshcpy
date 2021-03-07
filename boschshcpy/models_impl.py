@@ -152,7 +152,7 @@ class SHCSmartPlugCompact(SHCDevice):
         return self._powermeter_service.powerconsumption
 
     @property
-    def communicationquality(self) -> float:
+    def communicationquality(self) -> CommunicationQualityService.State:
         return self._communicationquality_service.value
 
     def update(self):
