@@ -374,7 +374,7 @@ class CameraNotificationService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        return self.State(self.state["value"] if "value" in self.state else "DISABLED")
 
     def summary(self):
         super().summary()

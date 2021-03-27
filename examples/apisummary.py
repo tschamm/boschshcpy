@@ -14,8 +14,6 @@ from boschshcpy import SHCSession, SHCDeviceHelper
 zeroconf = Zeroconf()
 session = SHCSession(
     controller_ip="192.168.1.6", certificate='../keystore/dev-cert.pem', key='../keystore/dev-key.pem', zeroconf=zeroconf)
-
-session.information.summary()
 zeroconf.close()
 
 for device in session.devices:
@@ -28,3 +26,5 @@ for scenario in session.scenarios:
     scenario.summary()
 
 session.intrusion_system.summary()
+
+session.information.summary()

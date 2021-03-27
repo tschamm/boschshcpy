@@ -85,7 +85,13 @@ class SHCInformation:
 
     @property
     def shcIpAddress(self):
+        """Get the ip address from public information."""
         return self._pub_info["shcIpAddress"]
+
+    @property
+    def macAddress(self):
+        """Get the mac address from public information."""
+        return self._pub_info["macAddress"] if "macAddress" in self._pub_info else None
 
     @property
     def name(self):
@@ -118,12 +124,13 @@ class SHCInformation:
         self._unique_id = format_mac(mac_address)
         self._name = name
 
-    def get_mac(self, host):
-        """Get the mac address of the given host."""
 
     def get_unique_id(self, zeroconf):
         if zeroconf is not None:
             self._listener = SHCListener(zeroconf, self.filter)
+        elif self.macAddress is not None:
+            self._unique_id = self.macAddress
+            self._name = self.shcIpAddress
         else:
             host = self.shcIpAddress
             try:
@@ -146,6 +153,7 @@ class SHCInformation:
     def summary(self):
         print(f"Information:")
         print(f"  shcIpAddress       : {self.shcIpAddress}")
+        print(f"  macAddress         : {self.macAddress}")
         print(f"  SW-Version         : {self.version}")
         print(f"  updateState        : {self.updateState.name}")
         print(f"  uniqueId           : {self.unique_id}")

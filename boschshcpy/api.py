@@ -42,6 +42,7 @@ class SHCAPI:
         self._key = key
         self._controller_ip = controller_ip
         self._api_root = f"https://{self._controller_ip}:8444/smarthome"
+        self._public_root = f"https://{self._controller_ip}:8446/smarthome/public"
         self._rpc_root = f"https://{self._controller_ip}:8444/remote/json-rpc"
 
         # Settings for all API calls
@@ -134,7 +135,7 @@ class SHCAPI:
         return result
 
     def get_public_information(self):
-        api_url = f"https://{self._controller_ip}:8446/smarthome/public/information"
+        api_url = f"{self._public_root}/information"
         try:
             result = self._get_api_result_or_fail(api_url, headers={})
         except Exception as e:
