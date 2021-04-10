@@ -8,7 +8,7 @@ class SHCDeviceService:
         self._raw_state = (
             self._raw_device_service["state"]
             if "state" in self._raw_device_service
-            else []
+            else {}
         )
 
         self._callbacks = {}
@@ -53,7 +53,7 @@ class SHCDeviceService:
         self._raw_state = (
             self._raw_device_service["state"]
             if "state" in self._raw_device_service
-            else []
+            else {}
         )
 
     def process_long_polling_poll_result(self, raw_result):

@@ -600,7 +600,6 @@ class WaterLeakageSensorCheckService(SHCDeviceService):
         return self.state["result"]
 
     def summary(self):
-        print(self.state)
         super().summary()
         print(f"    waterLeakageSensorCheck  : {self.value}")
 
