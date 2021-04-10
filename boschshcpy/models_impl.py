@@ -226,25 +226,13 @@ class SHCCameraEyes(SHCDevice):
     from .services_impl import (
         CameraLightService,
         CameraNotificationService,
-        PrivacyModeService,
     )
 
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
-        self._privacymode_service = self.device_service("PrivacyMode")
         self._cameranotification_service = self.device_service("CameraNotification")
         self._cameralight_service = self.device_service("CameraLight")
-
-    @property
-    def privacymode(self) -> PrivacyModeService.State:
-        return self._privacymode_service.value
-
-    @privacymode.setter
-    def privacymode(self, state: bool):
-        self._privacymode_service.put_state_element(
-            "value", "ENABLED" if state else "DISABLED"
-        )
 
     @property
     def cameranotification(self) -> CameraNotificationService.State:
@@ -267,7 +255,6 @@ class SHCCameraEyes(SHCDevice):
     def update(self):
         self._cameralight_service.short_poll()
         self._cameranotification_service.short_poll()
-        self._privacymode_service.short_poll()
 
     def summary(self):
         print(f"CAMERA_EYES CameraEyes:")
