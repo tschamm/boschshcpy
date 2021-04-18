@@ -15,6 +15,7 @@ from .models_impl import (
     SHCSmartPlug,
     SHCSmartPlugCompact,
     SHCSmokeDetector,
+    SHCSmokeDetectionSystem,
     SHCThermostat,
     SHCTwinguard,
     SHCUniversalSwitch,
@@ -146,3 +147,9 @@ class SHCDeviceHelper:
         if "WATER_LEAKAGE_SENSOR" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["WATER_LEAKAGE_SENSOR"].values())
+
+    @property
+    def smoke_detection_system(self) -> typing.Sequence[SHCSmokeDetectionSystem]:
+        if "SMOKE_DETECTION_SYSTEM" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["SMOKE_DETECTION_SYSTEM"].values())
