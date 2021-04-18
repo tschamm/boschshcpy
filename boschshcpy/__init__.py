@@ -12,6 +12,7 @@ from .device_helper import (
     SHCSmartPlug,
     SHCSmartPlugCompact,
     SHCSmokeDetector,
+    SHCSmokeDetectionSystem,
     SHCThermostat,
     SHCTwinguard,
     SHCUniversalSwitch,
