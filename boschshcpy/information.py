@@ -65,13 +65,18 @@ class SHCInformation:
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
 
-    def __init__(self, api, zeroconf=None):
+    def __init__(self, api, authenticate=True, zeroconf=None):
         self._api = api
         self._unique_id = None
         self._name = None
+
         self._pub_info = self._api.get_public_information()
         if self._pub_info == None:
-            raise SHCAuthenticationError
+            raise SHCConnectionError
+
+        if authenticate:
+            if self._api.get_information() == None:
+                raise SHCAuthenticationError
 
         self.get_unique_id(zeroconf)
 

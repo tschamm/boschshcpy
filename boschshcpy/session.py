@@ -267,9 +267,9 @@ class SHCSession:
 
     def mdns_info(self) -> SHCInformation:
         try:
-            return SHCInformation(api=self._api, zeroconf=self._zeroconf)
+            return SHCInformation(api=self._api, authenticate=False, zeroconf=self._zeroconf)
         except SHCmDNSError:
-            return SHCInformation(api=self._api)
+            return SHCInformation(api=self._api, authenticate=False)
 
     @property
     def information(self) -> SHCInformation:
