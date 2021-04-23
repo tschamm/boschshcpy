@@ -16,7 +16,6 @@ from zeroconf import (
 from boschshcpy.exceptions import (
     SHCAuthenticationError,
     SHCConnectionError,
-    SHCmDNSError,
 )
 
 logger = logging.getLogger("boschshcpy")
@@ -125,7 +124,7 @@ class SHCInformation:
                     if server_pos > -1:
                         name = info.server[:server_pos]
         if mac_address is None or name is None:
-            raise SHCmDNSError
+            return
         self._unique_id = format_mac(mac_address)
         self._name = name
 
@@ -133,9 +132,14 @@ class SHCInformation:
     def get_unique_id(self, zeroconf):
         if zeroconf is not None:
             self._listener = SHCListener(zeroconf, self.filter)
-        elif self.macAddress is not None:
+            if self._unique_id is not None:
+                logger.debug("Obtain unique_id via zeroconf: '%s'", self._unique_id)
+                return
+
+        if self.macAddress is not None:
             self._unique_id = self.macAddress
             self._name = self.shcIpAddress
+            logger.debug("Obtain unique_id via public information: '%s'", self._unique_id)
         else:
             host = self.shcIpAddress
             try:
@@ -144,9 +148,10 @@ class SHCInformation:
                     mac_address = get_mac_address(hostname=host)
             except Exception as err:  # pylint: disable=broad-except
                 logger.exception("Unable to get mac address: %s", err)
-                mac_address = None
+            
             if mac_address is not None:
                 self._unique_id = format_mac(mac_address)
+                logger.debug("Obtain unique_id via host IP: '%s'", self._unique_id)
             else:
                 self._unique_id = host
                 logger.warning(

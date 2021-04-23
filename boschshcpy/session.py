@@ -8,7 +8,7 @@ from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem
-from .exceptions import SHCAuthenticationError, SHCmDNSError, SHCSessionError
+from .exceptions import SHCAuthenticationError, SHCSessionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -258,18 +258,12 @@ class SHCSession:
         return self._scenarios_by_id[scenario_id]
 
     def authenticate(self):
-        try:
-            self._shc_information = SHCInformation(
-                api=self._api, zeroconf=self._zeroconf
-            )
-        except SHCmDNSError:
-            self._shc_information = SHCInformation(api=self._api)
+        self._shc_information = SHCInformation(
+            api=self._api, zeroconf=self._zeroconf
+        )
 
     def mdns_info(self) -> SHCInformation:
-        try:
-            return SHCInformation(api=self._api, authenticate=False, zeroconf=self._zeroconf)
-        except SHCmDNSError:
-            return SHCInformation(api=self._api, authenticate=False)
+        return SHCInformation(api=self._api, authenticate=False, zeroconf=self._zeroconf)
 
     @property
     def information(self) -> SHCInformation:
