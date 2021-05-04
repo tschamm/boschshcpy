@@ -17,6 +17,7 @@ from .device_helper import (
     SHCTwinguard,
     SHCUniversalSwitch,
     SHCWallThermostat,
+    SHCWaterLeakageSensor,
 )
 from .domain_impl import SHCIntrusionSystem
 from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCRegistrationError
