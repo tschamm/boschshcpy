@@ -700,6 +700,7 @@ class SHCLight(SHCDevice):
 
 
 class SHCWaterLeakageSensor(SHCBatteryDevice):
+    from .services_impl import WaterLeakageSensorService, WaterLeakageSensorTiltService
     def __init__(self, api, raw_device):
         super().__init__(api, raw_device)
 
