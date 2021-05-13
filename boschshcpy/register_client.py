@@ -60,12 +60,12 @@ class SHCRegisterClient:
                 return {}
         except requests.exceptions.SSLError as e:
             raise SHCRegistrationError(
-                f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts blinking. SSL Error: {e}."
+                f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts blinking.\n(SSL Error: {e})."
             )
 
     def _process_nok_result(self, result):
-        raise SHCSessionError(
-            f"API call returned non-OK result (code {result.status_code})!: {result.content}. Wrong password?"
+        raise SHCRegistrationError(
+            f"API call returned non-OK result (code {result.status_code})!: {result.content}... Please check your password?"
         )
 
     def register(self, client_id, name, certificate=None):

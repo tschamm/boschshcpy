@@ -17,22 +17,30 @@ class JSONRPCError(Exception):
     def __str__(self):
         return f"JSONRPCError (code: {self.code}, message: {self.message})"
 
+class SHCException(Exception):
+    """Generic SHC exception."""
+    def __init__(self, message):
+        super().__init__()
+        self._message = message
 
-class SHCConnectionError(Exception):
+    @property
+    def message(self):
+        return self._message
+
+    def __str__(self):
+        return f"SHC Error (message: {self.message})"
+
+
+class SHCConnectionError(SHCException):
     """Error to indicate a connection problem."""
 
 
-class SHCAuthenticationError(Exception):
+class SHCAuthenticationError(SHCException):
     """Error to indicate an authentication problem."""
 
 
-class SHCRegistrationError(Exception):
+class SHCRegistrationError(SHCException):
     """Error to indicate an error during client registration."""
 
-
-class SHCSessionError(Exception):
+class SHCSessionError(SHCException):
     """Error to indicate a session problem."""
-
-
-class SHCException(Exception):
-    """Generic SHC exception."""
