@@ -31,11 +31,11 @@ class SHCException(Exception):
         return f"SHC Error (message: {self.message})"
 
 
-class SHCConnectionError(SHCException):
+class SHCConnectionError(Exception):
     """Error to indicate a connection problem."""
 
 
-class SHCAuthenticationError(SHCException):
+class SHCAuthenticationError(Exception):
     """Error to indicate an authentication problem."""
 
 
