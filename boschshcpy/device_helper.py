@@ -152,9 +152,9 @@ class SHCDeviceHelper:
 
     @property
     def water_leakage_detectors(self) -> typing.Sequence[SHCWaterLeakageSensor]:
-        if "WATER_LEAKAGE_SENSOR" not in SUPPORTED_MODELS:
+        if "WLS" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model["WATER_LEAKAGE_SENSOR"].values())
+        return list(self._devices_by_model["WLS"].values())
 
     @property
     def smoke_detection_system(self) -> typing.Sequence[SHCSmokeDetectionSystem]:

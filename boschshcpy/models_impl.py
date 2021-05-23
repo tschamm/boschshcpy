@@ -732,7 +732,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"WATER_LEAKAGE_SENSOR:")
+        print(f"WLS:")
         super().summary()
 
 
@@ -755,7 +755,7 @@ MODEL_MAPPING = {
     "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
     "LEDVANCE_LIGHT": SHCLight,
     "HUE_LIGHT": SHCLight,
-    "WATER_LEAKAGE_SENSOR": SHCWaterLeakageSensor,
+    "WLS": SHCWaterLeakageSensor,
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
