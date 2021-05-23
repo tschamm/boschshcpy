@@ -34,15 +34,23 @@ class SHCDeviceHelper:
         for model in SUPPORTED_MODELS:
             self._devices_by_model[model] = {}
 
-    def device_init(self, raw_device):
+    def device_init(self, raw_device, device_services):
         device_id = raw_device["id"]
         device_model = raw_device["deviceModel"]
         device = []
         if device_model in SUPPORTED_MODELS:
-            device = build(api=self._api, raw_device=raw_device)
+            device = build(
+                api=self._api,
+                raw_device=raw_device,
+                raw_device_services=device_services,
+            )
             self._devices_by_model[device_model][device_id] = device
         else:
-            device = SHCDevice(api=self._api, raw_device=raw_device)
+            device = SHCDevice(
+                api=self._api,
+                raw_device=raw_device,
+                raw_device_services=device_services,
+            )
 
         return device
 
@@ -71,7 +79,7 @@ class SHCDeviceHelper:
     def smart_plugs_compact(self) -> typing.Sequence[SHCSmartPlugCompact]:
         if "PLUG_COMPACT" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model['PLUG_COMPACT'].values())
+        return list(self._devices_by_model["PLUG_COMPACT"].values())
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:

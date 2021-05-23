@@ -155,6 +155,12 @@ class SHCAPI:
         api_url = f"{self._api_root}/devices"
         return self._get_api_result_or_fail(api_url, expected_element_type="device")
 
+    def get_services(self):
+        api_url = f"{self._api_root}/services"
+        return self._get_api_result_or_fail(
+            api_url, expected_element_type="DeviceServiceData"
+        )
+
     def get_device_service(self, device_id, service_id):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}"
         return self._get_api_result_or_fail(api_url, expected_type="DeviceServiceData")

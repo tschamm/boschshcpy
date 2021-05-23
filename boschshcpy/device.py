@@ -9,13 +9,16 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCDevice:
-    def __init__(self, api, raw_device):
+    def __init__(self, api, raw_device, raw_device_services):
         self._api = api
         self._raw_device = raw_device
 
         self._callbacks = {}
         self._device_services_by_id = {}
-        self._enumerate_services()
+        if not raw_device_services:
+            self._enumerate_services()
+        else:
+            self._init_services(raw_device_services)
 
     def _enumerate_services(self):
         for device_service_id in self._raw_device["deviceServiceIds"]:
@@ -28,6 +31,11 @@ class SHCDevice:
             device_service = build(self._api, raw_device_service_data)
 
             self._device_services_by_id[device_service_id] = device_service
+
+    def _init_services(self, raw_device_services):
+        for raw_device_service_data in raw_device_services:
+            device_service = build(self._api, raw_device_service_data)
+            self._device_services_by_id[raw_device_service_data["id"]] = device_service
 
     @property
     def root_device_id(self):
@@ -129,6 +137,7 @@ class SHCDevice:
         print(f"  Status        : {self.status}")
         print(f"  ParentDevice  : {self.parent_device_id}")
         print(f"  ChildDevices  : {self.child_device_ids}")
+        print(f"  DeviceServices: {self._raw_device['deviceServiceIds']}")
         for device_service in self.device_services:
             device_service.summary()
 

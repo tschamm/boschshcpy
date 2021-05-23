@@ -20,8 +20,8 @@ from .services_impl import (
 class SHCBatteryDevice(SHCDevice):
     from .services_impl import BatteryLevelService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._batterylevel_service = self.device_service("BatteryLevel")
 
     @property
@@ -42,8 +42,8 @@ class SHCBatteryDevice(SHCDevice):
 class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._alarm_service = self.device_service("Alarm")
         self._smokedetectorcheck_service = self.device_service("SmokeDetectorCheck")
@@ -82,8 +82,8 @@ class SHCSmartPlug(SHCDevice):
         PowerSwitchService,
     )
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._powerswitch_service = self.device_service("PowerSwitch")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
@@ -122,11 +122,11 @@ class SHCSmartPlugCompact(SHCDevice):
         PowerMeterService,
         PowerSwitchProgramService,
         PowerSwitchService,
-        CommunicationQualityService
+        CommunicationQualityService,
     )
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._powerswitch_service = self.device_service("PowerSwitch")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
@@ -169,8 +169,8 @@ class SHCSmartPlugCompact(SHCDevice):
 class SHCShutterControl(SHCDevice):
     from .services_impl import ShutterControlService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device=raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._service = self.device_service("ShutterControl")
 
     @property
@@ -201,8 +201,8 @@ class SHCShutterControl(SHCDevice):
 class SHCShutterContact(SHCBatteryDevice):
     from .services_impl import ShutterContactService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._service = self.device_service("ShutterContact")
 
     @property
@@ -228,8 +228,8 @@ class SHCCameraEyes(SHCDevice):
         CameraNotificationService,
     )
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._cameranotification_service = self.device_service("CameraNotification")
         self._cameralight_service = self.device_service("CameraLight")
@@ -264,8 +264,8 @@ class SHCCameraEyes(SHCDevice):
 class SHCCamera360(SHCDevice):
     from .services_impl import CameraNotificationService, PrivacyModeService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._privacymode_service = self.device_service("PrivacyMode")
         self._cameranotification_service = self.device_service("CameraNotification")
@@ -302,8 +302,8 @@ class SHCCamera360(SHCDevice):
 class SHCThermostat(SHCBatteryDevice):
     from .services_impl import TemperatureLevelService, ValveTappetService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._valvetappet_service = self.device_service("ValveTappet")
 
@@ -332,8 +332,8 @@ class SHCThermostat(SHCBatteryDevice):
 class SHCClimateControl(SHCDevice):
     from .services_impl import RoomClimateControlService, TemperatureLevelService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._roomclimatecontrol_service = self.device_service("RoomClimateControl")
 
@@ -397,8 +397,8 @@ class SHCClimateControl(SHCDevice):
 class SHCWallThermostat(SHCBatteryDevice):
     from .services_impl import HumidityLevelService, TemperatureLevelService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._humiditylevel_service = self.device_service("HumidityLevel")
 
@@ -423,8 +423,8 @@ class SHCWallThermostat(SHCBatteryDevice):
 class SHCUniversalSwitch(SHCBatteryDevice):
     from .services_impl import KeypadService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._keypad_service = self.device_service("Keypad")
 
     @property
@@ -455,8 +455,8 @@ class SHCUniversalSwitch(SHCBatteryDevice):
 class SHCMotionDetector(SHCBatteryDevice):
     from .services_impl import LatestMotionService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._service = self.device_service("LatestMotion")
 
     @property
@@ -475,8 +475,8 @@ class SHCMotionDetector(SHCBatteryDevice):
 class SHCTwinguard(SHCBatteryDevice):
     from .services_impl import AirQualityLevelService, SmokeDetectorCheckService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._airqualitylevel_service = self.device_service("AirQualityLevel")
         self._smokedetectorcheck_service = self.device_service("SmokeDetectorCheck")
 
@@ -534,8 +534,8 @@ class SHCTwinguard(SHCBatteryDevice):
 class SHCSmokeDetectionSystem(SHCDevice):
     from .services_impl import SurveillanceAlarmService
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
         self._surveillancealarm_service = self.device_service("SurveillanceAlarm")
         # self._smokedetectioncontrol_service = self.device_service("SmokeDetectionControl")
 
@@ -565,8 +565,8 @@ class SHCLight(SHCDevice):
         COLOR_TEMP = auto()
         COLOR_HSB = auto()
 
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._binaryswitch_service = self.device_service("BinarySwitch")
         self._multilevelswitch_service = self.device_service("MultiLevelSwitch")
@@ -701,8 +701,9 @@ class SHCLight(SHCDevice):
 
 class SHCWaterLeakageSensor(SHCBatteryDevice):
     from .services_impl import WaterLeakageSensorService, WaterLeakageSensorTiltService
-    def __init__(self, api, raw_device):
-        super().__init__(api, raw_device)
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
 
         self._leakage_service = self.device_service("WaterLeakageSensor")
         self._tilt_service = self.device_service("WaterLeakageSensorTilt")
@@ -739,7 +740,7 @@ MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "BBL": SHCShutterControl,
     "PSM": SHCSmartPlug,
-    "BSM": SHCSmartPlug,  # uses same impl as PSM
+    "BSM": SHCSmartPlug,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
@@ -747,7 +748,7 @@ MODEL_MAPPING = {
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
     "THB": SHCWallThermostat,
-    "BWTH": SHCWallThermostat,  # uses same impl as THB
+    "BWTH": SHCWallThermostat,
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "TWINGUARD": SHCTwinguard,
@@ -756,13 +757,13 @@ MODEL_MAPPING = {
     "HUE_LIGHT": SHCLight,
     "WATER_LEAKAGE_SENSOR": SHCWaterLeakageSensor,
 }
-# "PRESENCE_SIMULATION_SERVICE": "Presence Simulation"
-# "CAMERA_360": "Security Camera 360"
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
 
 
-def build(api, raw_device):
+def build(api, raw_device, raw_device_services):
     device_model = raw_device["deviceModel"]
     assert device_model in SUPPORTED_MODELS, "Device model is supported"
-    return MODEL_MAPPING[device_model](api=api, raw_device=raw_device)
+    return MODEL_MAPPING[device_model](
+        api=api, raw_device=raw_device, raw_device_services=raw_device_services
+    )

@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 import typing
+from collections import defaultdict
 
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
@@ -36,6 +37,7 @@ class SHCSession:
         self._rooms_by_id = {}
         self._scenarios_by_id = {}
         self._devices_by_id = {}
+        self._services_by_device_id = defaultdict(list)
         self._domains_by_id = {}
 
         if not lazy:
@@ -51,6 +53,7 @@ class SHCSession:
 
     def _enumerate_all(self):
         self.authenticate()
+        self._enumerate_services()
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
@@ -59,17 +62,27 @@ class SHCSession:
     def _add_device(self, raw_device):
         device_id = raw_device["id"]
 
-        if set(raw_device["deviceServiceIds"]).isdisjoint(SUPPORTED_DEVICE_SERVICE_IDS):
+        if not self._services_by_device_id[device_id]:
             logger.debug(
                 f"Skipping device id {device_id} which has no services that are supported by this library"
             )
             return
 
-        self._devices_by_id[device_id] = self._device_helper.device_init(raw_device)
+        self._devices_by_id[device_id] = self._device_helper.device_init(
+            raw_device, self._services_by_device_id[device_id]
+        )
 
     def _update_device(self, raw_device):
         device_id = raw_device["id"]
         self._devices_by_id[device_id].update_raw_information(raw_device)
+
+    def _enumerate_services(self):
+        raw_services = self._api.get_services()
+        for service in raw_services:
+            if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
+                continue
+            device_id = service["deviceId"]
+            self._services_by_device_id[device_id].append(service)
 
     def _enumerate_devices(self):
         raw_devices = self._api.get_devices()
@@ -258,12 +271,12 @@ class SHCSession:
         return self._scenarios_by_id[scenario_id]
 
     def authenticate(self):
-        self._shc_information = SHCInformation(
-            api=self._api, zeroconf=self._zeroconf
-        )
+        self._shc_information = SHCInformation(api=self._api, zeroconf=self._zeroconf)
 
     def mdns_info(self) -> SHCInformation:
-        return SHCInformation(api=self._api, authenticate=False, zeroconf=self._zeroconf)
+        return SHCInformation(
+            api=self._api, authenticate=False, zeroconf=self._zeroconf
+        )
 
     @property
     def information(self) -> SHCInformation:

@@ -5,22 +5,22 @@ with open("README.md", "r") as fh:
 
 setup(
     name="boschshcpy",
-    version="0.2.17",
+    version="0.2.18",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
     description="Bosch Smart Home Controller API Python Library",
-    license='bsd-3-clause',
+    license="bsd-3-clause",
     long_description=long_description,
     long_description_content_type="text/markdown",
     packages=find_packages(),
     classifiers=[
-        'Intended Audience :: Developers',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        "License :: OSI Approved :: BSD License"
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: BSD License",
     ],
-    python_requires='>=3.7',
-    install_requires=['requests>=2.22', 'zeroconf>=0.28.0', 'getmac==0.8.2']
+    python_requires=">=3.7",
+    install_requires=["requests>=2.22", "zeroconf>=0.28.0", "getmac==0.8.2"],
 )
