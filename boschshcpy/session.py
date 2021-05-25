@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import threading
@@ -9,7 +10,7 @@ from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem
-from .exceptions import SHCAuthenticationError, SHCSessionError
+from .exceptions import SHCAuthenticationError, SHCSessionError, SHCConnectionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -19,7 +20,7 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key, lazy=False, zeroconf=None):
+    def __init__(self, controller_ip: str, certificate, key, zeroconf=None):
         # API
         self._api = SHCAPI(
             controller_ip=controller_ip, certificate=certificate, key=key
@@ -40,9 +41,6 @@ class SHCSession:
         self._services_by_device_id = defaultdict(list)
         self._domains_by_id = {}
 
-        if not lazy:
-            self._enumerate_all()
-
         self._polling_thread = None
         self._stop_polling_thread = False
 
@@ -50,6 +48,21 @@ class SHCSession:
         self.reset_connection_listener = None
 
         self._callback = None
+
+    async def init(self, websession, lazy=False):
+        await self._api.init(websession)
+
+        pub_info = await self._api.get_public_information()
+        if pub_info == None:
+            raise SHCConnectionError
+
+        auth_info = await self._api.get_information()
+        if auth_info == None:
+            raise SHCAuthenticationError
+
+        if not lazy:
+            print("Enumerate")
+            # await self._enumerate_all()
 
     def _enumerate_all(self):
         self.authenticate()

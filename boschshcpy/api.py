@@ -1,5 +1,8 @@
+import asyncio
+import aiohttp
 import json
 import logging
+import ssl
 
 import pkg_resources
 import requests
@@ -44,27 +47,41 @@ class SHCAPI:
         self._api_root = f"https://{self._controller_ip}:8444/smarthome"
         self._public_root = f"https://{self._controller_ip}:8446/smarthome/public"
         self._rpc_root = f"https://{self._controller_ip}:8444/remote/json-rpc"
+        self._cafile = pkg_resources.resource_filename("boschshcpy", "tls_ca_chain.pem")
 
-        # Settings for all API calls
-        self._requests_session = requests.Session()
-        self._requests_session.mount("https://", HostNameIgnoringAdapter())
-        self._requests_session.cert = (self._certificate, self._key)
-        self._requests_session.headers.update(
+        self._async_requests_session = None
+        self._sslcontext = None
+        # # Settings for all API calls
+        # self._requests_session = requests.Session()
+        # self._requests_session.mount("https://", HostNameIgnoringAdapter())
+        # self._requests_session.cert = (self._certificate, self._key)
+        # self._requests_session.headers.update(
+        #     {"api-version": "2.1", "Content-Type": "application/json"}
+        # )
+        # self._requests_session.verify = pkg_resources.resource_filename(
+        #     "boschshcpy", "tls_ca_chain.pem"
+        # )
+
+    async def init(self, session):
+        self._async_requests_session = session
+
+        self._sslcontext = ssl.create_default_context(cafile=self._cafile)
+        self._sslcontext.load_cert_chain(self._certificate, self._key)
+        self._sslcontext.verify_mode = ssl.CERT_REQUIRED
+        self._sslcontext.check_hostname = False
+        self._async_requests_session.headers.update(
             {"api-version": "2.1", "Content-Type": "application/json"}
         )
-        self._requests_session.verify = pkg_resources.resource_filename(
-            "boschshcpy", "tls_ca_chain.pem"
-        )
 
-        import urllib3
+        # import urllib3
 
-        urllib3.disable_warnings()
+        # urllib3.disable_warnings()
 
     @property
     def controller_ip(self):
         return self._controller_ip
 
-    def _get_api_result_or_fail(
+    async def _get_api_result_or_fail(
         self,
         api_url,
         expected_type=None,
@@ -73,24 +90,20 @@ class SHCAPI:
         timeout=30,
     ):
         try:
-            result = self._requests_session.get(
-                api_url, headers=headers, timeout=timeout
-            )
-            if not result.ok:
-                self._process_nok_result(result)
+            async with self._async_requests_session.get(
+                api_url, headers=headers, timeout=timeout, ssl=self._sslcontext
+            ) as result:
+                if not result.ok:
+                    self._process_nok_result(result)
 
-            else:
-                if len(result.content) > 0:
-                    result = json.loads(result.content)
+                else:
+                    result = await result.json()
                     if expected_type is not None:
                         assert result["@type"] == expected_type
                     if expected_element_type is not None:
                         for result_ in result:
                             assert result_["@type"] == expected_element_type
-
                     return result
-                else:
-                    return {}
         except requests.exceptions.SSLError as e:
             raise Exception(f"API call returned SSLError: {e}.")
 
@@ -116,7 +129,7 @@ class SHCAPI:
         else:
             return {}
 
-    def _process_nok_result(self, result):
+    async def _process_nok_result(self, result):
         logging.error(f"Body: {result.request.body}")
         logging.error(f"Headers: {result.request.headers}")
         logging.error(f"URL: {result.request.url}")
@@ -125,19 +138,19 @@ class SHCAPI:
         )
 
     # API calls here
-    def get_information(self):
+    async def get_information(self):
         api_url = f"{self._api_root}/information"
         try:
-            result = self._get_api_result_or_fail(api_url)
+            result = await self._get_api_result_or_fail(api_url)
         except Exception as e:
             logging.error(f"Failed to get information from SHC controller: {e}")
             return None
         return result
 
-    def get_public_information(self):
+    async def get_public_information(self):
         api_url = f"{self._public_root}/information"
         try:
-            result = self._get_api_result_or_fail(api_url, headers={})
+            result = await self._get_api_result_or_fail(api_url, headers={})
         except Exception as e:
             logging.error(f"Failed to get public information from SHC controller: {e}")
             return None
