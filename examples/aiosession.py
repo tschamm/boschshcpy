@@ -42,12 +42,12 @@ async def run(websession):
         certificate="../keystore/dev-cert.pem",
         key="../keystore/dev-key.pem",
     )
-    await session.init(websession)
+    await session.auth_init(websession)
 
-    # for device in session.devices:
-    #     device.summary()
+    for device in session.devices:
+        device.summary()
 
-    # session.information.summary()
+    session.information.summary()
 
 
 asyncio.run(main())

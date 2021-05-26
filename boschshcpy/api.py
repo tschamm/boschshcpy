@@ -138,7 +138,7 @@ class SHCAPI:
         )
 
     # API calls here
-    async def get_information(self):
+    async def async_get_information(self):
         api_url = f"{self._api_root}/information"
         try:
             result = await self._get_api_result_or_fail(api_url)
@@ -147,7 +147,7 @@ class SHCAPI:
             return None
         return result
 
-    async def get_public_information(self):
+    async def async_get_public_information(self):
         api_url = f"{self._public_root}/information"
         try:
             result = await self._get_api_result_or_fail(api_url, headers={})
@@ -156,35 +156,41 @@ class SHCAPI:
             return None
         return result
 
-    def get_rooms(self):
+    async def async_get_rooms(self):
         api_url = f"{self._api_root}/rooms"
-        return self._get_api_result_or_fail(api_url, expected_element_type="room")
+        return await self._get_api_result_or_fail(api_url, expected_element_type="room")
 
-    def get_scenarios(self):
+    async def async_get_scenarios(self):
         api_url = f"{self._api_root}/scenarios"
-        return self._get_api_result_or_fail(api_url, expected_element_type="scenario")
+        return await self._get_api_result_or_fail(
+            api_url, expected_element_type="scenario"
+        )
 
-    def get_devices(self):
+    async def async_get_devices(self):
         api_url = f"{self._api_root}/devices"
-        return self._get_api_result_or_fail(api_url, expected_element_type="device")
+        return await self._get_api_result_or_fail(
+            api_url, expected_element_type="device"
+        )
 
-    def get_services(self):
+    async def async_get_services(self):
         api_url = f"{self._api_root}/services"
-        return self._get_api_result_or_fail(
+        return await self._get_api_result_or_fail(
             api_url, expected_element_type="DeviceServiceData"
         )
 
-    def get_device_service(self, device_id, service_id):
+    async def async_get_device_service(self, device_id, service_id):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}"
-        return self._get_api_result_or_fail(api_url, expected_type="DeviceServiceData")
+        return await self._get_api_result_or_fail(
+            api_url, expected_type="DeviceServiceData"
+        )
 
     def put_device_service_state(self, device_id, service_id, state_update):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         self._put_api_or_fail(api_url, state_update)
 
-    def get_domain_intrusion_detection(self):
+    async def async_get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
-        return self._get_api_result_or_fail(api_url, expected_type="systemState")
+        return await self._get_api_result_or_fail(api_url, expected_type="systemState")
 
     def post_domain_action(self, path, data=None):
         api_url = f"{self._api_root}/{path}"

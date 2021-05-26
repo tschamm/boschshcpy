@@ -49,28 +49,29 @@ class SHCSession:
 
         self._callback = None
 
-    async def init(self, websession, lazy=False):
+    async def auth_init(self, websession, lazy=False):
         await self._api.init(websession)
 
-        pub_info = await self._api.get_public_information()
+        pub_info = await self._api.async_get_public_information()
         if pub_info == None:
             raise SHCConnectionError
 
-        auth_info = await self._api.get_information()
+        auth_info = await self._api.async_get_information()
         if auth_info == None:
             raise SHCAuthenticationError
 
-        if not lazy:
-            print("Enumerate")
-            # await self._enumerate_all()
+        self._shc_information = SHCInformation(pub_info=pub_info)
 
-    def _enumerate_all(self):
-        self.authenticate()
-        self._enumerate_services()
-        self._enumerate_devices()
-        self._enumerate_rooms()
-        self._enumerate_scenarios()
-        self._initialize_domains()
+        if not lazy:
+            await self._async_enumerate_all()
+
+    async def _async_enumerate_all(self):
+        await self._async_enumerate_services()
+        await self._async_enumerate_devices()
+        await self._async_enumerate_rooms()
+        await self._async_enumerate_scenarios()
+        await self._async_initialize_domains()
+        print("Enumerate end")
 
     def _add_device(self, raw_device):
         device_id = raw_device["id"]
@@ -89,38 +90,37 @@ class SHCSession:
         device_id = raw_device["id"]
         self._devices_by_id[device_id].update_raw_information(raw_device)
 
-    def _enumerate_services(self):
-        raw_services = self._api.get_services()
+    async def _async_enumerate_services(self):
+        raw_services = await self._api.async_get_services()
         for service in raw_services:
             if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
                 continue
             device_id = service["deviceId"]
             self._services_by_device_id[device_id].append(service)
 
-    def _enumerate_devices(self):
-        raw_devices = self._api.get_devices()
+    async def _async_enumerate_devices(self):
+        raw_devices = await self._api.async_get_devices()
 
         for raw_device in raw_devices:
             self._add_device(raw_device)
 
-    def _enumerate_rooms(self):
-        raw_rooms = self._api.get_rooms()
+    async def _async_enumerate_rooms(self):
+        raw_rooms = await self._api.async_get_rooms()
         for raw_room in raw_rooms:
             room_id = raw_room["id"]
-            room = SHCRoom(api=self._api, raw_room=raw_room)
+            room = SHCRoom(raw_room=raw_room)
             self._rooms_by_id[room_id] = room
 
-    def _enumerate_scenarios(self):
-        raw_scenarios = self._api.get_scenarios()
+    async def _async_enumerate_scenarios(self):
+        raw_scenarios = await self._api.async_get_scenarios()
         for raw_scenario in raw_scenarios:
             scenario_id = raw_scenario["id"]
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
 
-    def _initialize_domains(self):
-        self._domains_by_id["IDS"] = SHCIntrusionSystem(
-            self._api, self._api.get_domain_intrusion_detection()
-        )
+    async def _async_initialize_domains(self):
+        raw_ids_domain = await self._api.async_get_domain_intrusion_detection()
+        self._domains_by_id["IDS"] = SHCIntrusionSystem(self._api, raw_ids_domain)
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:

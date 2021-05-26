@@ -1,6 +1,5 @@
 class SHCRoom:
-    def __init__(self, api, raw_room):
-        self._api = api
+    def __init__(self, raw_room):
         self._raw_room = raw_room
 
     @property
