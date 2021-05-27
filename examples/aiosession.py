@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 
+from datetime import datetime
 import os
 import sys
 import logging
@@ -42,12 +43,23 @@ async def run(websession):
         certificate="../keystore/dev-cert.pem",
         key="../keystore/dev-key.pem",
     )
-    await session.auth_init(websession)
+    await session.init(websession)
 
     for device in session.devices:
         device.summary()
 
     session.information.summary()
 
+    try:
+        # await session.start_polling()
+        async for updated_object in session.start_polling():
+            print(datetime.now().strftime("%H:%M:%S"), end=" ")
+            print("{}: {}".format(type(updated_object).__name__, updated_object))
+    except GeneratorExit:
+        pass
 
-asyncio.run(main())
+
+try:
+    asyncio.get_event_loop().run_until_complete(main())
+except KeyboardInterrupt:
+    pass

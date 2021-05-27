@@ -1,3 +1,5 @@
+import asyncio
+
 from .api import SHCAPI
 
 
@@ -18,8 +20,8 @@ class SHCScenario:
     def name(self):
         return self._raw_scenario["name"]
 
-    def trigger(self):
-        return self._api._post_api_or_fail(
+    async def async_trigger(self):
+        return await self._api._async_post_api_or_fail(
             f"{self._api._api_root}/scenarios/{self.id}/triggers", ""
         )
 

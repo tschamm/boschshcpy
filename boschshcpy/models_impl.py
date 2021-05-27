@@ -52,9 +52,8 @@ class SHCSmokeDetector(SHCBatteryDevice):
     def alarmstate(self) -> AlarmService.State:
         return self._alarm_service.value
 
-    @alarmstate.setter
-    def alarmstate(self, state: str):
-        self._alarm_service.put_state_element("value", state)
+    async def async_set_alarmstate(self, state: str):
+        await self._alarm_service.async_put_state_element("value", state)
 
     @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
@@ -93,9 +92,8 @@ class SHCSmartPlug(SHCDevice):
     def state(self) -> PowerSwitchService.State:
         return self._powerswitch_service.value
 
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
+    async def async_set_state(self, state: bool):
+        await self._powerswitch_service.async_put_state_element(
             "switchState", "ON" if state else "OFF"
         )
 
@@ -137,9 +135,8 @@ class SHCSmartPlugCompact(SHCDevice):
     def state(self) -> PowerSwitchService.State:
         return self._powerswitch_service.value
 
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
+    async def async_set_state(self, state: bool):
+        await self._powerswitch_service.async_put_state_element(
             "switchState", "ON" if state else "OFF"
         )
 
@@ -177,12 +174,11 @@ class SHCShutterControl(SHCDevice):
     def level(self) -> float:
         return self._service.level
 
-    @level.setter
-    def level(self, level):
-        self._service.put_state_element("level", level)
+    async def async_set_level(self, level):
+        await self._service.async_put_state_element("level", level)
 
-    def stop(self):
-        self._service.put_state_element(
+    async def async_stop(self):
+        await self._service.async_put_state_element(
             "operationState", ShutterControlService.State.STOPPED.name
         )
 
@@ -238,9 +234,8 @@ class SHCCameraEyes(SHCDevice):
     def cameranotification(self) -> CameraNotificationService.State:
         return self._cameranotification_service.value
 
-    @cameranotification.setter
-    def cameranotification(self, state: bool):
-        self._cameranotification_service.put_state_element(
+    async def async_set_cameranotification(self, state: bool):
+        await self._cameranotification_service.async_put_state_element(
             "value", "ENABLED" if state else "DISABLED"
         )
 
@@ -248,9 +243,10 @@ class SHCCameraEyes(SHCDevice):
     def cameralight(self) -> CameraLightService.State:
         return self._cameralight_service.value
 
-    @cameralight.setter
-    def cameralight(self, state: bool):
-        self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
+    async def async_set_cameralight(self, state: bool):
+        await self._cameralight_service.async_put_state_element(
+            "value", "ON" if state else "OFF"
+        )
 
     def update(self):
         self._cameralight_service.short_poll()
@@ -274,9 +270,8 @@ class SHCCamera360(SHCDevice):
     def privacymode(self) -> PrivacyModeService.State:
         return self._privacymode_service.value
 
-    @privacymode.setter
-    def privacymode(self, state: bool):
-        self._privacymode_service.put_state_element(
+    async def async_set_privacymode(self, state: bool):
+        await self._privacymode_service.async_put_state_element(
             "value", "ENABLED" if state else "DISABLED"
         )
 
@@ -284,9 +279,8 @@ class SHCCamera360(SHCDevice):
     def cameranotification(self) -> CameraNotificationService.State:
         return self._cameranotification_service.value
 
-    @cameranotification.setter
-    def cameranotification(self, state: bool):
-        self._cameranotification_service.put_state_element(
+    async def async_set_cameranotification(self, state: bool):
+        await self._cameranotification_service.async_put_state_element(
             "value", "ENABLED" if state else "DISABLED"
         )
 
@@ -341,25 +335,26 @@ class SHCClimateControl(SHCDevice):
     def setpoint_temperature(self) -> float:
         return self._roomclimatecontrol_service.setpoint_temperature
 
-    @setpoint_temperature.setter
-    def setpoint_temperature(self, temperature: float):
-        self._roomclimatecontrol_service.setpoint_temperature = temperature
+    async def async_set_setpoint_temperature(self, temperature: float):
+        await self._roomclimatecontrol_service.async_set_setpoint_temperature(
+            temperature
+        )
 
     @property
     def operation_mode(self) -> RoomClimateControlService.OperationMode:
         return self._roomclimatecontrol_service.operation_mode
 
-    @operation_mode.setter
-    def operation_mode(self, mode: RoomClimateControlService.OperationMode):
-        self._roomclimatecontrol_service.operation_mode = mode
+    async def async_set_operation_mode(
+        self, mode: RoomClimateControlService.OperationMode
+    ):
+        await self._roomclimatecontrol_service.async_set_operation_mode(mode)
 
     @property
     def boost_mode(self) -> bool:
         return self._roomclimatecontrol_service.boost_mode
 
-    @boost_mode.setter
-    def boost_mode(self, value: bool):
-        self._roomclimatecontrol_service.boost_mode = value
+    async def async_set_boost_mode(self, value: bool):
+        await self._roomclimatecontrol_service.async_set_boost_mode(value)
 
     @property
     def supports_boost_mode(self) -> bool:
@@ -369,17 +364,15 @@ class SHCClimateControl(SHCDevice):
     def low(self) -> bool:
         return self._roomclimatecontrol_service.low
 
-    @low.setter
-    def low(self, value: bool):
-        self._roomclimatecontrol_service.low = value
+    async def async_set_low(self, value: bool):
+        await self._roomclimatecontrol_service.async_set_low(value)
 
     @property
     def summer_mode(self) -> bool:
         return self._roomclimatecontrol_service.summer_mode
 
-    @summer_mode.setter
-    def summer_mode(self, value: bool):
-        self._roomclimatecontrol_service.summer_mode = value
+    async def async_set_summer_mode(self, value: bool):
+        await self._roomclimatecontrol_service.async_set_summer_mode(value)
 
     @property
     def temperature(self) -> float:
@@ -537,7 +530,6 @@ class SHCSmokeDetectionSystem(SHCDevice):
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._surveillancealarm_service = self.device_service("SurveillanceAlarm")
-        # self._smokedetectioncontrol_service = self.device_service("SmokeDetectionControl")
 
     @property
     def alarm(self) -> SurveillanceAlarmService.State:
@@ -545,7 +537,6 @@ class SHCSmokeDetectionSystem(SHCDevice):
 
     def update(self):
         self._surveillancealarm_service.short_poll()
-        # self._smokedetectioncontrol_service.short_poll()
 
     def summary(self):
         print(f"SMOKE_DETECTION_SYSTEM:")
@@ -585,9 +576,10 @@ class SHCLight(SHCDevice):
     def state(self) -> bool:
         return self._binaryswitch_service.value
 
-    @state.setter
-    def state(self, state: bool):
-        self._binaryswitch_service.put_state_element("on", True if state else False)
+    async def async_set_state(self, state: bool):
+        await self._binaryswitch_service.async_put_state_element(
+            "on", True if state else False
+        )
 
     @property
     def brightness(self) -> int:
@@ -597,12 +589,11 @@ class SHCLight(SHCDevice):
             return self._multilevelswitch_service.value
         return 0
 
-    @brightness.setter
-    def brightness(self, state: int):
+    async def async_set_brightness(self, state: int):
         if (
             self._capabilities & self.Capabilities.BRIGHTNESS
         ) == self.Capabilities.BRIGHTNESS:
-            self._multilevelswitch_service.put_state_element("level", state)
+            await self._multilevelswitch_service.async_put_state_element("level", state)
 
     @property
     def color(self) -> int:
@@ -612,12 +603,11 @@ class SHCLight(SHCDevice):
             return self._huecolortemperature_service.value
         return 0
 
-    @color.setter
-    def color(self, state: int):
+    async def async_set_color(self, state: int):
         if (
             self._capabilities & self.Capabilities.COLOR_TEMP
         ) == self.Capabilities.COLOR_TEMP:
-            self._huecolortemperature_service.put_state_element(
+            await self._huecolortemperature_service.async_put_state_element(
                 "colorTemperature", state
             )
 
@@ -629,12 +619,11 @@ class SHCLight(SHCDevice):
             return self._hsbcoloractuator_service.value
         return 0
 
-    @rgb.setter
-    def rgb(self, state: int):
+    async def async_set_rgb(self, state: int):
         if (
             self._capabilities & self.Capabilities.COLOR_HSB
         ) == self.Capabilities.COLOR_HSB:
-            self._hsbcoloractuator_service.put_state_element("rgb", state)
+            await self._hsbcoloractuator_service.async_put_state_element("rgb", state)
 
     @property
     def min_color_temperature(self) -> int:

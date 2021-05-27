@@ -32,17 +32,15 @@ class RoomClimateControlService(SHCDeviceService):
     def operation_mode(self) -> OperationMode:
         return self.OperationMode(self.state["operationMode"])
 
-    @operation_mode.setter
-    def operation_mode(self, value: OperationMode):
-        self.put_state_element("operationMode", value.value)
+    async def async_set_operation_mode(self, value: OperationMode):
+        await self.async_put_state_element("operationMode", value.value)
 
     @property
     def setpoint_temperature(self) -> float:
         return float(self.state["setpointTemperature"])
 
-    @setpoint_temperature.setter
-    def setpoint_temperature(self, value: float):
-        self.put_state_element("setpointTemperature", value)
+    async def async_set_setpoint_temperature(self, value: float):
+        await self.async_put_state_element("setpointTemperature", value)
 
     @property
     def setpoint_temperature_eco(self) -> float:
@@ -60,25 +58,22 @@ class RoomClimateControlService(SHCDeviceService):
     def low(self) -> bool:
         return self.state["low"]
 
-    @low.setter
-    def low(self, value: bool):
-        self.put_state_element("low", value)
+    async def async_set_low(self, value: bool):
+        await self.async_put_state_element("low", value)
 
     @property
     def boost_mode(self) -> bool:
         return self.state["boostMode"]
 
-    @boost_mode.setter
-    def boost_mode(self, value: bool):
-        self.put_state_element("boostMode", value)
+    async def async_set_boost_mode(self, value: bool):
+        await self.async_put_state_element("boostMode", value)
 
     @property
     def summer_mode(self) -> bool:
         return self.state["summerMode"]
 
-    @summer_mode.setter
-    def summer_mode(self, value: bool) -> bool:
-        self.put_state_element("summerMode", value)
+    async def async_set_summer_mode(self, value: bool) -> bool:
+        await self.async_put_state_element("summerMode", value)
 
     @property
     def supports_boost_mode(self) -> bool:

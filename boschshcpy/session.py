@@ -1,4 +1,5 @@
 import asyncio
+from aiohttp import client_exceptions
 import json
 import logging
 import threading
@@ -20,7 +21,7 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key, zeroconf=None):
+    def __init__(self, controller_ip: str, certificate, key):
         # API
         self._api = SHCAPI(
             controller_ip=controller_ip, certificate=certificate, key=key
@@ -32,7 +33,6 @@ class SHCSession:
 
         # SHC Information
         self._shc_information = None
-        self._zeroconf = zeroconf
 
         # All devices
         self._rooms_by_id = {}
@@ -49,29 +49,47 @@ class SHCSession:
 
         self._callback = None
 
-    async def auth_init(self, websession, lazy=False):
+    async def init(self, websession, authenticate=True):
         await self._api.init(websession)
 
         pub_info = await self._api.async_get_public_information()
         if pub_info == None:
             raise SHCConnectionError
 
-        auth_info = await self._api.async_get_information()
-        if auth_info == None:
-            raise SHCAuthenticationError
-
         self._shc_information = SHCInformation(pub_info=pub_info)
 
-        if not lazy:
+        if authenticate:
             await self._async_enumerate_all()
 
     async def _async_enumerate_all(self):
+        await self.authenticate()
+        self.cleanup()
+
         await self._async_enumerate_services()
         await self._async_enumerate_devices()
         await self._async_enumerate_rooms()
         await self._async_enumerate_scenarios()
         await self._async_initialize_domains()
-        print("Enumerate end")
+
+    async def authenticate(self):
+        auth_info = await self._api.async_get_information()
+        if auth_info == None:
+            raise SHCAuthenticationError
+
+    def cleanup(self):
+        self._rooms_by_id = {}
+        self._scenarios_by_id = {}
+        self._devices_by_id = {}
+        self._services_by_device_id = defaultdict(list)
+        self._domains_by_id = {}
+
+    @property
+    def information(self) -> SHCInformation:
+        return self._shc_information
+
+    @property
+    def api(self):
+        return self._api
 
     def _add_device(self, raw_device):
         device_id = raw_device["id"]
@@ -122,12 +140,14 @@ class SHCSession:
         raw_ids_domain = await self._api.async_get_domain_intrusion_detection()
         self._domains_by_id["IDS"] = SHCIntrusionSystem(self._api, raw_ids_domain)
 
-    def _long_poll(self, wait_seconds=10):
+    async def _async_long_poll(self, wait_seconds=10):
         if self._poll_id is None:
-            self._poll_id = self.api.long_polling_subscribe()
+            self._poll_id = await self.api.async_long_polling_subscribe()
             logger.debug(f"Subscribed for long poll. Poll id: {self._poll_id}")
         try:
-            raw_results = self.api.long_polling_poll(self._poll_id, wait_seconds)
+            raw_results = await self.api.async_long_polling_poll(
+                self._poll_id, wait_seconds
+            )
             for raw_result in raw_results:
                 self._process_long_polling_poll_result(raw_result)
 
@@ -142,12 +162,6 @@ class SHCSession:
             else:
                 raise json_rpc_error
 
-    def _maybe_unsubscribe(self):
-        if self._poll_id is not None:
-            self.api.long_polling_unsubscribe(self._poll_id)
-            logger.debug(f"Unsubscribed from long poll w/ poll id {self._poll_id}")
-            self._poll_id = None
-
     def _process_long_polling_poll_result(self, raw_result):
         logger.debug(f"Long poll: {raw_result}")
         if raw_result["@type"] == "DeviceServiceData":
@@ -159,7 +173,7 @@ class SHCSession:
                 logger.debug(
                     f"Skipping polling result with unknown device id {device_id}."
                 )
-            return
+            return raw_result
         if raw_result["@type"] == "message":
             assert "arguments" in raw_result
             if "deviceServiceDataModel" in raw_result["arguments"]:
@@ -167,7 +181,7 @@ class SHCSession:
                     raw_result["arguments"]["deviceServiceDataModel"]
                 )
                 self._process_long_polling_poll_result(raw_data_model)
-            return
+            return raw_result
         if raw_result["@type"] == "scenarioTriggered":
             if self._callback is not None:
                 self._callback(
@@ -175,7 +189,7 @@ class SHCSession:
                     raw_result["name"],
                     raw_result["lastTimeTriggered"],
                 )
-            return
+            return raw_result
         if raw_result["@type"] == "device":
             device_id = raw_result["id"]
             if device_id in self._devices_by_id.keys():
@@ -190,61 +204,85 @@ class SHCSession:
                 logger.debug("Found new device with id %s", device_id)
                 self._add_device(raw_result)
                 # inform on new device
-            return
+            return raw_result
         if raw_result["@type"] in SHCIntrusionSystem.DOMAIN_STATES:
             if self.intrusion_system is not None:
                 self.intrusion_system.process_long_polling_poll_result(raw_result)
-            return
-        return
+            return raw_result
+        return raw_result
 
-    def start_polling(self):
-        if self._polling_thread is None:
-
-            def polling_thread_main():
-                while not self._stop_polling_thread:
-                    try:
-                        if not self._long_poll():
-                            logger.warning(
-                                "_long_poll returned False. Waiting 1 second."
-                            )
-                            time.sleep(1.0)
-                    except RuntimeError as err:
-                        self._stop_polling_thread = True
-                        logger.info(
-                            "Stopping polling thread after expected runtime error."
-                        )
-                        logger.info(f"Error description: {err}. {err.args}")
-                        logger.info(f"Attempting unsubscribe...")
-                        try:
-                            self._maybe_unsubscribe()
-                        except Exception as ex:
-                            logger.info(f"Unsubscribe not successful: {ex}")
-
-                    except Exception as ex:
-                        logger.error(
-                            f"Error in polling thread: {ex}. Waiting 15 seconds."
-                        )
-                        time.sleep(15.0)
-
-            self._polling_thread = threading.Thread(
-                target=polling_thread_main, name="SHCPollingThread"
-            )
-            self._polling_thread.start()
-
-        else:
-            raise SHCSessionError("Already polling!")
-
-    def stop_polling(self):
-        if self._polling_thread is not None:
-            logger.debug(f"Unsubscribing from long poll")
-            self._stop_polling_thread = True
-            self._polling_thread.join()
-
-            self._maybe_unsubscribe()
-            self._polling_thread = None
+    async def _async_maybe_unsubscribe(self):
+        if self._poll_id is not None:
+            await self.api.async_long_polling_unsubscribe(self._poll_id)
+            logger.debug(f"Unsubscribed from long poll w/ poll id {self._poll_id}")
             self._poll_id = None
-        else:
-            raise SHCSessionError("Not polling!")
+
+    async def start_polling(self):
+        pending_events = asyncio.Queue()
+
+        async def receive_events():
+            while True:
+                if self._poll_id is None:
+                    self._poll_id = await self.api.async_long_polling_subscribe()
+                    logger.debug(f"Subscribed for long poll. Poll id: {self._poll_id}")
+                try:
+                    for raw_result in await self.api.async_long_polling_poll(
+                        self._poll_id, 360
+                    ):
+                        logger.debug("Received event: %s", raw_result)
+                        pending_events.put_nowait(raw_result)
+
+                except JSONRPCError as json_rpc_error:
+                    if json_rpc_error.code == -32001:
+                        self._poll_id = None
+                        logger.warning(
+                            f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
+                        )
+                    else:
+                        raise json_rpc_error
+                except client_exceptions.ServerDisconnectedError:
+                    logger.debug("Polling endpoint disconnected")
+                except client_exceptions.ClientError as err:
+                    if isinstance(err, client_exceptions.ClientResponseError):
+                        # We get 503 when it's too busy, but any other error
+                        # is probably also because too busy.
+                        logger.debug(
+                            "Got status %s from endpoint. Sleeping while waiting to resolve",
+                            err.status,
+                        )
+                    else:
+                        logger.debug("Unable to reach event endpoint: %s", err)
+
+                    await asyncio.sleep(5)
+                except asyncio.TimeoutError:
+                    pass
+                except asyncio.CancelledError:
+                    logger.debug(f"Unsubscribing from long poll")
+                    await self._async_maybe_unsubscribe()
+                except Exception:
+                    logger.exception("Unexpected error")
+                    pending_events.put(None)
+                    break
+
+        event_task = asyncio.create_task(receive_events())
+
+        while True:
+            try:
+                logger.debug("Process next event")
+                event = await pending_events.get()
+                logger.debug("Event processed")
+            except asyncio.CancelledError:
+                logger.debug("Cancel processing events")
+                event_task.cancel()
+                await event_task
+                logger.debug("event_task awaited")
+                raise
+
+            # If unexpected error occurred
+            if event is None:
+                return
+
+            yield self._process_long_polling_poll_result(event)
 
     def subscribe_scenario_callback(self, callback):
         self._callback = callback
@@ -267,7 +305,7 @@ class SHCSession:
         if room_id is not None:
             return self._rooms_by_id[room_id]
 
-        return SHCRoom(self.api, {"id": "n/a", "name": "n/a", "iconId": "0"})
+        return SHCRoom({"id": "n/a", "name": "n/a", "iconId": "0"})
 
     @property
     def scenarios(self) -> typing.Sequence[SHCScenario]:
@@ -283,25 +321,9 @@ class SHCSession:
     def scenario(self, scenario_id) -> SHCScenario:
         return self._scenarios_by_id[scenario_id]
 
-    def authenticate(self):
-        self._shc_information = SHCInformation(api=self._api, zeroconf=self._zeroconf)
-
-    def mdns_info(self) -> SHCInformation:
-        return SHCInformation(
-            api=self._api, authenticate=False, zeroconf=self._zeroconf
-        )
-
-    @property
-    def information(self) -> SHCInformation:
-        return self._shc_information
-
     @property
     def intrusion_system(self) -> SHCIntrusionSystem:
         return self._domains_by_id["IDS"]
-
-    @property
-    def api(self):
-        return self._api
 
     @property
     def device_helper(self) -> SHCDeviceHelper:

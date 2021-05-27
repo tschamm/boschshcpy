@@ -5,9 +5,6 @@ import logging
 import ssl
 
 import pkg_resources
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
 
 from .exceptions import SHCSessionError
 
@@ -30,13 +27,6 @@ class JSONRPCError(Exception):
 
     def __str__(self):
         return f"JSONRPCError (code: {self.code}, message: {self.message})"
-
-
-class HostNameIgnoringAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = PoolManager(
-            num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
-        )
 
 
 class SHCAPI:
@@ -73,10 +63,6 @@ class SHCAPI:
             {"api-version": "2.1", "Content-Type": "application/json"}
         )
 
-        # import urllib3
-
-        # urllib3.disable_warnings()
-
     @property
     def controller_ip(self):
         return self._controller_ip
@@ -97,39 +83,33 @@ class SHCAPI:
                     self._process_nok_result(result)
 
                 else:
-                    result = await result.json()
+                    json_result = await result.json()
                     if expected_type is not None:
-                        assert result["@type"] == expected_type
+                        assert json_result["@type"] == expected_type
                     if expected_element_type is not None:
-                        for result_ in result:
+                        for result_ in json_result:
                             assert result_["@type"] == expected_element_type
-                    return result
-        except requests.exceptions.SSLError as e:
+                    return json_result
+        except aiohttp.ClientSSLError as e:
             raise Exception(f"API call returned SSLError: {e}.")
 
-    def _put_api_or_fail(self, api_url, body, timeout=30):
-        result = self._requests_session.put(
-            api_url, data=json.dumps(body), timeout=timeout
-        )
-        if not result.ok:
-            self._process_nok_result(result)
-        if len(result.content) > 0:
-            return json.loads(result.content)
-        else:
-            return {}
+    async def _async_put_api_or_fail(self, api_url, body, timeout=30):
+        async with self._async_requests_session.put(
+            api_url, data=json.dumps(body), timeout=timeout, ssl=self._sslcontext
+        ) as result:
+            if not result.ok:
+                self._process_nok_result(result)
+            return await result.json()
 
-    def _post_api_or_fail(self, api_url, body, timeout=30):
-        result = self._requests_session.post(
-            api_url, data=json.dumps(body), timeout=timeout
-        )
-        if not result.ok:
-            self._process_nok_result(result)
-        if len(result.content) > 0:
-            return json.loads(result.content)
-        else:
-            return {}
+    async def _async_post_api_or_fail(self, api_url, body, timeout=30):
+        async with self._async_requests_session.post(
+            api_url, data=json.dumps(body), timeout=timeout, ssl=self._sslcontext
+        ) as result:
+            if not result.ok:
+                self._process_nok_result(result)
+            return await result.json()
 
-    async def _process_nok_result(self, result):
+    def _process_nok_result(self, result):
         logging.error(f"Body: {result.request.body}")
         logging.error(f"Headers: {result.request.headers}")
         logging.error(f"URL: {result.request.url}")
@@ -184,19 +164,19 @@ class SHCAPI:
             api_url, expected_type="DeviceServiceData"
         )
 
-    def put_device_service_state(self, device_id, service_id, state_update):
+    async def async_put_device_service_state(self, device_id, service_id, state_update):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
-        self._put_api_or_fail(api_url, state_update)
+        return await self._async_put_api_or_fail(api_url, state_update)
 
     async def async_get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
         return await self._get_api_result_or_fail(api_url, expected_type="systemState")
 
-    def post_domain_action(self, path, data=None):
+    async def async_post_domain_action(self, path, data=None):
         api_url = f"{self._api_root}/{path}"
-        self._post_api_or_fail(api_url, data)
+        return await self._async_post_api_or_fail(api_url, data)
 
-    def long_polling_subscribe(self):
+    async def async_long_polling_subscribe(self):
         data = [
             {
                 "jsonrpc": "2.0",
@@ -204,7 +184,7 @@ class SHCAPI:
                 "params": ["com/bosch/sh/remote/*", None],
             }
         ]
-        result = self._post_api_or_fail(self._rpc_root, data)
+        result = await self._async_post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(
@@ -213,7 +193,7 @@ class SHCAPI:
         else:
             return result[0]["result"]
 
-    def long_polling_poll(self, poll_id, wait_seconds=30):
+    async def async_long_polling_poll(self, poll_id, wait_seconds=30):
         data = [
             {
                 "jsonrpc": "2.0",
@@ -221,7 +201,9 @@ class SHCAPI:
                 "params": [poll_id, wait_seconds],
             }
         ]
-        result = self._post_api_or_fail(self._rpc_root, data, wait_seconds + 5)
+        result = await self._async_post_api_or_fail(
+            self._rpc_root, data, wait_seconds + 5
+        )
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(
@@ -230,9 +212,9 @@ class SHCAPI:
         else:
             return result[0]["result"]
 
-    def long_polling_unsubscribe(self, poll_id):
+    async def async_long_polling_unsubscribe(self, poll_id):
         data = [{"jsonrpc": "2.0", "method": "RE/unsubscribe", "params": [poll_id]}]
-        result = self._post_api_or_fail(self._rpc_root, data)
+        result = await self._async_post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(
