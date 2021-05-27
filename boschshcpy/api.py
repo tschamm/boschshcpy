@@ -41,16 +41,6 @@ class SHCAPI:
 
         self._async_requests_session = None
         self._sslcontext = None
-        # # Settings for all API calls
-        # self._requests_session = requests.Session()
-        # self._requests_session.mount("https://", HostNameIgnoringAdapter())
-        # self._requests_session.cert = (self._certificate, self._key)
-        # self._requests_session.headers.update(
-        #     {"api-version": "2.1", "Content-Type": "application/json"}
-        # )
-        # self._requests_session.verify = pkg_resources.resource_filename(
-        #     "boschshcpy", "tls_ca_chain.pem"
-        # )
 
     async def init(self, session):
         self._async_requests_session = session
@@ -114,7 +104,7 @@ class SHCAPI:
         logging.error(f"Headers: {result.request.headers}")
         logging.error(f"URL: {result.request.url}")
         raise SHCSessionError(
-            f"API call returned non-OK result (code {result.status_code})!: {result.content}"
+            f"API call returned non-OK result (code {result.status})!: {result.content}"
         )
 
     # API calls here

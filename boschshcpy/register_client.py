@@ -1,24 +1,17 @@
+import asyncio
+import aiohttp
 import base64
 import json
 import logging
 import os.path
+import ssl
 
 import pkg_resources
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
 
 from .exceptions import SHCRegistrationError, SHCSessionError
 from .generate_cert import generate_certificate
 
 logger = logging.getLogger("boschshcpy")
-
-
-class HostNameIgnoringAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
-        self.poolmanager = PoolManager(
-            num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
-        )
 
 
 class SHCRegisterClient:
@@ -28,47 +21,45 @@ class SHCRegisterClient:
         """Initializes with IP address and access credentials."""
         self._controller_ip = controller_ip
         self._url = f"https://{self._controller_ip}:8443/smarthome/clients"
+        self._cafile = pkg_resources.resource_filename("boschshcpy", "tls_ca_chain.pem")
+        self._password_base64 = base64.b64encode(password.encode("utf-8"))
 
-        # Settings for API call
-        password_base64 = base64.b64encode(password.encode("utf-8"))
-        self._requests_session = requests.Session()
-        self._requests_session.mount("https://", HostNameIgnoringAdapter())
-        self._requests_session.headers.update(
-            {
-                "Content-Type": "application/json",
-                "Systempassword": password_base64.decode("utf-8"),
-            }
-        )
-        self._requests_session.verify = pkg_resources.resource_filename(
-            "boschshcpy", "tls_ca_chain.pem"
-        )
+        self._async_requests_session = None
+        self._sslcontext = None
 
-        import urllib3
-
-        urllib3.disable_warnings()
-
-    def _post_api_or_fail(self, body, timeout=30):
+    async def _async_post_api_or_fail(self, body, timeout=30):
         try:
-            result = self._requests_session.post(
-                self._url, data=json.dumps(body), timeout=timeout
-            )
-            if not result.ok:
-                self._process_nok_result(result)
-            if len(result.content) > 0:
-                return json.loads(result.content)
-            else:
-                return {}
-        except requests.exceptions.SSLError as e:
+            async with self._async_requests_session.post(
+                self._url, data=json.dumps(body), timeout=timeout, ssl=self._sslcontext
+            ) as result:
+                if not result.ok:
+                    self._process_nok_result(result)
+                return await result.json()
+        except aiohttp.ClientSSLError as e:
             raise SHCRegistrationError(
                 f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts blinking.\n(SSL Error: {e})."
             )
 
     def _process_nok_result(self, result):
         raise SHCRegistrationError(
-            f"API call returned non-OK result (code {result.status_code})!: {result.content}... Please check your password?"
+            f"API call returned non-OK result (code {result.status})!: {result.content}... Please check your password?"
         )
 
-    def register(self, client_id, name, certificate=None):
+    async def register(self, session, client_id, name, certificate=None):
+        self._async_requests_session = session
+
+        self._sslcontext = ssl.create_default_context(cafile=self._cafile)
+        self._sslcontext.verify_mode = ssl.CERT_REQUIRED
+        self._sslcontext.check_hostname = False
+
+        self._async_requests_session.headers.update(
+            {
+                "api-version": "2.1",
+                "Content-Type": "application/json",
+                "Systempassword": self._password_base64.decode("utf-8"),
+            }
+        )
+
         cert = key = None
         if not certificate:
             cert, key = generate_certificate(client_id, name)
@@ -103,7 +94,7 @@ class SHCRegisterClient:
             "certificate": certstr,
         }
 
-        result = self._post_api_or_fail(data)
+        result = await self._async_post_api_or_fail(data)
         return (
             {"token": result["token"], "cert": cert, "key": key}
             if "token" in result

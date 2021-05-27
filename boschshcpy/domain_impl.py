@@ -99,15 +99,15 @@ class SHCIntrusionSystem:
         print(f"    Alarm State:           {self.alarm_state}")
 
     async def async_arm(self):
-        result = await self._api.async_post_domain_action("intrusion/actions/arm")
+        await self._api.async_post_domain_action("intrusion/actions/arm")
 
     async def async_arm_full_protection(self):
         data = {"@type": "armRequest", "profileId": "0"}
-        result = await self._api.async_post_domain_action("intrusion/actions/arm", data)
+        await self._api.async_post_domain_action("intrusion/actions/arm", data)
 
     async def async_arm_partial_protection(self):
         data = {"@type": "armRequest", "profileId": "1"}
-        result = await self._api.async_post_domain_action("intrusion/actions/arm", data)
+        await self._api.async_post_domain_action("intrusion/actions/arm", data)
 
     async def async_arm_individual_protection(self):
         data = {"@type": "armRequest", "profileId": "2"}

@@ -55,6 +55,8 @@ import boschshcpy
 
 # Create session
 session = boschshcpy.SHCSession(controller_ip="192.168.25.51", certificate='cert.pem', key='key.pem')
+await session.init(websession)
+
 session.information.summary()
 
 device = session.device('roomClimateControl_hz_5')
@@ -62,16 +64,13 @@ service = device.device_service('TemperatureLevel')
 print(service.temperature)
 
 # Update this service's state
-service.short_poll()
+await service.async_short_poll()
 
 # Start long polling thread in background
-session.start_polling()
+await session.start_polling()
 
 # Do work here
 ...
-
-# Stop polling
-session.stop_polling()
 
 # Trigger intrusion detection system
 intrusion_control = session.device_helper.intrusion_detection_system
