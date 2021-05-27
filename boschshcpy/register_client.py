@@ -35,9 +35,9 @@ class SHCRegisterClient:
                 if not result.ok:
                     self._process_nok_result(result)
                 return await result.json()
-        except aiohttp.ClientSSLError as e:
+        except aiohttp.ClientSSLError as err:
             raise SHCRegistrationError(
-                f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts blinking.\n(SSL Error: {e})."
+                f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts blinking.\n(SSL Error: {err})."
             )
 
     def _process_nok_result(self, result):

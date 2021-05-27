@@ -21,9 +21,7 @@ class SHCScenario:
         return self._raw_scenario["name"]
 
     async def async_trigger(self):
-        return await self._api._async_post_api_or_fail(
-            f"{self._api._api_root}/scenarios/{self.id}/triggers", ""
-        )
+        return await self._api.async_post_scenario_trigger(self.id)
 
     def summary(self):
         print(f"Scenario  : {self.id}")

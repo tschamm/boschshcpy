@@ -80,8 +80,8 @@ class SHCAPI:
                         for result_ in json_result:
                             assert result_["@type"] == expected_element_type
                     return json_result
-        except aiohttp.ClientSSLError as e:
-            raise Exception(f"API call returned SSLError: {e}.")
+        except aiohttp.ClientSSLError as err:
+            raise Exception(f"API call returned SSLError: {err}.")
 
     async def _async_put_api_or_fail(self, api_url, body, timeout=30):
         async with self._async_requests_session.put(
@@ -112,8 +112,8 @@ class SHCAPI:
         api_url = f"{self._api_root}/information"
         try:
             result = await self._get_api_result_or_fail(api_url)
-        except Exception as e:
-            logging.error(f"Failed to get information from SHC controller: {e}")
+        except Exception as err:
+            logging.error(f"Failed to get information from SHC controller: {err}")
             return None
         return result
 
@@ -121,8 +121,10 @@ class SHCAPI:
         api_url = f"{self._public_root}/information"
         try:
             result = await self._get_api_result_or_fail(api_url, headers={})
-        except Exception as e:
-            logging.error(f"Failed to get public information from SHC controller: {e}")
+        except Exception as err:
+            logging.error(
+                f"Failed to get public information from SHC controller: {err}"
+            )
             return None
         return result
 
@@ -166,6 +168,10 @@ class SHCAPI:
         api_url = f"{self._api_root}/{path}"
         return await self._async_post_api_or_fail(api_url, data)
 
+    async def async_post_scenario_trigger(self, scenario_id, data=None):
+        api_url = f"{self._api_root}/scenarios/{scenario_id}/triggers"
+        return await self._async_post_api_or_fail(api_url, data)
+
     async def async_long_polling_subscribe(self):
         data = [
             {
@@ -180,8 +186,7 @@ class SHCAPI:
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
             )
-        else:
-            return result[0]["result"]
+        return result[0]["result"]
 
     async def async_long_polling_poll(self, poll_id, wait_seconds=30):
         data = [
@@ -199,8 +204,7 @@ class SHCAPI:
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
             )
-        else:
-            return result[0]["result"]
+        return result[0]["result"]
 
     async def async_long_polling_unsubscribe(self, poll_id):
         data = [{"jsonrpc": "2.0", "method": "RE/unsubscribe", "params": [poll_id]}]
@@ -210,5 +214,4 @@ class SHCAPI:
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
             )
-        else:
-            return result[0]["result"]
+        return result[0]["result"]

@@ -60,11 +60,9 @@ class SHCDevice:
 
     @property
     def deleted(self):
-        return (
-            True
-            if "deleted" in self._raw_device and self._raw_device["deleted"] == True
-            else False
-        )
+        if "deleted" in self._raw_device:
+            return self._raw_device["deleted"] is True
+        return False
 
     @property
     def child_device_ids(self):
@@ -123,7 +121,7 @@ class SHCDevice:
         print(f"  ParentDevice   : {self.parent_device_id}")
         print(f"  ChildDevices   : {self.child_device_ids}")
         print(f"  DeviceServices : {self._raw_device['deviceServiceIds']}")
-        print(f"  Device Service")
+        print("  Device Service")
         for device_service in self.device_services:
             device_service.summary()
 

@@ -41,7 +41,7 @@ class SHCInformation:
         return self._unique_id
 
     def summary(self):
-        print(f"Information:")
+        print("Information          :")
         print(f"  shcIpAddress       : {self.shcIpAddress}")
         print(f"  macAddress         : {self.macAddress}")
         print(f"  SW-Version         : {self.version}")

@@ -1,8 +1,6 @@
 import asyncio
 import json
 import logging
-import threading
-import time
 import typing
 from collections import defaultdict
 
@@ -54,7 +52,7 @@ class SHCSession:
         await self._api.init(websession)
 
         pub_info = await self._api.async_get_public_information()
-        if pub_info == None:
+        if pub_info is None:
             raise SHCConnectionError
 
         self._shc_information = SHCInformation(pub_info=pub_info)
@@ -74,7 +72,7 @@ class SHCSession:
 
     async def authenticate(self):
         auth_info = await self._api.async_get_information()
-        if auth_info == None:
+        if auth_info is None:
             raise SHCAuthenticationError
 
     def cleanup(self):
@@ -160,8 +158,7 @@ class SHCSession:
                     f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
                 )
                 return False
-            else:
-                raise json_rpc_error
+            raise json_rpc_error
 
     def _process_long_polling_poll_result(self, raw_result):
         logger.debug(f"Received event: {raw_result}")
@@ -196,7 +193,7 @@ class SHCSession:
             if device_id in self._devices_by_id.keys():
                 self._update_device(raw_result)
                 if (
-                    "deleted" in raw_result and raw_result["deleted"] == True
+                    "deleted" in raw_result and raw_result["deleted"] is True
                 ):  # Device deleted
                     # inform on deleted device
                     logger.debug("Deleting device with id %s", device_id)
