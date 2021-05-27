@@ -36,9 +36,9 @@ class SHCDeviceService:
         self._callbacks.pop(entity, None)
 
     def summary(self):
-        print(f"  Device Service: {self.id}")
-        print(f"    State: {self.state}")
-        print(f"    Path:  {self.path}")
+        print(f"  - {self.id}")
+        print(f"    State                    : {self.state}")
+        print(f"    Path                     :  {self.path}")
 
     async def async_put_state(self, key_value_pairs):
         await self._api.async_put_device_service_state(

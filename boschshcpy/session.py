@@ -163,7 +163,7 @@ class SHCSession:
                 raise json_rpc_error
 
     def _process_long_polling_poll_result(self, raw_result):
-        logger.debug(f"Long poll: {raw_result}")
+        logger.debug(f"Received event: {raw_result}")
         if raw_result["@type"] == "DeviceServiceData":
             device_id = raw_result["deviceId"]
             if device_id in self._devices_by_id.keys():
@@ -229,14 +229,13 @@ class SHCSession:
                     for raw_result in await self.api.async_long_polling_poll(
                         self._poll_id, 360
                     ):
-                        logger.debug("Received event: %s", raw_result)
                         pending_events.put_nowait(raw_result)
 
                 except JSONRPCError as json_rpc_error:
                     if json_rpc_error.code == -32001:
                         self._poll_id = None
                         logger.warning(
-                            f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
+                            f"SHC claims unknown poll id. Invalidating poll id and trying re-subscribe next time..."
                         )
                     else:
                         raise json_rpc_error
@@ -268,14 +267,11 @@ class SHCSession:
 
         while True:
             try:
-                logger.debug("Process next event")
                 event = await pending_events.get()
-                logger.debug("Event processed")
             except asyncio.CancelledError:
                 logger.debug("Cancel processing events")
                 event_task.cancel()
                 await event_task
-                logger.debug("event_task awaited")
                 raise
 
             # If unexpected error occurred

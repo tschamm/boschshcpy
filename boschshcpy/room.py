@@ -15,6 +15,6 @@ class SHCRoom:
         return self._raw_room["name"]
 
     def summary(self):
-        print(f"Room: {self.id}")
-        print(f"  Name   : {self.name}")
-        print(f"  Icon Id: {self.icon_id}")
+        print(f"Room      : {self.id}")
+        print(f"  Name    : {self.name}")
+        print(f"  Icon Id : {self.icon_id}")

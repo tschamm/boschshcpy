@@ -26,6 +26,6 @@ class SHCScenario:
         )
 
     def summary(self):
-        print(f"scenario: {self.id}")
-        print(f"  Name   : {self.name}")
-        print(f"  Icon Id: {self.icon_id}")
+        print(f"Scenario  : {self.id}")
+        print(f"  Name    : {self.name}")
+        print(f"  Icon Id : {self.icon_id}")

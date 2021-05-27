@@ -113,16 +113,17 @@ class SHCDevice:
 
     def summary(self):
         print(f"Device: {self.id}")
-        print(f"  Name          : {self.name}")
-        print(f"  Manufacturer  : {self.manufacturer}")
-        print(f"  Model         : {self.device_model}")
-        print(f"  Room          : {self.room_id}")
-        print(f"  Serial        : {self.serial}")
-        print(f"  Profile       : {self.profile}")
-        print(f"  Status        : {self.status}")
-        print(f"  ParentDevice  : {self.parent_device_id}")
-        print(f"  ChildDevices  : {self.child_device_ids}")
-        print(f"  DeviceServices: {self._raw_device['deviceServiceIds']}")
+        print(f"  Name           : {self.name}")
+        print(f"  Manufacturer   : {self.manufacturer}")
+        print(f"  Model          : {self.device_model}")
+        print(f"  Room           : {self.room_id}")
+        print(f"  Serial         : {self.serial}")
+        print(f"  Profile        : {self.profile}")
+        print(f"  Status         : {self.status}")
+        print(f"  ParentDevice   : {self.parent_device_id}")
+        print(f"  ChildDevices   : {self.child_device_ids}")
+        print(f"  DeviceServices : {self._raw_device['deviceServiceIds']}")
+        print(f"  Device Service")
         for device_service in self.device_services:
             device_service.summary()
 

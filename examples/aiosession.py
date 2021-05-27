@@ -45,18 +45,40 @@ async def run(websession):
     )
     await session.init(websession)
 
+    print("Devices:")
+    print()
     for device in session.devices:
         device.summary()
 
+    print()
+    print("Scenarios:")
+    print()
+    for scenario in session.scenarios:
+        scenario.summary()
+
+    print()
+    print("Rooms:")
+    print()
+    for room in session.rooms:
+        room.summary()
+
+    print()
+    print("Intrusion Detection System:")
+    print()
+    session.intrusion_system.summary()
+
+    print()
+    print("SHC Information:")
+    print()
     session.information.summary()
 
-    try:
-        # await session.start_polling()
-        async for updated_object in session.start_polling():
-            print(datetime.now().strftime("%H:%M:%S"), end=" ")
-            print("{}: {}".format(type(updated_object).__name__, updated_object))
-    except GeneratorExit:
-        pass
+    # try:
+    #     # await session.start_polling()
+    #     async for updated_object in session.start_polling():
+    #         print(datetime.now().strftime("%H:%M:%S"), end=" ")
+    #         print("{}: {}".format(type(updated_object).__name__, updated_object))
+    # except GeneratorExit:
+    #     pass
 
 
 try:

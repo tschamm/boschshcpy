@@ -93,10 +93,11 @@ class SHCIntrusionSystem:
         self._callbacks.pop(entity, None)
 
     def summary(self):
-        print(f"  Domain:                  {self.id}")
-        print(f"    System Availability:   {self.system_availability}")
-        print(f"    Arming State:          {self.arming_state}")
-        print(f"    Alarm State:           {self.alarm_state}")
+        print(f"Domain:                  {self.id}")
+        print(f"  System Availability:   {self.system_availability}")
+        print(f"  Arming State:          {self.arming_state}")
+        print(f"  Arming Profile:        {self.active_configuration_profile}")
+        print(f"  Alarm State:           {self.alarm_state}")
 
     async def async_arm(self):
         await self._api.async_post_domain_action("intrusion/actions/arm")
