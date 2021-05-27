@@ -1,9 +1,9 @@
 import asyncio
-import aiohttp
 import json
 import logging
 import ssl
 
+import aiohttp
 import pkg_resources
 
 from .exceptions import SHCSessionError

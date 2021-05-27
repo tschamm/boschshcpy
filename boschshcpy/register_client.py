@@ -1,11 +1,11 @@
 import asyncio
-import aiohttp
 import base64
 import json
 import logging
 import os.path
 import ssl
 
+import aiohttp
 import pkg_resources
 
 from .exceptions import SHCRegistrationError, SHCSessionError

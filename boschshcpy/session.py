@@ -1,5 +1,4 @@
 import asyncio
-from aiohttp import client_exceptions
 import json
 import logging
 import threading
@@ -7,11 +6,13 @@ import time
 import typing
 from collections import defaultdict
 
+from aiohttp import client_exceptions
+
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem
-from .exceptions import SHCAuthenticationError, SHCSessionError, SHCConnectionError
+from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCSessionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario

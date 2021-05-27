@@ -118,10 +118,10 @@ class SHCSmartPlug(SHCDevice):
 
 class SHCSmartPlugCompact(SHCDevice):
     from .services_impl import (
+        CommunicationQualityService,
         PowerMeterService,
         PowerSwitchProgramService,
         PowerSwitchService,
-        CommunicationQualityService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
@@ -220,10 +220,7 @@ class SHCShutterContact(SHCBatteryDevice):
 
 
 class SHCCameraEyes(SHCDevice):
-    from .services_impl import (
-        CameraLightService,
-        CameraNotificationService,
-    )
+    from .services_impl import CameraLightService, CameraNotificationService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
