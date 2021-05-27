@@ -1,3 +1,4 @@
+import asyncio
 from enum import Enum
 
 from .device_service import SHCDeviceService
