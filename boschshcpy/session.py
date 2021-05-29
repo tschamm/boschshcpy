@@ -40,12 +40,6 @@ class SHCSession:
         self._services_by_device_id = defaultdict(list)
         self._domains_by_id = {}
 
-        self._polling_thread = None
-        self._stop_polling_thread = False
-
-        # Stop polling function
-        self.reset_connection_listener = None
-
         self._callback = None
 
     async def init(self, websession, authenticate=True):
@@ -230,6 +224,9 @@ class SHCSession:
                 except JSONRPCError as json_rpc_error:
                     if json_rpc_error.code == -32001:
                         self._poll_id = None
+                        print(
+                            f"SHC claims unknown poll id. Invalidating poll id and trying re-subscribe next time..."
+                        )
                         logger.warning(
                             f"SHC claims unknown poll id. Invalidating poll id and trying re-subscribe next time..."
                         )
@@ -252,8 +249,13 @@ class SHCSession:
                 except asyncio.TimeoutError:
                     pass
                 except asyncio.CancelledError:
-                    logger.debug(f"Unsubscribing from long poll")
-                    await self._maybe_unsubscribe()
+                    logger.debug(f"Unsubscribing from long poll ({self._poll_id})")
+                    if self._poll_id is not None:
+                        await self.api.long_polling_unsubscribe(self._poll_id)
+                        logger.debug(
+                            f"Unsubscribed from long poll w/ poll id {self._poll_id}"
+                        )
+                        self._poll_id = None
                 except Exception:
                     logger.exception("Unexpected error")
                     pending_events.put(None)

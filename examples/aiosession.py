@@ -72,13 +72,12 @@ async def run(websession):
     print()
     session.information.summary()
 
-    # try:
-    #     # await session.start_polling()
-    #     async for updated_object in session.start_polling():
-    #         print(datetime.now().strftime("%H:%M:%S"), end=" ")
-    #         print("{}: {}".format(type(updated_object).__name__, updated_object))
-    # except GeneratorExit:
-    #     pass
+    try:
+        async for updated_object in session.start_polling():
+            print(datetime.now().strftime("%H:%M:%S"), end=" ")
+            print("{}: {}".format(type(updated_object).__name__, updated_object))
+    except GeneratorExit:
+        pass
 
 
 try:

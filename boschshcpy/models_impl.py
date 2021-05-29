@@ -60,8 +60,8 @@ class SHCSmokeDetector(SHCBatteryDevice):
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
         return self._smokedetectorcheck_service.value
 
-    def smoketest_requested(self):
-        self._smokedetectorcheck_service.put_state_element(
+    async def smoketest_requested(self):
+        await self._smokedetectorcheck_service.put_state_element(
             "value", "SMOKE_TEST_REQUESTED"
         )
 
@@ -503,8 +503,8 @@ class SHCTwinguard(SHCBatteryDevice):
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
         return self._smokedetectorcheck_service.value
 
-    def smoketest_requested(self):
-        self._smokedetectorcheck_service.put_state_element(
+    async def smoketest_requested(self):
+        await self._smokedetectorcheck_service.put_state_element(
             "value", "SMOKE_TEST_REQUESTED"
         )
 
