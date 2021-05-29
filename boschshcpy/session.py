@@ -51,27 +51,27 @@ class SHCSession:
     async def init(self, websession, authenticate=True):
         await self._api.init(websession)
 
-        pub_info = await self._api.async_get_public_information()
+        pub_info = await self._api.get_public_information()
         if pub_info is None:
             raise SHCConnectionError
 
         self._shc_information = SHCInformation(pub_info=pub_info)
 
         if authenticate:
-            await self._async_enumerate_all()
+            await self._enumerate_all()
 
-    async def _async_enumerate_all(self):
+    async def _enumerate_all(self):
         await self.authenticate()
         self.cleanup()
 
-        await self._async_enumerate_services()
-        await self._async_enumerate_devices()
-        await self._async_enumerate_rooms()
-        await self._async_enumerate_scenarios()
-        await self._async_initialize_domains()
+        await self._enumerate_services()
+        await self._enumerate_devices()
+        await self._enumerate_rooms()
+        await self._enumerate_scenarios()
+        await self._initialize_domains()
 
     async def authenticate(self):
-        auth_info = await self._api.async_get_information()
+        auth_info = await self._api.get_information()
         if auth_info is None:
             raise SHCAuthenticationError
 
@@ -107,46 +107,44 @@ class SHCSession:
         device_id = raw_device["id"]
         self._devices_by_id[device_id].update_raw_information(raw_device)
 
-    async def _async_enumerate_services(self):
-        raw_services = await self._api.async_get_services()
+    async def _enumerate_services(self):
+        raw_services = await self._api.get_services()
         for service in raw_services:
             if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
                 continue
             device_id = service["deviceId"]
             self._services_by_device_id[device_id].append(service)
 
-    async def _async_enumerate_devices(self):
-        raw_devices = await self._api.async_get_devices()
+    async def _enumerate_devices(self):
+        raw_devices = await self._api.get_devices()
 
         for raw_device in raw_devices:
             self._add_device(raw_device)
 
-    async def _async_enumerate_rooms(self):
-        raw_rooms = await self._api.async_get_rooms()
+    async def _enumerate_rooms(self):
+        raw_rooms = await self._api.get_rooms()
         for raw_room in raw_rooms:
             room_id = raw_room["id"]
             room = SHCRoom(raw_room=raw_room)
             self._rooms_by_id[room_id] = room
 
-    async def _async_enumerate_scenarios(self):
-        raw_scenarios = await self._api.async_get_scenarios()
+    async def _enumerate_scenarios(self):
+        raw_scenarios = await self._api.get_scenarios()
         for raw_scenario in raw_scenarios:
             scenario_id = raw_scenario["id"]
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
 
-    async def _async_initialize_domains(self):
-        raw_ids_domain = await self._api.async_get_domain_intrusion_detection()
+    async def _initialize_domains(self):
+        raw_ids_domain = await self._api.get_domain_intrusion_detection()
         self._domains_by_id["IDS"] = SHCIntrusionSystem(self._api, raw_ids_domain)
 
-    async def _async_long_poll(self, wait_seconds=10):
+    async def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
-            self._poll_id = await self.api.async_long_polling_subscribe()
+            self._poll_id = await self.api.long_polling_subscribe()
             logger.debug(f"Subscribed for long poll. Poll id: {self._poll_id}")
         try:
-            raw_results = await self.api.async_long_polling_poll(
-                self._poll_id, wait_seconds
-            )
+            raw_results = await self.api.long_polling_poll(self._poll_id, wait_seconds)
             for raw_result in raw_results:
                 self._process_long_polling_poll_result(raw_result)
 
@@ -209,9 +207,9 @@ class SHCSession:
             return raw_result
         return raw_result
 
-    async def _async_maybe_unsubscribe(self):
+    async def _maybe_unsubscribe(self):
         if self._poll_id is not None:
-            await self.api.async_long_polling_unsubscribe(self._poll_id)
+            await self.api.long_polling_unsubscribe(self._poll_id)
             logger.debug(f"Unsubscribed from long poll w/ poll id {self._poll_id}")
             self._poll_id = None
 
@@ -221,10 +219,10 @@ class SHCSession:
         async def receive_events():
             while True:
                 if self._poll_id is None:
-                    self._poll_id = await self.api.async_long_polling_subscribe()
+                    self._poll_id = await self.api.long_polling_subscribe()
                     logger.debug(f"Subscribed for long poll. Poll id: {self._poll_id}")
                 try:
-                    for raw_result in await self.api.async_long_polling_poll(
+                    for raw_result in await self.api.long_polling_poll(
                         self._poll_id, 360
                     ):
                         pending_events.put_nowait(raw_result)
@@ -255,7 +253,7 @@ class SHCSession:
                     pass
                 except asyncio.CancelledError:
                     logger.debug(f"Unsubscribing from long poll")
-                    await self._async_maybe_unsubscribe()
+                    await self._maybe_unsubscribe()
                 except Exception:
                     logger.exception("Unexpected error")
                     pending_events.put(None)

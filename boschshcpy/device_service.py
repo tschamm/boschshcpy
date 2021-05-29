@@ -40,16 +40,16 @@ class SHCDeviceService:
         print(f"    State                    : {self.state}")
         print(f"    Path                     :  {self.path}")
 
-    async def async_put_state(self, key_value_pairs):
-        await self._api.async_put_device_service_state(
+    async def put_state(self, key_value_pairs):
+        await self._api.put_device_service_state(
             self.device_id, self.id, {"@type": self.state["@type"], **key_value_pairs}
         )
 
-    async def async_put_state_element(self, key, value):
-        await self.async_put_state({key: value})
+    async def put_state_element(self, key, value):
+        await self.put_state({key: value})
 
-    async def async_short_poll(self):
-        self._raw_device_service = await self._api.async_get_device_service(
+    async def short_poll(self):
+        self._raw_device_service = await self._api.get_device_service(
             self.device_id, self.id
         )
         self._raw_state = (

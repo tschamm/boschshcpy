@@ -24,12 +24,12 @@ class SHCRegisterClient:
         self._cafile = pkg_resources.resource_filename("boschshcpy", "tls_ca_chain.pem")
         self._password_base64 = base64.b64encode(password.encode("utf-8"))
 
-        self._async_requests_session = None
+        self._requests_session = None
         self._sslcontext = None
 
-    async def _async_post_api_or_fail(self, body, timeout=30):
+    async def _post_api_or_fail(self, body, timeout=30):
         try:
-            async with self._async_requests_session.post(
+            async with self._requests_session.post(
                 self._url, data=json.dumps(body), timeout=timeout, ssl=self._sslcontext
             ) as result:
                 if not result.ok:
@@ -46,13 +46,13 @@ class SHCRegisterClient:
         )
 
     async def register(self, session, client_id, name, certificate=None):
-        self._async_requests_session = session
+        self._requests_session = session
 
         self._sslcontext = ssl.create_default_context(cafile=self._cafile)
         self._sslcontext.verify_mode = ssl.CERT_REQUIRED
         self._sslcontext.check_hostname = False
 
-        self._async_requests_session.headers.update(
+        self._requests_session.headers.update(
             {
                 "api-version": "2.1",
                 "Content-Type": "application/json",
@@ -94,7 +94,7 @@ class SHCRegisterClient:
             "certificate": certstr,
         }
 
-        result = await self._async_post_api_or_fail(data)
+        result = await self._post_api_or_fail(data)
         return (
             {"token": result["token"], "cert": cert, "key": key}
             if "token" in result

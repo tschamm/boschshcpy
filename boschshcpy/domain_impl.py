@@ -99,29 +99,29 @@ class SHCIntrusionSystem:
         print(f"  Arming Profile:        {self.active_configuration_profile}")
         print(f"  Alarm State:           {self.alarm_state}")
 
-    async def async_arm(self):
-        await self._api.async_post_domain_action("intrusion/actions/arm")
+    async def arm(self):
+        await self._api.post_domain_action("intrusion/actions/arm")
 
-    async def async_arm_full_protection(self):
+    async def arm_full_protection(self):
         data = {"@type": "armRequest", "profileId": "0"}
-        await self._api.async_post_domain_action("intrusion/actions/arm", data)
+        await self._api.post_domain_action("intrusion/actions/arm", data)
 
-    async def async_arm_partial_protection(self):
+    async def arm_partial_protection(self):
         data = {"@type": "armRequest", "profileId": "1"}
-        await self._api.async_post_domain_action("intrusion/actions/arm", data)
+        await self._api.post_domain_action("intrusion/actions/arm", data)
 
-    async def async_arm_individual_protection(self):
+    async def arm_individual_protection(self):
         data = {"@type": "armRequest", "profileId": "2"}
-        await self._api.async_post_domain_action("intrusion/actions/arm", data)
+        await self._api.post_domain_action("intrusion/actions/arm", data)
 
-    async def async_disarm(self):
-        await self._api.async_post_domain_action("intrusion/actions/disarm")
+    async def disarm(self):
+        await self._api.post_domain_action("intrusion/actions/disarm")
 
-    async def async_mute(self):
-        await self._api.async_post_domain_action("intrusion/actions/mute")
+    async def mute(self):
+        await self._api.post_domain_action("intrusion/actions/mute")
 
-    async def async_short_poll(self):
-        raw_domain_state = await self._api.async_get_domain_intrusion_detection()
+    async def short_poll(self):
+        raw_domain_state = await self._api.get_domain_intrusion_detection()
         self._raw_system_availability = raw_domain_state["systemAvailability"]
         self._raw_arming_state = raw_domain_state["armingState"]
         self._raw_alarm_state = raw_domain_state["alarmState"]

@@ -64,7 +64,7 @@ service = device.device_service('TemperatureLevel')
 print(service.temperature)
 
 # Update this service's state
-await service.async_short_poll()
+await service.short_poll()
 
 # Start long polling thread in background
 await session.start_polling()

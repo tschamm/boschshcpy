@@ -20,8 +20,8 @@ class SHCScenario:
     def name(self):
         return self._raw_scenario["name"]
 
-    async def async_trigger(self):
-        return await self._api.async_post_scenario_trigger(self.id)
+    async def trigger(self):
+        return await self._api.post_scenario_trigger(self.id)
 
     def summary(self):
         print(f"Scenario  : {self.id}")

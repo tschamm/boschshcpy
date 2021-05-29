@@ -39,17 +39,17 @@ class SHCAPI:
         self._rpc_root = f"https://{self._controller_ip}:8444/remote/json-rpc"
         self._cafile = pkg_resources.resource_filename("boschshcpy", "tls_ca_chain.pem")
 
-        self._async_requests_session = None
+        self._requests_session = None
         self._sslcontext = None
 
     async def init(self, session):
-        self._async_requests_session = session
+        self._requests_session = session
 
         self._sslcontext = ssl.create_default_context(cafile=self._cafile)
         self._sslcontext.load_cert_chain(self._certificate, self._key)
         self._sslcontext.verify_mode = ssl.CERT_REQUIRED
         self._sslcontext.check_hostname = False
-        self._async_requests_session.headers.update(
+        self._requests_session.headers.update(
             {"api-version": "2.1", "Content-Type": "application/json"}
         )
 
@@ -66,7 +66,7 @@ class SHCAPI:
         timeout=30,
     ):
         try:
-            async with self._async_requests_session.get(
+            async with self._requests_session.get(
                 api_url, headers=headers, timeout=timeout, ssl=self._sslcontext
             ) as result:
                 if not result.ok:
@@ -83,16 +83,16 @@ class SHCAPI:
         except aiohttp.ClientSSLError as err:
             raise Exception(f"API call returned SSLError: {err}.")
 
-    async def _async_put_api_or_fail(self, api_url, body, timeout=30):
-        async with self._async_requests_session.put(
+    async def _put_api_or_fail(self, api_url, body, timeout=30):
+        async with self._requests_session.put(
             api_url, data=json.dumps(body), timeout=timeout, ssl=self._sslcontext
         ) as result:
             if not result.ok:
                 self._process_nok_result(result)
             return await result.json()
 
-    async def _async_post_api_or_fail(self, api_url, body, timeout=30):
-        async with self._async_requests_session.post(
+    async def _post_api_or_fail(self, api_url, body, timeout=30):
+        async with self._requests_session.post(
             api_url, data=json.dumps(body), timeout=timeout, ssl=self._sslcontext
         ) as result:
             if not result.ok:
@@ -108,7 +108,7 @@ class SHCAPI:
         )
 
     # API calls here
-    async def async_get_information(self):
+    async def get_information(self):
         api_url = f"{self._api_root}/information"
         try:
             result = await self._get_api_result_or_fail(api_url)
@@ -117,7 +117,7 @@ class SHCAPI:
             return None
         return result
 
-    async def async_get_public_information(self):
+    async def get_public_information(self):
         api_url = f"{self._public_root}/information"
         try:
             result = await self._get_api_result_or_fail(api_url, headers={})
@@ -128,51 +128,51 @@ class SHCAPI:
             return None
         return result
 
-    async def async_get_rooms(self):
+    async def get_rooms(self):
         api_url = f"{self._api_root}/rooms"
         return await self._get_api_result_or_fail(api_url, expected_element_type="room")
 
-    async def async_get_scenarios(self):
+    async def get_scenarios(self):
         api_url = f"{self._api_root}/scenarios"
         return await self._get_api_result_or_fail(
             api_url, expected_element_type="scenario"
         )
 
-    async def async_get_devices(self):
+    async def get_devices(self):
         api_url = f"{self._api_root}/devices"
         return await self._get_api_result_or_fail(
             api_url, expected_element_type="device"
         )
 
-    async def async_get_services(self):
+    async def get_services(self):
         api_url = f"{self._api_root}/services"
         return await self._get_api_result_or_fail(
             api_url, expected_element_type="DeviceServiceData"
         )
 
-    async def async_get_device_service(self, device_id, service_id):
+    async def get_device_service(self, device_id, service_id):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}"
         return await self._get_api_result_or_fail(
             api_url, expected_type="DeviceServiceData"
         )
 
-    async def async_put_device_service_state(self, device_id, service_id, state_update):
+    async def put_device_service_state(self, device_id, service_id, state_update):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
-        return await self._async_put_api_or_fail(api_url, state_update)
+        return await self._put_api_or_fail(api_url, state_update)
 
-    async def async_get_domain_intrusion_detection(self):
+    async def get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
         return await self._get_api_result_or_fail(api_url, expected_type="systemState")
 
-    async def async_post_domain_action(self, path, data=None):
+    async def post_domain_action(self, path, data=None):
         api_url = f"{self._api_root}/{path}"
-        return await self._async_post_api_or_fail(api_url, data)
+        return await self._post_api_or_fail(api_url, data)
 
-    async def async_post_scenario_trigger(self, scenario_id, data=None):
+    async def post_scenario_trigger(self, scenario_id, data=None):
         api_url = f"{self._api_root}/scenarios/{scenario_id}/triggers"
-        return await self._async_post_api_or_fail(api_url, data)
+        return await self._post_api_or_fail(api_url, data)
 
-    async def async_long_polling_subscribe(self):
+    async def long_polling_subscribe(self):
         data = [
             {
                 "jsonrpc": "2.0",
@@ -180,7 +180,7 @@ class SHCAPI:
                 "params": ["com/bosch/sh/remote/*", None],
             }
         ]
-        result = await self._async_post_api_or_fail(self._rpc_root, data)
+        result = await self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(
@@ -188,7 +188,7 @@ class SHCAPI:
             )
         return result[0]["result"]
 
-    async def async_long_polling_poll(self, poll_id, wait_seconds=30):
+    async def long_polling_poll(self, poll_id, wait_seconds=30):
         data = [
             {
                 "jsonrpc": "2.0",
@@ -196,9 +196,7 @@ class SHCAPI:
                 "params": [poll_id, wait_seconds],
             }
         ]
-        result = await self._async_post_api_or_fail(
-            self._rpc_root, data, wait_seconds + 5
-        )
+        result = await self._post_api_or_fail(self._rpc_root, data, wait_seconds + 5)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(
@@ -206,9 +204,9 @@ class SHCAPI:
             )
         return result[0]["result"]
 
-    async def async_long_polling_unsubscribe(self, poll_id):
+    async def long_polling_unsubscribe(self, poll_id):
         data = [{"jsonrpc": "2.0", "method": "RE/unsubscribe", "params": [poll_id]}]
-        result = await self._async_post_api_or_fail(self._rpc_root, data)
+        result = await self._post_api_or_fail(self._rpc_root, data)
         assert result[0]["jsonrpc"] == "2.0"
         if "error" in result[0].keys():
             raise JSONRPCError(
