@@ -89,7 +89,7 @@ class SHCAPI:
         ) as result:
             if not result.ok:
                 self._process_nok_result(result)
-            return await result.json()
+            return
 
     async def _post_api_or_fail(self, api_url, body, timeout=30):
         async with self._requests_session.post(
@@ -158,7 +158,8 @@ class SHCAPI:
 
     async def put_device_service_state(self, device_id, service_id, state_update):
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
-        return await self._put_api_or_fail(api_url, state_update)
+        await self._put_api_or_fail(api_url, state_update)
+        return
 
     async def get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
