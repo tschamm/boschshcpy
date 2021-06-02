@@ -46,7 +46,8 @@ class SHCAPI:
         self._requests_session = session
 
         self._sslcontext = ssl.create_default_context(cafile=self._cafile)
-        self._sslcontext.load_cert_chain(self._certificate, self._key)
+        if self._certificate != "" or self._key != "":
+            self._sslcontext.load_cert_chain(self._certificate, self._key)
         self._sslcontext.verify_mode = ssl.CERT_REQUIRED
         self._sslcontext.check_hostname = False
         self._requests_session.headers.update(
