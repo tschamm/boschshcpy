@@ -22,5 +22,10 @@ setup(
         "License :: OSI Approved :: BSD License",
     ],
     python_requires=">=3.7",
-    install_requires=["requests>=2.22", "zeroconf>=0.28.0", "getmac==0.8.2"],
+    install_requires=[
+        "cryptography",
+        "getmac==0.8.2",
+        "requests>=2.22",
+        "zeroconf>=0.28.0",
+    ],
 )
