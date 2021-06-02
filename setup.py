@@ -22,5 +22,8 @@ setup(
         "License :: OSI Approved :: BSD License",
     ],
     python_requires=">=3.7",
-    install_requires=["aiohttp>=3.7.4"],
+    install_requires=[
+        "aiohttp>=3.7.4",
+        "cryptography>=3.3.2",
+    ],
 )

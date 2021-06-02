@@ -1,0 +1,33 @@
+{'sourceId': 'hdm:HomeMaticIP: 3014F711A00000987859CF73', 'sourceType': 'DEVICE', '@type': 'message', 'flags': ['USER_ACTION_REQUIRED', 'STATUS', 'STICKY'
+    ], 'messageCode': {'name': 'BATTERY_LOW', 'category': 'INFO'
+    }, 'location': 'Büro', 'arguments': {'deviceServiceDataModel': '{
+            "@type": "DeviceServiceData",
+            "id": "BatteryLevel",
+            "deviceId": "hdm:HomeMaticIP:3014F711A00000987859CF73",
+            "faults": {
+                "entries": [
+                    {
+                        "type": "LOW_BATTERY",
+                        "category": "WARNING"
+                    }
+                ]
+            },
+            "path": "/devices/hdm:HomeMaticIP:3014F711A00000987859CF73/services/BatteryLevel"
+        }', 'deviceModel': 'SWD'
+    }, 'id': '5fd62556-46d3-4be9-81bc-10b1f60b9a2c', 'sourceName': 'Fenster Büro (groß)', 'timestamp': 1587590691198
+}
+
+{
+    "@type": "DeviceServiceData",
+    "id": "BatteryLevel",
+    "deviceId": "hdm:HomeMaticIP:3014F711A00000987859CF73",
+    "faults": {
+        "entries": [
+            {
+                "type": "LOW_BATTERY",
+                "category": "WARNING"
+            }
+        ]
+    },
+    "path": "/devices/hdm:HomeMaticIP:3014F711A00000987859CF73/services/BatteryLevel"
+}
