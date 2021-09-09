@@ -139,12 +139,7 @@ class SHCSession:
         logger.debug(f"Long poll: {raw_result}")
         if raw_result["@type"] == "DeviceServiceData":
             device_id = raw_result["deviceId"]
-            if (
-                device_id == "intrusionDetectionSystem"
-                and self.intrusion_system is not None
-            ):
-                self.intrusion_system.process_long_polling_poll_result(raw_result)
-            elif device_id in self._devices_by_id.keys():
+            if device_id in self._devices_by_id.keys():
                 device = self._devices_by_id[device_id]
                 device.process_long_polling_poll_result(raw_result)
             else:
@@ -182,6 +177,10 @@ class SHCSession:
                 logger.debug("Found new device with id %s", device_id)
                 self._add_device(raw_result)
                 # inform on new device
+            return
+        if raw_result["@type"] in SHCIntrusionSystem.DOMAIN_STATES:
+            if self.intrusion_system is not None:
+                self.intrusion_system.process_long_polling_poll_result(raw_result)
             return
         return
 
