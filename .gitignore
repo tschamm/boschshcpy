@@ -1,6 +1,7 @@
 .idea/
 build/
 dist/
+venv/
 boschshcpy.egg-info/
 boschshcpy_dev.egg-info/
 examples/keystore
