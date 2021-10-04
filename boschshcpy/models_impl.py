@@ -394,6 +394,53 @@ class SHCClimateControl(SHCDevice):
         super().summary()
 
 
+class SHCHeatingCircuit(SHCDevice):
+    from .services_impl import HeatingCircuitService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._heating_circuit_service = self.device_service("HeatingCircuit")
+
+    @property
+    def setpoint_temperature(self) -> float:
+        return self._heating_circuit_service.setpoint_temperature
+
+    @setpoint_temperature.setter
+    def setpoint_temperature(self, temperature: float):
+        self._heating_circuit_service.setpoint_temperature = temperature
+
+    @property
+    def operation_mode(self) -> HeatingCircuitService.OperationMode:
+        return self._heating_circuit_service.operation_mode
+
+    @operation_mode.setter
+    def operation_mode(self, mode: HeatingCircuitService.OperationMode):
+        self._heating_circuit_service.operation_mode = mode
+
+    @property
+    def temperature_override_mode_active(self) -> bool:
+        return self._heating_circuit_service.temperature_override_mode_active
+
+    @property
+    def temperature_override_feature_enabled(self) -> bool:
+        return self._heating_circuit_service.temperature_override_feature_enabled
+
+    @property
+    def energy_saving_feature_enabled(self) -> bool:
+        return self._heating_circuit_service.energy_saving_feature_enabled
+
+    @property
+    def on(self) -> bool:
+        return self._heating_circuit_service.on
+
+    def update(self):
+        self._heating_circuit_service.short_poll()
+
+    def summary(self):
+        print(f"HEATING_CIRCUIT:")
+        super().summary()
+
+
 class SHCWallThermostat(SHCBatteryDevice):
     from .services_impl import HumidityLevelService, TemperatureLevelService
 
@@ -756,6 +803,7 @@ MODEL_MAPPING = {
     "LEDVANCE_LIGHT": SHCLight,
     "HUE_LIGHT": SHCLight,
     "WLS": SHCWaterLeakageSensor,
+    "HEATING_CIRCUIT": SHCHeatingCircuit,
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
