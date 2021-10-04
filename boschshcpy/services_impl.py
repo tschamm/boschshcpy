@@ -105,6 +105,75 @@ class RoomClimateControlService(SHCDeviceService):
         print(f"    Show Setpoint Temperature: {self.show_setpoint_temperature}")
 
 
+class HeatingCircuitService(SHCDeviceService):
+    class OperationMode(Enum):
+        AUTOMATIC = "AUTOMATIC"
+        MANUAL = "MANUAL"
+
+    @property
+    def operation_mode(self) -> OperationMode:
+        return self.OperationMode(self.state["operationMode"])
+
+    @operation_mode.setter
+    def operation_mode(self, value: OperationMode):
+        self.put_state_element("operationMode", value.value)
+
+    @property
+    def setpoint_temperature(self) -> float:
+        return float(self.state["setpointTemperature"])
+
+    @setpoint_temperature.setter
+    def setpoint_temperature(self, value: float):
+        self.put_state_element("setpointTemperature", value)
+
+    @property
+    def setpoint_temperature_eco(self) -> float:
+        return float(self.state["setpointTemperatureForLevelEco"])
+
+    @setpoint_temperature_eco.setter
+    def setpoint_temperature_eco(self, value: float):
+        self.put_state_element("setpointTemperatureForLevelEco", value)
+
+    @property
+    def setpoint_temperature_comfort(self) -> float:
+        return float(self.state["setpointTemperatureForLevelComfort"])
+
+    @setpoint_temperature_comfort.setter
+    def setpoint_temperature_comfort(self, value: float):
+        self.put_state_element("setpointTemperatureForLevelComfort", value)
+
+    @property
+    def temperature_override_mode_active(self) -> bool:
+        return self.state["temperatureOverrideModeActive"]
+
+    @property
+    def temperature_override_feature_enabled(self) -> bool:
+        return self.state["temperatureOverrideFeatureEnabled"]
+
+    @property
+    def energy_saving_feature_enabled(self) -> bool:
+        return self.state["energySavingFeatureEnabled"]
+
+    @property
+    def on(self) -> bool:
+        return self.state["on"]
+
+    def summary(self):
+        super().summary()
+        print(f"    Operation Mode             : {self.operation_mode}")
+        print(f"    Setpoint Temperature       : {self.setpoint_temperature}")
+        print(f"    Setpoint Temperature ECO   : {self.setpoint_temperature_eco}")
+        print(f"    Setpoint Temperature CMF   : {self.setpoint_temperature_comfort}")
+        print(
+            f"    Temp Override Mode Active  : {self.temperature_override_mode_active}"
+        )
+        print(
+            f"    Temp Override Feat Enabled : {self.temperature_override_feature_enabled}"
+        )
+        print(f"    Energy Saving Feat Enabled : {self.energy_saving_feature_enabled}")
+        print(f"    On                         : {self.on}")
+
+
 class ShutterContactService(SHCDeviceService):
     class State(Enum):
         CLOSED = "CLOSED"
@@ -613,6 +682,7 @@ SERVICE_MAPPING = {
     "CameraLight": CameraLightService,
     "CameraNotification": CameraNotificationService,
     "CommunicationQuality": CommunicationQualityService,
+    "HeatingCircuit": HeatingCircuitService,
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
     "HumidityLevel": HumidityLevelService,

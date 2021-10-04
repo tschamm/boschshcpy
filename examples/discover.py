@@ -1,16 +1,20 @@
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo, IPVersion
 import Crypto.Hash.SHA256
 
-class MyListener:
 
+class MyListener:
     def filter(self, info: ServiceInfo):
-        if "Bosch SHC" in info.name: 
-            print (f"SHC Device found!")
-            print (f"Name: {info.get_name()}")
-            print (f"IP: {info.parsed_addresses(IPVersion.V4Only)}")
-            server_epos = info.server.find('.local.')
+        if "Bosch SHC" in info.name:
+            print(f"SHC Device found!")
+            print(f"Name: {info.get_name()}")
+            print(f"IP: {info.parsed_addresses(IPVersion.V4Only)}")
+            for host in info.parsed_addresses(IPVersion.V4Only):
+                if host.startswith("169."):
+                    continue
+                print(f"Found host {host}")
+            server_epos = info.server.find(".local.")
             if server_epos > -1:
-                print (f"server: {info.server[:server_epos]}")
+                print(f"server: {info.server[:server_epos]}")
 
         # print("Service %s added, service info: %s" % (name, info))
 

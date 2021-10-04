@@ -8,6 +8,7 @@ from .models_impl import (
     SHCCamera360,
     SHCCameraEyes,
     SHCClimateControl,
+    SHCHeatingCircuit,
     SHCLight,
     SHCMotionDetector,
     SHCShutterContact,
@@ -161,3 +162,9 @@ class SHCDeviceHelper:
         if "SMOKE_DETECTION_SYSTEM" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["SMOKE_DETECTION_SYSTEM"].values())
+
+    @property
+    def heating_circuits(self) -> typing.Sequence[SHCHeatingCircuit]:
+        if "HEATING_CIRCUIT" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["HEATING_CIRCUIT"].values())
