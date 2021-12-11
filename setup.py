@@ -24,7 +24,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "cryptography>=3.3.2",
-        "getmac==0.8.2",
+        "getmac>=0.8.2,<1",
         "requests>=2.22",
         "zeroconf>=0.28.0",
     ],
