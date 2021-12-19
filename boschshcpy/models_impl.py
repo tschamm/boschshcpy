@@ -6,6 +6,7 @@ from .services_impl import (
     BinarySwitchService,
     CameraLightService,
     HumidityLevelService,
+    RoutingService,
     ShutterContactService,
     ShutterControlService,
     SurveillanceAlarmService,
@@ -86,6 +87,7 @@ class SHCSmartPlug(SHCDevice):
         super().__init__(api, raw_device, raw_device_services)
 
         self._powerswitch_service = self.device_service("PowerSwitch")
+        self._routing_service = self.device_service("Routing")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
         self._powermeter_service = self.device_service("PowerMeter")
 
@@ -97,6 +99,16 @@ class SHCSmartPlug(SHCDevice):
     def state(self, state: bool):
         self._powerswitch_service.put_state_element(
             "switchState", "ON" if state else "OFF"
+        )
+
+    @property
+    def routing(self) -> RoutingService.State:
+        return self._routing_service.value
+
+    @routing.setter
+    def routing(self, state: bool):
+        self._routing_service.put_state_element(
+            "routingState", "ENABLED" if state else "DISABLED"
         )
 
     @property
@@ -113,7 +125,7 @@ class SHCSmartPlug(SHCDevice):
         self._powermeter_service.short_poll()
 
     def summary(self):
-        print(f"PSM/BSM SmartPlug:")
+        print(f"PSM SmartPlug:")
         super().summary()
 
 
@@ -163,6 +175,48 @@ class SHCSmartPlugCompact(SHCDevice):
 
     def summary(self):
         print(f"PLUG_COMPACT SmartPlugCompact:")
+        super().summary()
+
+
+class SHCLightSwitch(SHCDevice):
+    from .services_impl import (
+        PowerMeterService,
+        PowerSwitchProgramService,
+        PowerSwitchService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+        self._powerswitch_service = self.device_service("PowerSwitch")
+        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+        self._powermeter_service = self.device_service("PowerMeter")
+
+    @property
+    def state(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    @state.setter
+    def state(self, state: bool):
+        self._powerswitch_service.put_state_element(
+            "switchState", "ON" if state else "OFF"
+        )
+
+    @property
+    def energyconsumption(self) -> float:
+        return self._powermeter_service.energyconsumption
+
+    @property
+    def powerconsumption(self) -> float:
+        return self._powermeter_service.powerconsumption
+
+    def update(self):
+        self._powerswitch_service.short_poll()
+        self._powerswitchprogram_service.short_poll()
+        self._powermeter_service.short_poll()
+
+    def summary(self):
+        print(f"BSM LightSwitch:")
         super().summary()
 
 
@@ -787,7 +841,7 @@ MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "BBL": SHCShutterControl,
     "PSM": SHCSmartPlug,
-    "BSM": SHCSmartPlug,
+    "BSM": SHCLightSwitch,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,

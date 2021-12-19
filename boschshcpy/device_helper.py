@@ -13,6 +13,7 @@ from .models_impl import (
     SHCMotionDetector,
     SHCShutterContact,
     SHCShutterControl,
+    SHCLightSwitch,
     SHCSmartPlug,
     SHCSmartPlugCompact,
     SHCSmokeDetector,
@@ -68,13 +69,16 @@ class SHCDeviceHelper:
         return list(self._devices_by_model["BBL"].values())
 
     @property
+    def light_switches(self) -> typing.Sequence[SHCLightSwitch]:
+        if "BSM" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["BSM"].values())
+
+    @property
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
-        devices = []
-        if "PSM" in SUPPORTED_MODELS:
-            devices.extend(self._devices_by_model["PSM"].values())
-        if "BSM" in SUPPORTED_MODELS:
-            devices.extend(self._devices_by_model["BSM"].values())
-        return devices
+        if "PSM" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["PSM"].values())
 
     @property
     def smart_plugs_compact(self) -> typing.Sequence[SHCSmartPlugCompact]:
