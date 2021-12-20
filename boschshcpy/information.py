@@ -90,7 +90,9 @@ class SHCInformation:
     @property
     def shcIpAddress(self):
         """Get the ip address from public information."""
-        return self._pub_info["shcIpAddress"]
+        return (
+            self._pub_info["shcIpAddress"] if "shcIpAddress" in self._pub_info else None
+        )
 
     @property
     def macAddress(self):
@@ -112,11 +114,14 @@ class SHCInformation:
         try:
             host_ip = socket.gethostbyname(self.shcIpAddress)
         except Exception as e:
-            raise SHCConnectionError
+            host_ip = None
 
         for info in service_info.values():
             if "Bosch SHC" in info.name:
-                if host_ip in info.parsed_addresses(IPVersion.V4Only):
+                if (
+                    host_ip in info.parsed_addresses(IPVersion.V4Only)
+                    or host_ip is None
+                ):
                     mac_address = info.name[
                         info.name.find("[") + 1 : info.name.find("]")
                     ]
@@ -128,19 +133,28 @@ class SHCInformation:
         self._unique_id = format_mac(mac_address)
         self._name = name
 
-
     def get_unique_id(self, zeroconf):
         if zeroconf is not None:
             self._listener = SHCListener(zeroconf, self.filter)
             if self._unique_id is not None:
-                logger.debug("Obtain unique_id via zeroconf: '%s'", self._unique_id)
+                logger.debug(
+                    "Obtain unique_id for '%s' via zeroconf: '%s'",
+                    self._name,
+                    self._unique_id,
+                )
                 return
 
         if self.macAddress is not None:
             self._unique_id = self.macAddress
-            self._name = self.shcIpAddress
-            logger.debug("Obtain unique_id via public information: '%s'", self._unique_id)
-        else:
+            self._name = (
+                self.shcIpAddress if self.shcIpAddress is not None else self.macAddress
+            )
+            logger.debug(
+                "Obtain unique_id for '%s' via public information: '%s'",
+                self._name,
+                self._unique_id,
+            )
+        elif self.shcIpAddress is not None:
             host = self.shcIpAddress
             try:
                 mac_address = get_mac_address(ip=host)
@@ -148,10 +162,14 @@ class SHCInformation:
                     mac_address = get_mac_address(hostname=host)
             except Exception as err:  # pylint: disable=broad-except
                 logger.exception("Unable to get mac address: %s", err)
-            
+
             if mac_address is not None:
                 self._unique_id = format_mac(mac_address)
-                logger.debug("Obtain unique_id via host IP: '%s'", self._unique_id)
+                logger.debug(
+                    "Obtain unique_id for '%s' via host IP: '%s'",
+                    self._name,
+                    self._unique_id,
+                )
             else:
                 self._unique_id = host
                 logger.warning(
@@ -159,6 +177,8 @@ class SHCInformation:
                     host,
                 )
             self._name = host
+        else:
+            raise SHCConnectionError
 
     def summary(self):
         print(f"Information:")
