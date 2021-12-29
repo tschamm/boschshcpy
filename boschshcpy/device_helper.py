@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import logging
 import typing
 
+from .api import SHCAPI
 from .device import SHCDevice
 from .models_impl import (
     SUPPORTED_MODELS,
@@ -31,9 +34,9 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCDeviceHelper:
-    def __init__(self, api):
+    def __init__(self, api: SHCAPI) -> None:
         self._api = api
-        self._devices_by_model = {}
+        self._devices_by_model: dict[str, dict[str, SHCDevice]] = {}
         for model in SUPPORTED_MODELS:
             self._devices_by_model[model] = {}
 
@@ -168,13 +171,15 @@ class SHCDeviceHelper:
     ) -> SHCPresenceSimulationSystem:
         if "PRESENCE_SIMULATION_SERVICE" not in SUPPORTED_MODELS:
             return None
-        return self._devices_by_model["PRESENCE_SIMULATION_SERVICE"].values()
+        return self._devices_by_model["PRESENCE_SIMULATION_SERVICE"][
+            "presenceSimulationService"
+        ]
 
     @property
     def smoke_detection_system(self) -> SHCSmokeDetectionSystem:
         if "SMOKE_DETECTION_SYSTEM" not in SUPPORTED_MODELS:
             return None
-        return self._devices_by_model["SMOKE_DETECTION_SYSTEM"].values()
+        return self._devices_by_model["SMOKE_DETECTION_SYSTEM"]["smokeDetectionSystem"]
 
     @property
     def heating_circuits(self) -> typing.Sequence[SHCHeatingCircuit]:
