@@ -13,6 +13,7 @@ It supports both long and short polling. The following device services are imple
 * ```PowerMeter```
 * ```Routing```
 * ```PowerSwitchProgram```
+* ```PresenceSimulationConfiguration```
 * ```BinarySwitch```
 * ```SmokeDetectorCheck```
 * ```Alarm```
@@ -45,6 +46,7 @@ The following device models are implemented, using the above services:
 * ```WallThermostat```
 * ```UniversalSwitch```
 * ```MotionDetector```
+* ```PresenceSimulationSystem```
 * ```Twinguard```
 * ```WaterLeakageSensor```
 
@@ -74,8 +76,8 @@ session.start_polling()
 session.stop_polling()
 
 # Trigger intrusion detection system
-intrusion_control = session.device_helper.intrusion_detection_system
-intrusion_control.arm_instant()
+intrusion_control = session.intrusion_system
+intrusion_control.arm()
 ```
 
 To get a list of all devices, rooms and scenarios, see [apisummary.py Example](examples/apisummary.py)

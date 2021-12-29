@@ -165,16 +165,16 @@ class SHCDeviceHelper:
     @property
     def presence_simulation_system(
         self,
-    ) -> typing.Sequence[SHCPresenceSimulationSystem]:
+    ) -> SHCPresenceSimulationSystem:
         if "PRESENCE_SIMULATION_SERVICE" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["PRESENCE_SIMULATION_SERVICE"].values())
+            return None
+        return self._devices_by_model["PRESENCE_SIMULATION_SERVICE"].values()
 
     @property
-    def smoke_detection_system(self) -> typing.Sequence[SHCSmokeDetectionSystem]:
+    def smoke_detection_system(self) -> SHCSmokeDetectionSystem:
         if "SMOKE_DETECTION_SYSTEM" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["SMOKE_DETECTION_SYSTEM"].values())
+            return None
+        return self._devices_by_model["SMOKE_DETECTION_SYSTEM"].values()
 
     @property
     def heating_circuits(self) -> typing.Sequence[SHCHeatingCircuit]:
