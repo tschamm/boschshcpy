@@ -14,6 +14,7 @@ from .models_impl import (
     SHCShutterContact,
     SHCShutterControl,
     SHCLightSwitch,
+    SHCPresenceSimulationSystem,
     SHCSmartPlug,
     SHCSmartPlugCompact,
     SHCSmokeDetector,
@@ -160,6 +161,14 @@ class SHCDeviceHelper:
         if "WLS" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["WLS"].values())
+
+    @property
+    def presence_simulation_system(
+        self,
+    ) -> typing.Sequence[SHCPresenceSimulationSystem]:
+        if "PRESENCE_SIMULATION_SERVICE" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["PRESENCE_SIMULATION_SERVICE"].values())
 
     @property
     def smoke_detection_system(self) -> typing.Sequence[SHCSmokeDetectionSystem]:

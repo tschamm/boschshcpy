@@ -674,6 +674,20 @@ class WaterLeakageSensorCheckService(SHCDeviceService):
         print(f"    waterLeakageSensorCheck  : {self.value}")
 
 
+class PresenceSimulationConfigurationService(SHCDeviceService):
+    @property
+    def enabled(self) -> bool:
+        return self.state["enabled"]
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        self.put_state_element("enabled", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    presenceSimulationConfigurationState  : {self.enabled}")
+
+
 SERVICE_MAPPING = {
     "AirQualityLevel": AirQualityLevelService,
     "Alarm": AlarmService,
@@ -692,6 +706,7 @@ SERVICE_MAPPING = {
     "PowerMeter": PowerMeterService,
     "PowerSwitch": PowerSwitchService,
     "PowerSwitchProgram": PowerSwitchProgramService,
+    "PresenceSimulationConfiguration": PresenceSimulationConfigurationService,
     "PrivacyMode": PrivacyModeService,
     "RoomClimateControl": RoomClimateControlService,
     "Routing": RoutingService,

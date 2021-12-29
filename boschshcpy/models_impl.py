@@ -6,6 +6,7 @@ from .services_impl import (
     BinarySwitchService,
     CameraLightService,
     HumidityLevelService,
+    PresenceSimulationConfigurationService,
     RoutingService,
     ShutterContactService,
     ShutterControlService,
@@ -666,6 +667,31 @@ class SHCSmokeDetectionSystem(SHCDevice):
         super().summary()
 
 
+class SHCPresenceSimulationSystem(SHCDevice):
+    from .services_impl import PresenceSimulationConfigurationService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._presencesimulationconfiguration_service = self.device_service(
+            "PresenceSimulationConfiguration"
+        )
+
+    @property
+    def enabled(self) -> bool:
+        return self._presencesimulationconfiguration_service.enabled
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        self._presencesimulationconfiguration_service.enabled = value
+
+    def update(self):
+        self._presencesimulationconfiguration_service.short_poll()
+
+    def summary(self):
+        print(f"PRESENCE_SIMULATION_SERVICE:")
+        super().summary()
+
+
 class SHCLight(SHCDevice):
     from .services_impl import (
         BinarySwitchService,
@@ -865,6 +891,7 @@ MODEL_MAPPING = {
     "BWTH": SHCWallThermostat,
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
+    "PRESENCE_SIMULATION_SERVICE": SHCPresenceSimulationSystem,
     "TWINGUARD": SHCTwinguard,
     "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
     "LEDVANCE_LIGHT": SHCLight,
