@@ -109,7 +109,7 @@ class SHCSmartPlug(SHCDevice):
     @routing.setter
     def routing(self, state: bool):
         self._routing_service.put_state_element(
-            "routingState", "ENABLED" if state else "DISABLED"
+            "value", "ENABLED" if state else "DISABLED"
         )
 
     @property
