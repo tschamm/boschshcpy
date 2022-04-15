@@ -195,6 +195,7 @@ class ValveTappetService(SHCDeviceService):
         RANGE_TOO_BIG = "RANGE_TOO_BIG"
         RUN_TO_START_POSITION = "RUN_TO_START_POSITION"
         IN_START_POSITION = "IN_START_POSITION"
+        NOT_AVAILABLE = "NOT_AVAILABLE"
 
     @property
     def position(self) -> int:
