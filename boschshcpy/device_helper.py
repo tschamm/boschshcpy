@@ -92,9 +92,12 @@ class SHCDeviceHelper:
 
     @property
     def smoke_detectors(self) -> typing.Sequence[SHCSmokeDetector]:
-        if "SD" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["SD"].values())
+        devices = []
+        if "SD" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SD"].values())
+        if "SMOKE_DETECTOR2" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SMOKE_DETECTOR2"].values())
+        return devices
 
     @property
     def climate_controls(self) -> typing.Sequence[SHCClimateControl]:
@@ -104,9 +107,12 @@ class SHCDeviceHelper:
 
     @property
     def thermostats(self) -> typing.Sequence[SHCThermostat]:
-        if "TRV" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["TRV"].values())
+        devices = []
+        if "TRV" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["TRV"].values())
+        if "TRV_GEN2" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["TRV_GEN2"].values())
+        return devices
 
     @property
     def wallthermostats(self) -> typing.Sequence[SHCWallThermostat]:

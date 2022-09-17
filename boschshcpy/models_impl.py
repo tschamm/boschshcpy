@@ -73,7 +73,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"SD SmokeDetector:")
+        print(f"SD / SMOKE_DETECTOR2 SmokeDetector:")
         super().summary()
 
 
@@ -380,7 +380,7 @@ class SHCThermostat(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"TRV Thermostat:")
+        print(f"TRV / TRV_GEN2 Thermostat:")
         super().summary()
 
 
@@ -870,10 +870,12 @@ MODEL_MAPPING = {
     "BSM": SHCLightSwitch,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
+    "SMOKE_DETECTOR2": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
     "CAMERA_360": SHCCamera360,
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
+    "TRV_GEN2": SHCThermostat,
     "THB": SHCWallThermostat,
     "BWTH": SHCWallThermostat,
     "WRC2": SHCUniversalSwitch,
