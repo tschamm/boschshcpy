@@ -36,6 +36,7 @@ class SHCListener:
         ):  # Give zeroconf some time to respond
             time.sleep(0.1)
         callback(self.shc_services)
+        zeroconf.close()
 
     def service_update(self, zeroconf, service_type, name, state_change):
         """Service state changed."""
