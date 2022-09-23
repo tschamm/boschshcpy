@@ -29,14 +29,16 @@ class SHCListener:
         self.shc_services = {}
         self.waiting = True
 
-        ServiceBrowser(zeroconf, "_http._tcp.local.", handlers=[self.service_update])
+        browser = ServiceBrowser(
+            zeroconf, "_http._tcp.local.", handlers=[self.service_update]
+        )
         current_millis = current_time_millis()
         while (
             self.waiting and current_time_millis() - current_millis < 10000
         ):  # Give zeroconf some time to respond
             time.sleep(0.1)
         callback(self.shc_services)
-        zeroconf.close()
+        browser.cancel()
 
     def service_update(self, zeroconf, service_type, name, state_change):
         """Service state changed."""

@@ -1,5 +1,4 @@
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo, IPVersion
-import Crypto.Hash.SHA256
 
 
 class MyListener:
@@ -35,4 +34,5 @@ browser = ServiceBrowser(zeroconf, "_http._tcp.local.", listener)
 try:
     input("Press enter to exit...\n\n")
 finally:
+    browser.cancel()
     zeroconf.close()
