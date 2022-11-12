@@ -273,7 +273,7 @@ class SHCShutterContact(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"SWD ShutterContact:")
+        print(f"SWD / SWD2 / SWD2_PLUS ShutterContact:")
         super().summary()
 
 
@@ -865,6 +865,8 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
+    "SWD2": SHCShutterContact,
+    "SWD2_PLUS": SHCShutterContact,
     "BBL": SHCShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitch,
