@@ -62,9 +62,14 @@ class SHCDeviceHelper:
 
     @property
     def shutter_contacts(self) -> typing.Sequence[SHCShutterContact]:
-        if "SWD" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["SWD"].values())
+        devices = []
+        if "SWD" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SWD"].values())
+        if "SWD2" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SWD2"].values())
+        if "SWD2_PLUS" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SWD2_PLUS"].values())
+        return devices
 
     @property
     def shutter_controls(self) -> typing.Sequence[SHCShutterControl]:
