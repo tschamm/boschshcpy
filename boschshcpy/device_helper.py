@@ -79,6 +79,7 @@ class SHCDeviceHelper:
         if "MICROMODULE_SHUTTER" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["MICROMODULE_SHUTTER"].values())
         return devices
+    
     @property
     def light_switches(self) -> typing.Sequence[SHCLightSwitch]:
         if "BSM" not in SUPPORTED_MODELS:
