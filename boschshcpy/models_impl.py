@@ -249,7 +249,7 @@ class SHCShutterControl(SHCDevice):
         self._service.short_poll()
 
     def summary(self):
-        print(f"BBL ShutterControl:")
+        print(f"BBL / MICROMODULE_SHUTTER ShutterControl:")
         super().summary()
 
 
@@ -868,6 +868,7 @@ MODEL_MAPPING = {
     "SWD2": SHCShutterContact,
     "SWD2_PLUS": SHCShutterContact,
     "BBL": SHCShutterControl,
+    "MICROMODULE_SHUTTER": SHCShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitch,
     "PLUG_COMPACT": SHCSmartPlugCompact,
