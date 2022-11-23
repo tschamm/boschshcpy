@@ -73,9 +73,12 @@ class SHCDeviceHelper:
 
     @property
     def shutter_controls(self) -> typing.Sequence[SHCShutterControl]:
-        if "BBL" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["BBL"].values())
+        devices = []
+        if "BBL" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["BBL"].values())
+        if "MICROMODULE_SHUTTER" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["MICROMODULE_SHUTTER"].values())
+        return devices
 
     @property
     def light_switches(self) -> typing.Sequence[SHCLightSwitch]:
