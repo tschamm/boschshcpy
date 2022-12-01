@@ -217,7 +217,7 @@ class SHCLightSwitch(SHCDevice):
         self._powermeter_service.short_poll()
 
     def summary(self):
-        print(f"BSM LightSwitch:")
+        print(f"BSM / MICROMODULE_LIGHT_CONTROL LightSwitch:")
         super().summary()
 
 
@@ -871,6 +871,7 @@ MODEL_MAPPING = {
     "MICROMODULE_SHUTTER": SHCShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitch,
+    "MICROMODULE_LIGHT_AVAILABLE": SHCLightSwitch,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "SMOKE_DETECTOR2": SHCSmokeDetector,
