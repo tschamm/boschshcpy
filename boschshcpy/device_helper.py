@@ -82,9 +82,12 @@ class SHCDeviceHelper:
     
     @property
     def light_switches(self) -> typing.Sequence[SHCLightSwitch]:
-        if "BSM" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["BSM"].values())
+        devices = []
+        if "BSM" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["BSM"].values())
+        if "MICROMODULE_LIGHT_ATTACHED" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["MICROMODULE_LIGHT_ATTACHED"].values())
+        return devices        
 
     @property
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
