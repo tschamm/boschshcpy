@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="boschshcpy",
-    version="0.2.37",
+    version="0.2.38",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",

@@ -355,12 +355,17 @@ class SHCCamera360(SHCDevice):
 
 
 class SHCThermostat(SHCBatteryDevice):
-    from .services_impl import TemperatureLevelService, ValveTappetService
+    from .services_impl import (
+        TemperatureLevelService,
+        ValveTappetService,
+        SilentModeService,
+    )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._valvetappet_service = self.device_service("ValveTappet")
+        self._silentmode_service = self.device_service("SilentMode")
 
     @property
     def position(self) -> int:
@@ -374,9 +379,18 @@ class SHCThermostat(SHCBatteryDevice):
     def temperature(self) -> float:
         return self._temperaturelevel_service.temperature
 
+    @property
+    def silentmode(self) -> SilentModeService.State:
+        return self._silentmode_service.mode
+
+    @silentmode.setter
+    def silentmode(self, mode: SilentModeService.State):
+        self._silentmode_service.put_state_element("mode", mode.name)
+
     def update(self):
         self._temperaturelevel_service.short_poll()
         self._valvetappet_service.short_poll()
+        self._silentmode_service.short_poll()
         super().update()
 
     def summary(self):

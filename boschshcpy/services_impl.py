@@ -173,6 +173,14 @@ class HeatingCircuitService(SHCDeviceService):
         print(f"    Energy Saving Feat Enabled : {self.energy_saving_feature_enabled}")
         print(f"    On                         : {self.on}")
 
+class SilentModeService(SHCDeviceService):
+    class State(Enum):
+        MODE_SILENT = "MODE_SILENT"
+        MODE_NORMAL = "MODE_NORMAL"
+
+    @property
+    def mode(self) -> State:
+        return self.State(self.state["mode"])
 
 class ShutterContactService(SHCDeviceService):
     class State(Enum):
@@ -713,6 +721,7 @@ SERVICE_MAPPING = {
     "Routing": RoutingService,
     "ShutterContact": ShutterContactService,
     "ShutterControl": ShutterControlService,
+    "SilentMode": SilentModeService,
     "SmokeDetectorCheck": SmokeDetectorCheckService,
     "SurveillanceAlarm": SurveillanceAlarmService,
     "TemperatureLevel": TemperatureLevelService,
