@@ -5,13 +5,8 @@ with open("README.md", "r") as fh:
 
 setup(
     name="boschshcpy",
-<<<<<<< HEAD
-    version="0.2.38",
+    version="0.2.39",
     url="https://github.com/tschamm/boschshcpy",
-=======
-    version="0.2.37.1",
-    url="https://github.com/beilm/boschshcpy",
->>>>>>> 91df3ec (changed version)
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
     description="Bosch Smart Home Controller API Python Library",
