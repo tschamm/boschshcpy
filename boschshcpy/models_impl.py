@@ -240,12 +240,14 @@ class SHCLightSwitchBSM(SHCLightSwitch):
 class SHCLightControl(SHCDevice):
     from .services_impl import (
         PowerMeterService,
+        CommunicationQualityService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
 
         self._powermeter_service = self.device_service("PowerMeter")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
 
     @property
     def energyconsumption(self) -> float:
@@ -255,9 +257,14 @@ class SHCLightControl(SHCDevice):
     def powerconsumption(self) -> float:
         return self._powermeter_service.powerconsumption
 
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
     def update(self):
         super().update()
         self._powermeter_service.short_poll()
+        self._communicationquality_service.short_poll()
 
     def summary(self):
         super().summary()
@@ -298,12 +305,14 @@ class SHCShutterControl(SHCDevice):
 class SHCMicromoduleShutterControl(SHCShutterControl):
     from .services_impl import (
         PowerMeterService,
+        CommunicationQualityService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
 
         self._powermeter_service = self.device_service("PowerMeter")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
 
     @property
     def energyconsumption(self) -> float:
@@ -313,9 +322,14 @@ class SHCMicromoduleShutterControl(SHCShutterControl):
     def powerconsumption(self) -> float:
         return self._powermeter_service.powerconsumption
 
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
     def update(self):
         super().update()
         self._powermeter_service.short_poll()
+        self._communicationquality_service.short_poll()
 
     def summary(self):
         super().summary()
