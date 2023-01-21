@@ -295,6 +295,32 @@ class SHCShutterControl(SHCDevice):
         super().summary()
 
 
+class SHCMicromoduleShutterControl(SHCShutterControl):
+    from .services_impl import (
+        PowerMeterService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+        self._powermeter_service = self.device_service("PowerMeter")
+
+    @property
+    def energyconsumption(self) -> float:
+        return self._powermeter_service.energyconsumption
+
+    @property
+    def powerconsumption(self) -> float:
+        return self._powermeter_service.powerconsumption
+
+    def update(self):
+        super().update()
+        self._powermeter_service.short_poll()
+
+    def summary(self):
+        super().summary()
+
+
 class SHCShutterContact(SHCBatteryDevice):
     from .services_impl import ShutterContactService
 
@@ -937,7 +963,7 @@ MODEL_MAPPING = {
     "SWD2": SHCShutterContact,
     "SWD2_PLUS": SHCShutterContact,
     "BBL": SHCShutterControl,
-    "MICROMODULE_SHUTTER": SHCShutterControl,
+    "MICROMODULE_SHUTTER": SHCMicromoduleShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitchBSM,
     "MICROMODULE_LIGHT_ATTACHED": SHCLightSwitch,
