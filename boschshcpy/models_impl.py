@@ -73,7 +73,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"SD / SMOKE_DETECTOR2 SmokeDetector:")
+        print(f"SmokeDetector:")
         super().summary()
 
 
@@ -126,7 +126,7 @@ class SHCSmartPlug(SHCDevice):
         self._powermeter_service.short_poll()
 
     def summary(self):
-        print(f"PSM SmartPlug:")
+        print(f"SmartPlug:")
         super().summary()
 
 
@@ -175,13 +175,12 @@ class SHCSmartPlugCompact(SHCDevice):
         self._communicationquality_service.short_poll()
 
     def summary(self):
-        print(f"PLUG_COMPACT SmartPlugCompact:")
+        print(f"SmartPlugCompact:")
         super().summary()
 
 
 class SHCLightSwitch(SHCDevice):
     from .services_impl import (
-        PowerMeterService,
         PowerSwitchProgramService,
         PowerSwitchService,
     )
@@ -191,7 +190,6 @@ class SHCLightSwitch(SHCDevice):
 
         self._powerswitch_service = self.device_service("PowerSwitch")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
-        self._powermeter_service = self.device_service("PowerMeter")
 
     @property
     def state(self) -> PowerSwitchService.State:
@@ -203,6 +201,25 @@ class SHCLightSwitch(SHCDevice):
             "switchState", "ON" if state else "OFF"
         )
 
+    def update(self):
+        self._powerswitch_service.short_poll()
+        self._powerswitchprogram_service.short_poll()
+
+    def summary(self):
+        print(f"LightSwitch:")
+        super().summary()
+
+
+class SHCLightSwitchBSM(SHCLightSwitch):
+    from .services_impl import (
+        PowerMeterService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+        self._powermeter_service = self.device_service("PowerMeter")
+
     @property
     def energyconsumption(self) -> float:
         return self._powermeter_service.energyconsumption
@@ -212,12 +229,36 @@ class SHCLightSwitch(SHCDevice):
         return self._powermeter_service.powerconsumption
 
     def update(self):
-        self._powerswitch_service.short_poll()
-        self._powerswitchprogram_service.short_poll()
+        super().update()
         self._powermeter_service.short_poll()
 
     def summary(self):
-        print(f"BSM / MICROMODULE_LIGHT_CONTROL LightSwitch:")
+        super().summary()
+
+
+class SHCLightControl(SHCDevice):
+    from .services_impl import (
+        PowerMeterService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+        self._powermeter_service = self.device_service("PowerMeter")
+
+    @property
+    def energyconsumption(self) -> float:
+        return self._powermeter_service.energyconsumption
+
+    @property
+    def powerconsumption(self) -> float:
+        return self._powermeter_service.powerconsumption
+
+    def update(self):
+        super().update()
+        self._powermeter_service.short_poll()
+
+    def summary(self):
         super().summary()
 
 
@@ -249,7 +290,7 @@ class SHCShutterControl(SHCDevice):
         self._service.short_poll()
 
     def summary(self):
-        print(f"BBL / MICROMODULE_SHUTTER ShutterControl:")
+        print(f"ShutterControl:")
         super().summary()
 
 
@@ -273,7 +314,7 @@ class SHCShutterContact(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"SWD / SWD2 / SWD2_PLUS ShutterContact:")
+        print(f"ShutterContact:")
         super().summary()
 
 
@@ -325,7 +366,7 @@ class SHCCameraEyes(SHCDevice):
         self._cameranotification_service.short_poll()
 
     def summary(self):
-        print(f"CAMERA_EYES CameraEyes:")
+        print(f"CameraEyes:")
         super().summary()
 
 
@@ -363,7 +404,7 @@ class SHCCamera360(SHCDevice):
         self._privacymode_service.short_poll()
 
     def summary(self):
-        print(f"CAMERA_360 Camera360:")
+        print(f"Camera360:")
         super().summary()
 
 
@@ -407,7 +448,7 @@ class SHCThermostat(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"TRV / TRV_GEN2 Thermostat:")
+        print(f"Thermostat:")
         super().summary()
 
 
@@ -472,7 +513,7 @@ class SHCClimateControl(SHCDevice):
         self._roomclimatecontrol_service.short_poll()
 
     def summary(self):
-        print(f"ROOM_CLIMATE_CONTROL:")
+        print(f"Room Climate Control:")
         super().summary()
 
 
@@ -519,7 +560,7 @@ class SHCHeatingCircuit(SHCDevice):
         self._heating_circuit_service.short_poll()
 
     def summary(self):
-        print(f"HEATING_CIRCUIT:")
+        print(f"Heating Circuit:")
         super().summary()
 
 
@@ -545,7 +586,7 @@ class SHCWallThermostat(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"THB/BWTH Wall Thermostat:")
+        print(f"Wall Thermostat:")
         super().summary()
 
 
@@ -577,7 +618,7 @@ class SHCUniversalSwitch(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"WRC2 Universal Switch:")
+        print(f"Universal Switch:")
         super().summary()
 
 
@@ -597,7 +638,7 @@ class SHCMotionDetector(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"MD Motion Detector:")
+        print(f"Motion Detector:")
         super().summary()
 
 
@@ -656,7 +697,7 @@ class SHCTwinguard(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"TWINGUARD:")
+        print(f"Twinguard:")
         super().summary()
 
 
@@ -677,7 +718,7 @@ class SHCSmokeDetectionSystem(SHCDevice):
         # self._smokedetectioncontrol_service.short_poll()
 
     def summary(self):
-        print(f"SMOKE_DETECTION_SYSTEM:")
+        print(f"Smoke Detection System:")
         super().summary()
 
 
@@ -702,7 +743,7 @@ class SHCPresenceSimulationSystem(SHCDevice):
         self._presencesimulationconfiguration_service.short_poll()
 
     def summary(self):
-        print(f"PRESENCE_SIMULATION_SERVICE:")
+        print(f"Presence Simulation System:")
         super().summary()
 
 
@@ -848,7 +889,7 @@ class SHCLight(SHCDevice):
             self._hsbcoloractuator_service.short_poll()
 
     def summary(self):
-        print(f"HUE/LEDVANCE Light:")
+        print(f"Light:")
         print(f"  Capabilities               : {self._capabilities}")
         super().summary()
 
@@ -886,7 +927,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"WLS:")
+        print(f"Water Leakage System:")
         super().summary()
 
 
@@ -897,8 +938,9 @@ MODEL_MAPPING = {
     "BBL": SHCShutterControl,
     "MICROMODULE_SHUTTER": SHCShutterControl,
     "PSM": SHCSmartPlug,
-    "BSM": SHCLightSwitch,
+    "BSM": SHCLightSwitchBSM,
     "MICROMODULE_LIGHT_ATTACHED": SHCLightSwitch,
+    "MICROMODULE_LIGHT_CONTROL": SHCLightControl,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "SMOKE_DETECTOR2": SHCSmokeDetector,
