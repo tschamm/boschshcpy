@@ -82,6 +82,7 @@ class SHCSmartPlug(SHCDevice):
         PowerMeterService,
         PowerSwitchProgramService,
         PowerSwitchService,
+        RoutingService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
