@@ -16,7 +16,9 @@ from .models_impl import (
     SHCMotionDetector,
     SHCShutterContact,
     SHCShutterControl,
+    SHCLightControl,
     SHCLightSwitch,
+    SHCLightSwitchBSM,
     SHCPresenceSimulationSystem,
     SHCSmartPlug,
     SHCSmartPlugCompact,
@@ -79,15 +81,29 @@ class SHCDeviceHelper:
         if "MICROMODULE_SHUTTER" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["MICROMODULE_SHUTTER"].values())
         return devices
-    
+
     @property
-    def light_switches(self) -> typing.Sequence[SHCLightSwitch]:
+    def light_switches_bsm(self) -> typing.Sequence[SHCLightSwitchBSM]:
         devices = []
         if "BSM" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["BSM"].values())
+        return devices
+
+    @property
+    def micromodule_light_attached(self) -> typing.Sequence[SHCLightSwitch]:
+        devices = []
         if "MICROMODULE_LIGHT_ATTACHED" in SUPPORTED_MODELS:
-            devices.extend(self._devices_by_model["MICROMODULE_LIGHT_ATTACHED"].values())
-        return devices        
+            devices.extend(
+                self._devices_by_model["MICROMODULE_LIGHT_ATTACHED"].values()
+            )
+        return devices
+
+    @property
+    def micromodule_light_controls(self) -> typing.Sequence[SHCLightControl]:
+        devices = []
+        if "MICROMODULE_LIGHT_CONTROL" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["MICROMODULE_LIGHT_CONTROL"].values())
+        return devices
 
     @property
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
