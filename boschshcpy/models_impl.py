@@ -871,7 +871,7 @@ MODEL_MAPPING = {
     "MICROMODULE_SHUTTER": SHCShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitch,
-    "MICROMODULE_LIGHT_AVAILABLE": SHCLightSwitch,
+    "MICROMODULE_LIGHT_ATTACHED": SHCLightSwitch,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "SMOKE_DETECTOR2": SHCSmokeDetector,
