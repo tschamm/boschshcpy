@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="boschshcpy",
-    version="0.2.44",
+    version="0.2.45",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
@@ -20,6 +20,7 @@ setup(
     packages=find_packages(),
     entry_points={
         "console_scripts": [
+            "boschshc_rawscan=boschshcpy.rawscan:main",
             "boschshc_registerclient=boschshcpy.register_client:main",
         ],
     },
