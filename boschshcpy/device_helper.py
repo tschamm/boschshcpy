@@ -15,6 +15,7 @@ from .models_impl import (
     SHCLight,
     SHCMotionDetector,
     SHCShutterContact,
+    SHCShutterContact2,
     SHCShutterControl,
     SHCMicromoduleShutterControl,
     SHCLightControl,
@@ -68,6 +69,11 @@ class SHCDeviceHelper:
         devices = []
         if "SWD" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["SWD"].values())
+        return devices
+
+    @property
+    def shutter_contacts2(self) -> typing.Sequence[SHCShutterContact2]:
+        devices = []
         if "SWD2" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["SWD2"].values())
         if "SWD2_PLUS" in SUPPORTED_MODELS:

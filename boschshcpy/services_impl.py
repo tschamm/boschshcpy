@@ -173,6 +173,7 @@ class HeatingCircuitService(SHCDeviceService):
         print(f"    Energy Saving Feat Enabled : {self.energy_saving_feature_enabled}")
         print(f"    On                         : {self.on}")
 
+
 class SilentModeService(SHCDeviceService):
     class State(Enum):
         MODE_SILENT = "MODE_SILENT"
@@ -182,6 +183,7 @@ class SilentModeService(SHCDeviceService):
     def mode(self) -> State:
         return self.State(self.state["mode"])
 
+
 class ShutterContactService(SHCDeviceService):
     class State(Enum):
         CLOSED = "CLOSED"
@@ -190,6 +192,20 @@ class ShutterContactService(SHCDeviceService):
     @property
     def value(self) -> State:
         return self.State(self.state["value"])
+
+    def summary(self):
+        super().summary()
+        print(f"    Value                    : {self.value}")
+
+
+class BypassService(SHCDeviceService):
+    class State(Enum):
+        BYPASS_INACTIVE = "BYPASS_INACTIVE"
+        BYPASS_ACTIVE = "BYPASS_ACTIVE"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["state"])
 
     def summary(self):
         super().summary()
@@ -702,6 +718,7 @@ SERVICE_MAPPING = {
     "Alarm": AlarmService,
     "BatteryLevel": BatteryLevelService,
     "BinarySwitch": BinarySwitchService,
+    "Bypass": BypassService,
     "CameraLight": CameraLightService,
     "CameraNotification": CameraNotificationService,
     "CommunicationQuality": CommunicationQualityService,

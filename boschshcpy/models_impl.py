@@ -359,6 +359,37 @@ class SHCShutterContact(SHCBatteryDevice):
         super().summary()
 
 
+class SHCShutterContact2(SHCShutterContact):
+    from .services_impl import CommunicationQualityService, BypassService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._bypass_service = self.device_service("Bypass")
+
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
+    @property
+    def bypass(self) -> BypassService.State:
+        return self._bypass_service.value
+
+    @bypass.setter
+    def bypass(self, state: bool):
+        self._bypass_service.put_state_element(
+            "value", "BYPASS_ACTIVE" if state else "BYPASS_INACTIVE"
+        )
+
+    def update(self):
+        self._communicationquality_service.short_poll()
+        self._bypass_service.short_poll()
+        super().update()
+
+    def summary(self):
+        super().summary()
+
+
 class SHCCameraEyes(SHCDevice):
     from .services_impl import (
         CameraLightService,
@@ -974,8 +1005,8 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
-    "SWD2": SHCShutterContact,
-    "SWD2_PLUS": SHCShutterContact,
+    "SWD2": SHCShutterContact2,
+    "SWD2_PLUS": SHCShutterContact2,
     "BBL": SHCShutterControl,
     "MICROMODULE_SHUTTER": SHCMicromoduleShutterControl,
     "PSM": SHCSmartPlug,
