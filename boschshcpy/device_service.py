@@ -42,7 +42,7 @@ class SHCDeviceService:
 
     def put_state(self, key_value_pairs):
         self._api.put_device_service_state(
-            self.device_id, self.id, {"@type": self.state["@type"], **key_value_pairs}
+            self.device_id.replace('#','%23'), self.id, {"@type": self.state["@type"], **key_value_pairs}
         )
 
     def put_state_element(self, key, value):
