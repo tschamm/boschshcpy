@@ -50,7 +50,7 @@ class SHCAPI:
         self._requests_session.mount("https://", HostNameIgnoringAdapter())
         self._requests_session.cert = (self._certificate, self._key)
         self._requests_session.headers.update(
-            {"api-version": "2.1", "Content-Type": "application/json"}
+            {"api-version": "3.2", "Content-Type": "application/json"}
         )
         self._requests_session.verify = pkg_resources.resource_filename(
             "boschshcpy", "tls_ca_chain.pem"
