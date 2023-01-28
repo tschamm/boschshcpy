@@ -106,7 +106,9 @@ class SHCSession:
 
     def _initialize_domains(self):
         self._domains_by_id["IDS"] = SHCIntrusionSystem(
-            self._api, self._api.get_domain_intrusion_detection()
+            self._api,
+            self._api.get_domain_intrusion_detection(),
+            self.information.macAddress,
         )
 
     def _long_poll(self, wait_seconds=10):

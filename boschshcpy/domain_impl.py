@@ -27,7 +27,7 @@ class SHCIntrusionSystem:
         PARTIAL_PROTECTION = 1
         CUSTOM_PROTECTION = 2
 
-    def __init__(self, api: SHCAPI, raw_domain_state):
+    def __init__(self, api: SHCAPI, raw_domain_state, root_device_id):
         self._api = api
         self._raw_system_availability = raw_domain_state["systemAvailability"]
         self._raw_arming_state = raw_domain_state["armingState"]
@@ -36,6 +36,7 @@ class SHCIntrusionSystem:
             "activeConfigurationProfile"
         ]
         self._raw_security_gap_state = raw_domain_state["securityGapState"]
+        self._root_device_id = root_device_id
 
         self._callbacks = {}
 
@@ -50,6 +51,10 @@ class SHCIntrusionSystem:
     @property
     def name(self):
         return "Intrusion Detection System"
+
+    @property
+    def root_device_id(self):
+        return self._root_device_id
 
     @property
     def device_model(self):
