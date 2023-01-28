@@ -411,7 +411,7 @@ class SHCCameraEyes(SHCDevice):
     @privacymode.setter
     def privacymode(self, state: bool):
         self._privacymode_service.put_state_element(
-            "value", "ENABLED" if state else "DISABLED"
+            "value", "DISABLED" if state else "ENABLED"
         )
 
     @property
