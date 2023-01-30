@@ -85,6 +85,9 @@ class SHCRegisterClient:
             "primaryRole": "ROLE_RESTRICTED_CLIENT",
             "certificate": cert_str,
         }
+        logger.debug(
+            f"Registering new client with id {data['id']} and name {data['name']}."
+        )
 
         result = self._post_api_or_fail(data)
         return (

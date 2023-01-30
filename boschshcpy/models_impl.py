@@ -485,6 +485,9 @@ class SHCThermostat(SHCBatteryDevice):
         TemperatureLevelService,
         ValveTappetService,
         SilentModeService,
+        CommunicationQualityService,
+        ThermostatService,
+        TemperatureOffsetService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
@@ -492,6 +495,43 @@ class SHCThermostat(SHCBatteryDevice):
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._valvetappet_service = self.device_service("ValveTappet")
         self._silentmode_service = self.device_service("SilentMode")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._thermostat_service = self.device_service("Thermostat")
+        self._temperatureoffset_service = self.device_service("TemperatureOffset")
+
+    @property
+    def child_lock(self) -> ThermostatService.State:
+        return self._thermostat_service.childLock
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._thermostat_service.put_state_element(
+            "childLock", "ON" if state else "OFF"
+        )
+
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
+    @property
+    def offset(self) -> float:
+        return self._temperatureoffset_service.offset
+
+    @offset.setter
+    def offset(self, value: float):
+        self._temperatureoffset_service.offset = value
+
+    @property
+    def step_size(self) -> float:
+        return self._temperatureoffset_service.step_size
+
+    @property
+    def min_offset(self) -> float:
+        return self._temperatureoffset_service.min_offset
+
+    @property
+    def max_offset(self) -> float:
+        return self._temperatureoffset_service.max_offset
 
     @property
     def position(self) -> int:
@@ -514,6 +554,9 @@ class SHCThermostat(SHCBatteryDevice):
         self._silentmode_service.put_state_element("mode", mode.name)
 
     def update(self):
+        self._thermostat_service.short_poll()
+        self._communicationquality_service.short_poll()
+        self._temperatureoffset_service.short_poll()
         self._temperaturelevel_service.short_poll()
         self._valvetappet_service.short_poll()
         self._silentmode_service.short_poll()
@@ -659,6 +702,77 @@ class SHCWallThermostat(SHCBatteryDevice):
 
     def summary(self):
         print(f"Wall Thermostat:")
+        super().summary()
+
+
+class SHCRoomThermostat2(SHCBatteryDevice):
+    from .services_impl import (
+        TemperatureLevelService,
+        CommunicationQualityService,
+        ThermostatService,
+        TemperatureOffsetService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._temperaturelevel_service = self.device_service("TemperatureLevel")
+        # self._humiditylevel_service = self.device_service("HumidityLevel")
+        self._thermostat_service = self.device_service("Thermostat")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._temperatureoffset_service = self.device_service("TemperatureOffset")
+
+    @property
+    def temperature(self) -> float:
+        return self._temperaturelevel_service.temperature
+
+    # @property
+    # def humidity(self) -> float:
+    #     return self._humiditylevel_service.humidity
+
+    @property
+    def child_lock(self) -> ThermostatService.State:
+        return self._thermostat_service.childLock
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._thermostat_service.put_state_element(
+            "childLock", "ON" if state else "OFF"
+        )
+
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
+    @property
+    def offset(self) -> float:
+        return self._temperatureoffset_service.offset
+
+    @offset.setter
+    def offset(self, value: float):
+        self._temperatureoffset_service.offset = value
+
+    @property
+    def step_size(self) -> float:
+        return self._temperatureoffset_service.step_size
+
+    @property
+    def min_offset(self) -> float:
+        return self._temperatureoffset_service.min_offset
+
+    @property
+    def max_offset(self) -> float:
+        return self._temperatureoffset_service.max_offset
+
+    def update(self):
+        self._temperaturelevel_service.short_poll()
+        # self._humiditylevel_service.short_poll()
+        self._thermostat_service.short_poll()
+        self._communicationquality_service.short_poll()
+        self._temperatureoffset_service.short_poll()
+        super().update()
+
+    def summary(self):
+        print(f"Room Thermostat 2:")
         super().summary()
 
 
@@ -1023,6 +1137,7 @@ MODEL_MAPPING = {
     "TRV_GEN2": SHCThermostat,
     "THB": SHCWallThermostat,
     "BWTH": SHCWallThermostat,
+    "RTH2_BAT": SHCRoomThermostat2,
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "PRESENCE_SIMULATION_SERVICE": SHCPresenceSimulationSystem,

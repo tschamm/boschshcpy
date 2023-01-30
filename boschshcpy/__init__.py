@@ -20,6 +20,7 @@ from .device_helper import (
     SHCSmokeDetector,
     SHCSmokeDetectionSystem,
     SHCThermostat,
+    SHCRoomThermostat2,
     SHCTwinguard,
     SHCUniversalSwitch,
     SHCWallThermostat,

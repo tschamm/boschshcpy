@@ -27,6 +27,7 @@ from .models_impl import (
     SHCSmokeDetector,
     SHCSmokeDetectionSystem,
     SHCThermostat,
+    SHCRoomThermostat2,
     SHCTwinguard,
     SHCUniversalSwitch,
     SHCWallThermostat,
@@ -162,6 +163,13 @@ class SHCDeviceHelper:
             devices.extend(self._devices_by_model["THB"].values())
         if "BWTH" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["BWTH"].values())
+        return devices
+
+    @property
+    def roomthermostats(self) -> typing.Sequence[SHCRoomThermostat2]:
+        devices = []
+        if "RTH2_BAT" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["RTH2_BAT"].values())
         return devices
 
     @property

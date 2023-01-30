@@ -3,6 +3,35 @@ from enum import Enum
 from .device_service import SHCDeviceService
 
 
+class TemperatureOffsetService(SHCDeviceService):
+    @property
+    def offset(self) -> float:
+        return float(self.state["offset"] if "offset" in self.state else 0.0)
+
+    @offset.setter
+    def offset(self, value: float):
+        self.put_state_element("offset", value)
+
+    @property
+    def step_size(self) -> float:
+        return float(self.state["stepSize"] if "stepSize" in self.state else 0.0)
+
+    @property
+    def min_offset(self) -> float:
+        return float(self.state["minOffset"] if "minOffset" in self.state else 0.0)
+
+    @property
+    def max_offset(self) -> float:
+        return float(self.state["maxOffset"] if "maxOffset" in self.state else 0.0)
+
+    def summary(self):
+        super().summary()
+        print(f"    TemperatureOffset        : {self.offset}")
+        print(f"    stepSize                 : {self.step_size}")
+        print(f"    minOffset                : {self.min_offset}")
+        print(f"    maxOffset                : {self.max_offset}")
+
+
 class TemperatureLevelService(SHCDeviceService):
     @property
     def temperature(self) -> float:
@@ -632,12 +661,12 @@ class ThermostatService(SHCDeviceService):
         OFF = "OFF"
 
     @property
-    def value(self) -> State:
+    def childLock(self) -> State:
         return self.State(self.state["childLock"])
 
     def summary(self):
         super().summary()
-        print(f"    childLock                : {self.value}")
+        print(f"    childLock                : {self.childLock}")
 
 
 class CommunicationQualityService(SHCDeviceService):
@@ -742,6 +771,7 @@ SERVICE_MAPPING = {
     "SmokeDetectorCheck": SmokeDetectorCheckService,
     "SurveillanceAlarm": SurveillanceAlarmService,
     "TemperatureLevel": TemperatureLevelService,
+    "TemperatureOffset": TemperatureOffsetService,
     "Thermostat": ThermostatService,
     "ValveTappet": ValveTappetService,
     "WaterLeakageSensor": WaterLeakageSensorService,
