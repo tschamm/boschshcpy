@@ -708,6 +708,7 @@ class SHCWallThermostat(SHCBatteryDevice):
 class SHCRoomThermostat2(SHCBatteryDevice):
     from .services_impl import (
         TemperatureLevelService,
+        HumidityLevelService,
         CommunicationQualityService,
         ThermostatService,
         TemperatureOffsetService,
@@ -716,7 +717,7 @@ class SHCRoomThermostat2(SHCBatteryDevice):
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
-        # self._humiditylevel_service = self.device_service("HumidityLevel")
+        self._humiditylevel_service = self.device_service("HumidityLevel")
         self._thermostat_service = self.device_service("Thermostat")
         self._communicationquality_service = self.device_service("CommunicationQuality")
         self._temperatureoffset_service = self.device_service("TemperatureOffset")
@@ -725,9 +726,9 @@ class SHCRoomThermostat2(SHCBatteryDevice):
     def temperature(self) -> float:
         return self._temperaturelevel_service.temperature
 
-    # @property
-    # def humidity(self) -> float:
-    #     return self._humiditylevel_service.humidity
+    @property
+    def humidity(self) -> float:
+        return self._humiditylevel_service.humidity
 
     @property
     def child_lock(self) -> ThermostatService.State:
@@ -765,7 +766,7 @@ class SHCRoomThermostat2(SHCBatteryDevice):
 
     def update(self):
         self._temperaturelevel_service.short_poll()
-        # self._humiditylevel_service.short_poll()
+        self._humiditylevel_service.short_poll()
         self._thermostat_service.short_poll()
         self._communicationquality_service.short_poll()
         self._temperatureoffset_service.short_poll()
