@@ -145,17 +145,13 @@ def main():
         print("successful registered new device with token {}".format(result["token"]))
         print(f"Cert: {result['cert']}")
         print(f"Key: {result['key']}")
-        if args.access_cert is None:
-            hostname = result["token"].split(":", 1)[1]
-            print(
-                f"Create new certificate key pair: {'oss_' + args.id + '_' + hostname + '_cert.pem'} {'oss_' + args.id + '_' + hostname + '_key.pem'}"
-            )
-            write_tls_asset(
-                "oss_" + args.id + "_" + hostname + "_cert.pem", result["cert"]
-            )
-            write_tls_asset(
-                "oss_" + args.id + "_" + hostname + "_key.pem", result["key"]
-            )
+
+        hostname = result["token"].split(":", 1)[1]
+        print(
+            f"Create new certificate key pair: {'oss_' + args.id + '_' + hostname + '_cert.pem'} {'oss_' + args.id + '_' + hostname + '_key.pem'}"
+        )
+        write_tls_asset("oss_" + args.id + "_" + hostname + "_cert.pem", result["cert"])
+        write_tls_asset("oss_" + args.id + "_" + hostname + "_key.pem", result["key"])
 
     else:
         print(
