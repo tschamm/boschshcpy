@@ -810,18 +810,24 @@ class SHCUniversalSwitch(SHCBatteryDevice):
 
 
 class SHCMotionDetector(SHCBatteryDevice):
-    from .services_impl import LatestMotionService
+    from .services_impl import LatestMotionService, MultiLevelSensorService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._service = self.device_service("LatestMotion")
+        self._multi_level_sensor_service = self.device_service("MultiLevelSensor")
 
     @property
     def latestmotion(self) -> str:
         return self._service.latestMotionDetected
 
+    @property
+    def illuminance(self) -> str:
+        return self._multi_level_sensor_service.illuminance
+
     def update(self):
         self._service.short_poll()
+        self._multi_level_sensor_service.short_poll()
         super().update()
 
     def summary(self):

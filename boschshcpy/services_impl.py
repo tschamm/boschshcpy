@@ -345,6 +345,16 @@ class MultiLevelSwitchService(SHCDeviceService):
         print(f"    multiLevelSwitchState    : {self.value}")
 
 
+class MultiLevelSensorService(SHCDeviceService):
+    @property
+    def illuminance(self) -> int:
+        return self.state["illuminance"]
+
+    def summary(self):
+        super().summary()
+        print(f"    multiLevelSensorState    : {self.illuminance}")
+
+
 class HueColorTemperatureService(SHCDeviceService):
     @property
     def value(self) -> int:
@@ -758,6 +768,7 @@ SERVICE_MAPPING = {
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
     "MultiLevelSwitch": MultiLevelSwitchService,
+    "MultiLevelSensor": MultiLevelSensorService,
     "PowerMeter": PowerMeterService,
     "PowerSwitch": PowerSwitchService,
     "PowerSwitchProgram": PowerSwitchProgramService,
