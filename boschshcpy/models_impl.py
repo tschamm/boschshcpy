@@ -5,6 +5,7 @@ from .services_impl import (
     BatteryLevelService,
     BinarySwitchService,
     CameraLightService,
+    ChildProtectionService,
     HumidityLevelService,
     PresenceSimulationConfigurationService,
     RoutingService,
@@ -306,13 +307,23 @@ class SHCMicromoduleShutterControl(SHCShutterControl):
     from .services_impl import (
         PowerMeterService,
         CommunicationQualityService,
+        ChildProtectionService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
 
+        self._childprotection_service = self.device_service("ChildProtection")
         self._powermeter_service = self.device_service("PowerMeter")
         self._communicationquality_service = self.device_service("CommunicationQuality")
+
+    @property
+    def child_lock(self) -> float:
+        return self._childprotection_service.childLockActive
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._childprotection_service.put_state_element("childLockActive", state)
 
     @property
     def energyconsumption(self) -> float:
@@ -330,6 +341,17 @@ class SHCMicromoduleShutterControl(SHCShutterControl):
         super().update()
         self._powermeter_service.short_poll()
         self._communicationquality_service.short_poll()
+
+    def summary(self):
+        super().summary()
+
+
+class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+    def update(self):
+        super().update()
 
     def summary(self):
         super().summary()
@@ -1132,6 +1154,7 @@ MODEL_MAPPING = {
     "MICROMODULE_SHUTTER": SHCMicromoduleShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitchBSM,
+    "MICROMODULE_BLINDS": SHCMicromoduleBlinds,
     "MICROMODULE_LIGHT_ATTACHED": SHCLightSwitch,
     "MICROMODULE_LIGHT_CONTROL": SHCLightControl,
     "PLUG_COMPACT": SHCSmartPlugCompact,

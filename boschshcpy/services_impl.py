@@ -515,6 +515,16 @@ class CameraNotificationService(SHCDeviceService):
         print(f"    value                    : {self.value}")
 
 
+class ChildProtectionService(SHCDeviceService):
+    @property
+    def childLockActive(self) -> bool:
+        return self.state["childLockActive"]
+
+    def summary(self):
+        super().summary()
+        print(f"    childLockActive                    : {self.childLockActive}")
+
+
 class KeypadService(SHCDeviceService):
     class KeyState(Enum):
         LOWER_BUTTON = "LOWER_BUTTON"
@@ -760,6 +770,7 @@ SERVICE_MAPPING = {
     "Bypass": BypassService,
     "CameraLight": CameraLightService,
     "CameraNotification": CameraNotificationService,
+    "ChildProtection": ChildProtectionService,
     "CommunicationQuality": CommunicationQualityService,
     "HeatingCircuit": HeatingCircuitService,
     "HSBColorActuator": HSBColorActuatorService,
