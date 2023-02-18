@@ -192,6 +192,15 @@ class SHCLightSwitch(SHCDevice):
 
         self._powerswitch_service = self.device_service("PowerSwitch")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+        self._childprotection_service = self.device_service("ChildProtection")
+
+    @property
+    def child_lock(self) -> float:
+        return self._childprotection_service.childLockActive
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._childprotection_service.put_state_element("childLockActive", state)
 
     @property
     def state(self) -> PowerSwitchService.State:
@@ -204,6 +213,7 @@ class SHCLightSwitch(SHCDevice):
         )
 
     def update(self):
+        self._childprotection_service.short_poll()
         self._powerswitch_service.short_poll()
         self._powerswitchprogram_service.short_poll()
 
@@ -339,6 +349,7 @@ class SHCMicromoduleShutterControl(SHCShutterControl):
 
     def update(self):
         super().update()
+        self._childprotection_service.short_poll()
         self._powermeter_service.short_poll()
         self._communicationquality_service.short_poll()
 
