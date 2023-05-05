@@ -172,6 +172,8 @@ class SHCDeviceHelper:
         devices = []
         if "RTH2_BAT" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["RTH2_BAT"].values())
+        if "RTH2_230" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["RTH2_230"].values())
         return devices
 
     @property

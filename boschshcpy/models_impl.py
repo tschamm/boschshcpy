@@ -1179,6 +1179,7 @@ MODEL_MAPPING = {
     "THB": SHCWallThermostat,
     "BWTH": SHCWallThermostat,
     "RTH2_BAT": SHCRoomThermostat2,
+    "RTH2_230": SHCRoomThermostat2,
     "WRC2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "PRESENCE_SIMULATION_SERVICE": SHCPresenceSimulationSystem,
