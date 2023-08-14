@@ -533,6 +533,7 @@ class KeypadService(SHCDeviceService):
     class KeyEvent(Enum):
         PRESS_SHORT = "PRESS_SHORT"
         PRESS_LONG = "PRESS_LONG"
+        PRESS_LONG_RELEASED = "PRESS_LONG_RELEASED"
 
     @property
     def keyCode(self) -> int:
