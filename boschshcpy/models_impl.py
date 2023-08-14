@@ -273,15 +273,15 @@ class SHCLightControl(SHCDevice):
         return self._communicationquality_service.value
 
     def update(self):
-        super().update()
         self._powermeter_service.short_poll()
         self._communicationquality_service.short_poll()
 
     def summary(self):
+        print(f"LightControl:")
         super().summary()
 
 
-class SHCMicroModuleRelay(SHCDevice):
+class SHCMicromoduleRelay(SHCDevice):
     from .services_impl import (
         CommunicationQualityService,
         PowerSwitchService,
@@ -320,13 +320,13 @@ class SHCMicroModuleRelay(SHCDevice):
         return self._communicationquality_service.value
 
     def update(self):
-        super().update()
         self._powerswitch_service.short_poll()
         self._powerswitchprogram_service.short_poll()
         self._communicationquality_service.short_poll()
         self._childprotection_service.short_poll()
 
     def summary(self):
+        print(f"MicromoduleRelay:")
         super().summary()
 
 
@@ -1217,7 +1217,7 @@ MODEL_MAPPING = {
     "MICROMODULE_BLINDS": SHCMicromoduleBlinds,
     "MICROMODULE_LIGHT_ATTACHED": SHCLightSwitch,
     "MICROMODULE_LIGHT_CONTROL": SHCLightControl,
-    "MICROMODULE_RELAY": SHCMicroModuleRelay,
+    "MICROMODULE_RELAY": SHCMicromoduleRelay,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "SMOKE_DETECTOR2": SHCSmokeDetector,
