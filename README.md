@@ -38,7 +38,7 @@ The following device models are implemented, using the above services:
 * ```ShutterControl```, ```Micromodule Shutter```
 * ```SmartPlug```
 * ```SmartPlugCompact```
-* ```LightControl```, ```Micromodule Light Control```, ```Micromodule Light Attached```
+* ```LightControl```, ```Micromodule Light Control```, ```Micromodule Light Attached```, ```Micromodule Relay```
 * ```SmokeDetector```
 * ```CameraEyes```, ```Camera360```
 * ```IntrusionDetectionSystem```
@@ -184,6 +184,9 @@ session.stop_polling()
 # Trigger intrusion detection system
 intrusion_control = session.intrusion_system
 intrusion_control.arm()
+
+# Get rawscan of devices
+scan_result = session.rawscan(command="devices")
 ```
 
 ## Usage guide

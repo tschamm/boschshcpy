@@ -281,6 +281,55 @@ class SHCLightControl(SHCDevice):
         super().summary()
 
 
+class SHCMicroModuleRelay(SHCDevice):
+    from .services_impl import (
+        CommunicationQualityService,
+        PowerSwitchService,
+        ChildProtectionService,
+        PowerSwitchProgramService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._powerswitch_service = self.device_service("PowerSwitch")
+        self._childprotection_service = self.device_service("ChildProtection")
+        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+
+    @property
+    def state(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    @state.setter
+    def state(self, state: bool):
+        self._powerswitch_service.put_state_element(
+            "switchState", "ON" if state else "OFF"
+        )
+
+    @property
+    def child_lock(self) -> float:
+        return self._childprotection_service.childLockActive
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._childprotection_service.put_state_element("childLockActive", state)
+
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
+    def update(self):
+        super().update()
+        self._powerswitch_service.short_poll()
+        self._powerswitchprogram_service.short_poll()
+        self._communicationquality_service.short_poll()
+        self._childprotection_service.short_poll()
+
+    def summary(self):
+        super().summary()
+
+
 class SHCShutterControl(SHCDevice):
     from .services_impl import ShutterControlService
 
@@ -1168,6 +1217,7 @@ MODEL_MAPPING = {
     "MICROMODULE_BLINDS": SHCMicromoduleBlinds,
     "MICROMODULE_LIGHT_ATTACHED": SHCLightSwitch,
     "MICROMODULE_LIGHT_CONTROL": SHCLightControl,
+    "MICROMODULE_RELAY": SHCMicroModuleRelay,
     "PLUG_COMPACT": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "SMOKE_DETECTOR2": SHCSmokeDetector,

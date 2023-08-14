@@ -295,3 +295,40 @@ class SHCSession:
     @property
     def device_helper(self) -> SHCDeviceHelper:
         return self._device_helper
+
+    def rawscan(self, **kwargs):
+        match (kwargs["command"].lower()):
+            case "devices":
+                return self._api.get_devices()
+
+            case "device":
+                return self._api.get_device(device_id=kwargs["device_id"])
+
+            case "services":
+                return self._api.get_services()
+
+            case "device_services":
+                return self._api.get_device_services(device_id=kwargs["device_id"])
+
+            case "device_service":
+                return self._api.get_device_service(
+                    device_id=kwargs["device_id"], service_id=kwargs["service_id"]
+                )
+
+            case "rooms":
+                return self._api.get_rooms()
+
+            case "scenarios":
+                return self._api.get_scenarios()
+
+            case "info" | "information":
+                return self._api.get_information()
+
+            case "public_information":
+                return self._api.get_public_information()
+
+            case "intrusion_detection":
+                return self._api.get_domain_intrusion_detection()
+
+            case _:
+                return None
