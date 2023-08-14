@@ -296,6 +296,22 @@ class SHCSession:
     def device_helper(self) -> SHCDeviceHelper:
         return self._device_helper
 
+    @property
+    def rawscan_commands(self):
+        return [
+            "devices",
+            "device",
+            "services",
+            "device_services",
+            "device_service",
+            "rooms",
+            "scenarios",
+            "info",
+            "information",
+            "public_information",
+            "intrusion_detection",
+        ]
+
     def rawscan(self, **kwargs):
         match (kwargs["command"].lower()):
             case "devices":
