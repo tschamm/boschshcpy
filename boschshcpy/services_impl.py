@@ -472,6 +472,33 @@ class ShutterControlService(SHCDeviceService):
         print(f"    Calibrated               : {self.calibrated}")
 
 
+class BlindsControlService(SHCDeviceService):
+    class BlindsType(Enum):
+        DEGREE_90 = "DEGREE_90"
+        DEGREE_180 = "DEGREE_180"
+
+    @property
+    def current_angle(self) -> float:
+        return self.state["currentAngle"]
+
+    @property
+    def target_angle(self) -> float:
+        return self.state["targetAngle"]
+
+    @target_angle.setter
+    def target_angle(self, value: float):
+        self.put_state_element("targetAngle", value)
+
+    @property
+    def blinds_type(self) -> BlindsType:
+        return self.state["blindsType"]
+
+    def summary(self):
+        super().summary()
+        print(f"    currentAngle              : {self.current_angle}")
+        print(f"    targetAngle               : {self.target_angle}")
+
+
 class CameraLightService(SHCDeviceService):
     class State(Enum):
         ON = "ON"
@@ -768,6 +795,7 @@ SERVICE_MAPPING = {
     "Alarm": AlarmService,
     "BatteryLevel": BatteryLevelService,
     "BinarySwitch": BinarySwitchService,
+    "BlindsControl": BlindsControlService,
     "Bypass": BypassService,
     "CameraLight": CameraLightService,
     "CameraNotification": CameraNotificationService,
