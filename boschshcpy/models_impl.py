@@ -424,9 +424,9 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
     @target_angle.setter
     def target_angle(self, value: float):
         self._blindscontrol_service.target_angle = value
-        
+
     @property
-    def blinds_type(self) -> BlindsControlService.BlindsType
+    def blinds_type(self) -> BlindsControlService.BlindsType:
         return self._blindscontrol_service.blinds_type
 
     def update(self):
