@@ -10,6 +10,7 @@ from .device_helper import (
     SHCShutterContact,
     SHCShutterContact2,
     SHCShutterControl,
+    SHCMicromoduleBlinds,
     SHCMicromoduleShutterControl,
     SHCMicromoduleRelay,
     SHCLightControl,

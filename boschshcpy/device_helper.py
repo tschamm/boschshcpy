@@ -17,6 +17,7 @@ from .models_impl import (
     SHCShutterContact,
     SHCShutterContact2,
     SHCShutterControl,
+    SHCMicromoduleBlinds,
     SHCMicromoduleRelay,
     SHCMicromoduleShutterControl,
     SHCLightControl,
@@ -96,6 +97,13 @@ class SHCDeviceHelper:
         devices = []
         if "MICROMODULE_SHUTTER" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["MICROMODULE_SHUTTER"].values())
+        return devices
+
+    @property
+    def micromodule_blinds(
+        self,
+    ) -> typing.Sequence[SHCMicromoduleBlinds]:
+        devices = []
         if "MICROMODULE_BLINDS" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["MICROMODULE_BLINDS"].values())
         return devices
