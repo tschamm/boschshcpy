@@ -907,7 +907,7 @@ class SHCUniversalSwitch(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"Universal Switch:")
+        print(f"Universal Switch / Switch 2:")
         super().summary()
 
 
@@ -1251,6 +1251,7 @@ MODEL_MAPPING = {
     "RTH2_BAT": SHCRoomThermostat2,
     "RTH2_230": SHCRoomThermostat2,
     "WRC2": SHCUniversalSwitch,
+    "SWITCH2": SHCUniversalSwitch,
     "MD": SHCMotionDetector,
     "PRESENCE_SIMULATION_SERVICE": SHCPresenceSimulationSystem,
     "TWINGUARD": SHCTwinguard,

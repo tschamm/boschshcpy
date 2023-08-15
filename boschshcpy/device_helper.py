@@ -208,9 +208,12 @@ class SHCDeviceHelper:
 
     @property
     def universal_switches(self) -> typing.Sequence[SHCUniversalSwitch]:
-        if "WRC2" not in SUPPORTED_MODELS:
-            return []
-        return list(self._devices_by_model["WRC2"].values())
+        devices = []
+        if "WRC2" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["WRC2"].values())
+        if "SWITCH2" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SWITCH2"].values())
+        return devices
 
     @property
     def camera_eyes(self) -> typing.Sequence[SHCCameraEyes]:
