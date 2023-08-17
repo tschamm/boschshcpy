@@ -61,6 +61,10 @@ class SHCIntrusionSystem:
         return "IDS"
 
     @property
+    def deleted(self):
+        return False
+
+    @property
     def system_availability(self) -> bool:
         return self._raw_system_availability["available"]
 
