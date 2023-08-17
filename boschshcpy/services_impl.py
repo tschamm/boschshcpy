@@ -552,6 +552,18 @@ class ChildProtectionService(SHCDeviceService):
         print(f"    childLockActive                    : {self.childLockActive}")
 
 
+class ImpulseSwitchService(SHCDeviceService):
+    @property
+    def impulse_state(self) -> bool:
+        return self.state["impulseState"]
+
+    @property
+    def instant_of_last_impulse(self) -> str:
+        if not "instantOfLastImpulse" in self.state:
+            return 0
+        return self.state["instantOfLastImpulse"]
+
+
 class KeypadService(SHCDeviceService):
     class KeyState(Enum):
         LOWER_BUTTON = "LOWER_BUTTON"
@@ -805,6 +817,7 @@ SERVICE_MAPPING = {
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
     "HumidityLevel": HumidityLevelService,
+    "ImpulseSwitch": ImpulseSwitchService,
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
     "MultiLevelSwitch": MultiLevelSwitchService,

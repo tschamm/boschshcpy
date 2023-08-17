@@ -114,7 +114,20 @@ class SHCDeviceHelper:
     ) -> typing.Sequence[SHCMicromoduleRelay]:
         devices = []
         if "MICROMODULE_RELAY" in SUPPORTED_MODELS:
-            devices.extend(self._devices_by_model["MICROMODULE_RELAY"].values())
+            for relay in self._devices_by_model["MICROMODULE_RELAY"].values():
+                if relay.relay_type == SHCMicromoduleRelay.RelayType.SWITCH:
+                    devices.extend(relay)
+        return devices
+
+    @property
+    def micromodule_impulse_relays(
+        self,
+    ) -> typing.Sequence[SHCMicromoduleRelay]:
+        devices = []
+        if "MICROMODULE_RELAY" in SUPPORTED_MODELS:
+            for relay in self._devices_by_model["MICROMODULE_RELAY"].values():
+                if relay.relay_type == SHCMicromoduleRelay.RelayType.BUTTON:
+                    devices.extend(relay)
         return devices
 
     @property

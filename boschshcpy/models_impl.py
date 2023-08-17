@@ -7,6 +7,7 @@ from .services_impl import (
     CameraLightService,
     ChildProtectionService,
     HumidityLevelService,
+    ImpulseSwitchService,
     PresenceSimulationConfigurationService,
     RoutingService,
     ShutterContactService,
@@ -285,17 +286,31 @@ class SHCMicromoduleRelay(SHCDevice):
     from .services_impl import (
         CommunicationQualityService,
         PowerSwitchService,
+        ImpulseSwitchService,
         ChildProtectionService,
         PowerSwitchProgramService,
     )
 
+    class RelayType(Enum):
+        BUTTON = "BUTTON"
+        SWITCH = "SWITCH"
+
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
 
-        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._impulseswitch_service = self.device_service("ImpulseSwitch")
         self._powerswitch_service = self.device_service("PowerSwitch")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
         self._childprotection_service = self.device_service("ChildProtection")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+
+    @property
+    def relay_type(self) -> RelayType:
+        return (
+            self.RelayType.BUTTON
+            if self.profile == "GENERIC"
+            else self.RelayType.SWITCH
+        )
 
     @property
     def state(self) -> PowerSwitchService.State:
@@ -306,6 +321,19 @@ class SHCMicromoduleRelay(SHCDevice):
         self._powerswitch_service.put_state_element(
             "switchState", "ON" if state else "OFF"
         )
+
+    @property
+    def impulse_state(self) -> bool:
+        return self._impulseswitch_service.impulse_state
+
+    @impulse_state.setter
+    def impulse_state(self, state: bool):
+        if state:
+            self._impulseswitch_service.put_state_element("impulseState", True)
+
+    @property
+    def instant_of_last_impulse(self) -> str:
+        return self._impulseswitch_service.instant_of_last_impulse
 
     @property
     def child_lock(self) -> float:
