@@ -499,6 +499,29 @@ class BlindsControlService(SHCDeviceService):
         print(f"    targetAngle               : {self.target_angle}")
 
 
+class BlindsSceneControlService(SHCDeviceService):
+    @property
+    def level(self) -> float:
+        return self.state["level"]
+
+    @level.setter
+    def level(self, value: float):
+        self.put_state_element("level", value)
+
+    @property
+    def angle(self) -> float:
+        return self.state["angle"]
+
+    @angle.setter
+    def angle(self, value: float):
+        self.put_state_element("angle", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    level              : {self.level}")
+        print(f"    angle               : {self.angle}")
+
+
 class CameraLightService(SHCDeviceService):
     class State(Enum):
         ON = "ON"
@@ -808,6 +831,7 @@ SERVICE_MAPPING = {
     "BatteryLevel": BatteryLevelService,
     "BinarySwitch": BinarySwitchService,
     "BlindsControl": BlindsControlService,
+    "BlindsSceneControl": BlindsSceneControlService,
     "Bypass": BypassService,
     "CameraLight": CameraLightService,
     "CameraNotification": CameraNotificationService,

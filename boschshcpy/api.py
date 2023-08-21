@@ -177,13 +177,17 @@ class SHCAPI:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         self._put_api_or_fail(api_url, state_update)
 
+    def put_shading_shutters_stop(self, device_id):
+        api_url = f"{self._api_root}/shading/shutters/{device_id}/stop"
+        self._put_api_or_fail(api_url, body=None)
+
     def get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
         return self._get_api_result_or_fail(api_url, expected_type="systemState")
 
     def post_domain_action(self, path, data=None):
         api_url = f"{self._api_root}/{path}"
-        self._post_api_or_fail(api_url, data)
+        self._post_api_or_fail(api_url, body=data)
 
     def long_polling_subscribe(self):
         data = [

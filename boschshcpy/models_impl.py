@@ -435,11 +435,12 @@ class SHCMicromoduleShutterControl(SHCShutterControl):
 
 
 class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
-    from .services_impl import BlindsControlService
+    from .services_impl import BlindsControlService, BlindsSceneControlService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._blindscontrol_service = self.device_service("BlindsControl")
+        self._blindsscenecontrol_service = self.device_service("BlindsSceneControl")
 
     @property
     def current_angle(self) -> float:
@@ -454,8 +455,19 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
         self._blindscontrol_service.target_angle = value
 
     @property
+    def blinds_level(self) -> float:
+        return self._blindsscenecontrol_service.level
+
+    @blinds_level.setter
+    def blinds_level(self, level: float):
+        self._blindsscenecontrol_service.level = level
+
+    @property
     def blinds_type(self) -> BlindsControlService.BlindsType:
         return self._blindscontrol_service.blinds_type
+
+    def stop_blinds(self):
+        self._api.put_shading_shutters_stop(self.id)
 
     def update(self):
         super().update()
