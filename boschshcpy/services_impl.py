@@ -231,6 +231,7 @@ class BypassService(SHCDeviceService):
     class State(Enum):
         BYPASS_INACTIVE = "BYPASS_INACTIVE"
         BYPASS_ACTIVE = "BYPASS_ACTIVE"
+        UNKNOWN = "UNKNOWN"
 
     @property
     def value(self) -> State:
