@@ -97,6 +97,8 @@ class SHCDeviceHelper:
         devices = []
         if "MICROMODULE_SHUTTER" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["MICROMODULE_SHUTTER"].values())
+        if "MICROMODULE_AWNING" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["MICROMODULE_AWNING"].values())
         return devices
 
     @property

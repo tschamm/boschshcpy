@@ -1271,6 +1271,7 @@ MODEL_MAPPING = {
     "SWD2": SHCShutterContact2,
     "SWD2_PLUS": SHCShutterContact2,
     "BBL": SHCShutterControl,
+    "MICROMODULE_AWNING": SHCMicromoduleShutterControl,
     "MICROMODULE_SHUTTER": SHCMicromoduleShutterControl,
     "PSM": SHCSmartPlug,
     "BSM": SHCLightSwitchBSM,
