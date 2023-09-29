@@ -591,7 +591,11 @@ class ImpulseSwitchService(SHCDeviceService):
 class KeypadService(SHCDeviceService):
     class KeyState(Enum):
         LOWER_BUTTON = "LOWER_BUTTON"
+        LOWER_LEFT_BUTTON = "LOWER_LEFT_BUTTON"
+        LOWER_RIGHT_BUTTON = "LOWER_RIGHT_BUTTON"
         UPPER_BUTTON = "UPPER_BUTTON"
+        UPPER_LEFT_BUTTON = "UPPER_LEFT_BUTTON"
+        UPPER_RIGHT_BUTTON = "UPPER_RIGHT_BUTTON"
 
     class KeyEvent(Enum):
         PRESS_SHORT = "PRESS_SHORT"
