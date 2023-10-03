@@ -322,14 +322,8 @@ class SHCMicromoduleRelay(SHCDevice):
             "switchState", "ON" if state else "OFF"
         )
 
-    @property
-    def impulse_state(self) -> bool:
-        return self._impulseswitch_service.impulse_state
-
-    @impulse_state.setter
-    def impulse_state(self, state: bool):
-        if state:
-            self._impulseswitch_service.put_state_element("impulseState", True)
+    def trigger_impulse_state(self):
+        self._impulseswitch_service.put_state_element("impulseState", True)
 
     @property
     def instant_of_last_impulse(self) -> str:

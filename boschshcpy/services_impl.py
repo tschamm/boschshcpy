@@ -584,7 +584,7 @@ class ImpulseSwitchService(SHCDeviceService):
     @property
     def instant_of_last_impulse(self) -> str:
         if not "instantOfLastImpulse" in self.state:
-            return 0
+            return None
         return self.state["instantOfLastImpulse"]
 
 
