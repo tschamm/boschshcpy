@@ -117,8 +117,8 @@ class SHCDeviceHelper:
         devices = []
         if "MICROMODULE_RELAY" in SUPPORTED_MODELS:
             for relay in self._devices_by_model["MICROMODULE_RELAY"].values():
-                if relay.profile == "LIGHT":
-                    devices.extend(relay)
+                if relay.relay_type == SHCMicromoduleRelay.RelayType.SWITCH:
+                    devices.extend([relay])
         return devices
 
     @property
@@ -128,8 +128,8 @@ class SHCDeviceHelper:
         devices = []
         if "MICROMODULE_RELAY" in SUPPORTED_MODELS:
             for relay in self._devices_by_model["MICROMODULE_RELAY"].values():
-                if relay.profile == "GENERIC":
-                    devices.extend(relay)
+                if relay.relay_type == SHCMicromoduleRelay.RelayType.BUTTON:
+                    devices.extend([relay])
         return devices
 
     @property
