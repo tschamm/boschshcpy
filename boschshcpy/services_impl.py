@@ -759,9 +759,10 @@ class ThermostatService(SHCDeviceService):
 
 class CommunicationQualityService(SHCDeviceService):
     class State(Enum):
+        BAD = "BAD"
         GOOD = "GOOD"
         MEDIUM = "MEDIUM"
-        BAD = "BAD"
+        NORMAL = "NORMAL"
         UNKNOWN = "UNKNOWN"
 
     @property
