@@ -491,12 +491,12 @@ class SHCShutterContact2(SHCShutterContact):
 
     @property
     def bypass(self) -> BypassService.State:
-        return self._bypass_service.value
+        return self._bypass_service.state
 
     @bypass.setter
     def bypass(self, state: bool):
         self._bypass_service.put_state_element(
-            "value", "BYPASS_ACTIVE" if state else "BYPASS_INACTIVE"
+            "state", "BYPASS_ACTIVE" if state else "BYPASS_INACTIVE"
         )
 
     def update(self):
