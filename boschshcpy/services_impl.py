@@ -245,12 +245,15 @@ class BypassService(SHCDeviceService):
 class VibrationSensorService(SHCDeviceService):
     class State(Enum):
         NO_VIBRATION = "NO_VIBRATION"
+        VIBRATION_DETECTED = "VIBRATION_DETECTED"
         UNKNOWN = "UNKNOWN"
 
     class SensitivityState(Enum):
+        VERY_HIGH = "VERY_HIGH"
         HIGH = "HIGH"
         MEDIUM = "MEDIUM"
         LOW = "LOW"
+        VERY_LOW = "VERY_LOW"
 
     @property
     def value(self) -> State:
