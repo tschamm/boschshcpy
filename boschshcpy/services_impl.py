@@ -242,6 +242,35 @@ class BypassService(SHCDeviceService):
         print(f"    Value                    : {self.value}")
 
 
+class VibrationSensorService(SHCDeviceService):
+    class State(Enum):
+        NO_VIBRATION = "NO_VIBRATION"
+        UNKNOWN = "UNKNOWN"
+
+    class SensitivityState(Enum):
+        HIGH = "HIGH"
+        MEDIUM = "MEDIUM"
+        LOW = "LOW"
+
+    @property
+    def value(self) -> State:
+        return self.State(self.state["value"])
+
+    @property
+    def enabled(self) -> bool:
+        return self.state["enabled"]
+
+    @property
+    def sensitivity(self) -> SensitivityState:
+        return self.SensitivityState(self.state["sensitivity"])
+
+    def summary(self):
+        super().summary()
+        print(f"    Value                    : {self.value}")
+        print(f"    Sensitivity              : {self.sensitivity}")
+        print(f"    Enabled                  : {self.enabled}")
+
+
 class ValveTappetService(SHCDeviceService):
     class State(Enum):
         VALVE_ADAPTION_SUCCESSFUL = "VALVE_ADAPTION_SUCCESSFUL"
@@ -868,6 +897,7 @@ SERVICE_MAPPING = {
     "TemperatureOffset": TemperatureOffsetService,
     "Thermostat": ThermostatService,
     "ValveTappet": ValveTappetService,
+    "VibrationSensor": VibrationSensorService,
     "WaterLeakageSensor": WaterLeakageSensorService,
     "WaterLeakageSensorTilt": WaterLeakageSensorTiltService,
     "WaterLeakageSensorCheck": WaterLeakageSensorCheckService,

@@ -1,24 +1,6 @@
 from enum import Enum, Flag, auto
 
 from .device import SHCDevice
-from .services_impl import (
-    BatteryLevelService,
-    BinarySwitchService,
-    CameraLightService,
-    ChildProtectionService,
-    HumidityLevelService,
-    ImpulseSwitchService,
-    PresenceSimulationConfigurationService,
-    RoutingService,
-    ShutterContactService,
-    ShutterControlService,
-    SurveillanceAlarmService,
-    TemperatureLevelService,
-    ValveTappetService,
-    WaterLeakageSensorCheckService,
-    WaterLeakageSensorService,
-    WaterLeakageSensorTiltService,
-)
 
 
 class SHCBatteryDevice(SHCDevice):
@@ -520,6 +502,41 @@ class SHCShutterContact2(SHCShutterContact):
     def update(self):
         self._communicationquality_service.short_poll()
         self._bypass_service.short_poll()
+        super().update()
+
+    def summary(self):
+        super().summary()
+
+
+class SHCShutterContact2Plus(SHCShutterContact2):
+    from .services_impl import VibrationSensorService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._vibrationsensor_service = self.device_service("VibrationSensor")
+
+    @property
+    def vibrationsensor(self) -> VibrationSensorService.State:
+        return self._vibrationsensor_service.value
+
+    @property
+    def enabled(self) -> bool:
+        return self._vibrationsensor_service.enabled
+
+    @enabled.setter
+    def enabled(self, state: bool):
+        self._vibrationsensor_service.put_state_element("enabled", state)
+
+    @property
+    def sensitivity(self) -> VibrationSensorService.SensitivityState:
+        return self._vibrationsensor_service.sensitivity
+
+    @sensitivity.setter
+    def sensitivity(self, state: VibrationSensorService.SensitivityState):
+        self._vibrationsensor_service.put_state_element("sensitivity", state.name)
+
+    def update(self):
+        self._vibrationsensor_service.short_poll()
         super().update()
 
     def summary(self):
@@ -1263,7 +1280,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "SWD2": SHCShutterContact2,
-    "SWD2_PLUS": SHCShutterContact2,
+    "SWD2_PLUS": SHCShutterContact2Plus,
     "BBL": SHCShutterControl,
     "MICROMODULE_AWNING": SHCMicromoduleShutterControl,
     "MICROMODULE_SHUTTER": SHCMicromoduleShutterControl,
