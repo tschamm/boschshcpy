@@ -160,6 +160,10 @@ class SHCSession:
         if raw_result["@type"] == "scenarioTriggered":
             if raw_result["id"] in self._scenario_callbacks:
                 self._scenario_callbacks[raw_result["id"]](raw_result)
+            if (
+                "shc" in self._scenario_callbacks
+            ):  # deprecated for providing bosch_shc.event trigger callbacks
+                self._scenario_callbacks["shc"](raw_result)
             return
         if raw_result["@type"] == "device":
             device_id = raw_result["id"]

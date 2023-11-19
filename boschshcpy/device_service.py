@@ -79,3 +79,6 @@ class SHCDeviceService:
         if raw_result["id"] == "Keypad":
             if raw_result["state"]["keyName"] in self._event_callbacks:
                 self._event_callbacks[raw_result["state"]["keyName"]]()
+        if raw_result["id"] == "LatestMotion":
+            if raw_result["deviceId"] in self._event_callbacks:
+                self._event_callbacks[raw_result["deviceId"]]()
