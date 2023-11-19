@@ -938,6 +938,14 @@ class SHCUniversalSwitch(SHCBatteryDevice):
         self._keypad_service = self.device_service("Keypad")
 
     @property
+    def keystates(self) -> dict[str]:
+        return ["LOWER_BUTTON", "UPPER_BUTTON"]
+
+    @property
+    def eventtypes(self) -> Enum:
+        return self._keypad_service.KeyEvent
+
+    @property
     def keycode(self) -> int:
         return self._keypad_service.keyCode
 
@@ -958,7 +966,30 @@ class SHCUniversalSwitch(SHCBatteryDevice):
         super().update()
 
     def summary(self):
-        print(f"Universal Switch / Switch 2:")
+        print(f"Universal Switch:")
+        super().summary()
+
+
+class SHCUniversalSwitch2(SHCUniversalSwitch):
+    from .services_impl import KeypadService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+
+    @property
+    def keystates(self) -> dict[str]:
+        return [
+            "LOWER_LEFT_BUTTON",
+            "LOWER_RIGHT_BUTTON",
+            "UPPER_LEFT_BUTTON",
+            "UPPER_RIGHT_BUTTON",
+        ]
+
+    def update(self):
+        super().update()
+
+    def summary(self):
+        print(f"Universal Switch 2:")
         super().summary()
 
 
@@ -1303,7 +1334,7 @@ MODEL_MAPPING = {
     "RTH2_BAT": SHCRoomThermostat2,
     "RTH2_230": SHCRoomThermostat2,
     "WRC2": SHCUniversalSwitch,
-    "SWITCH2": SHCUniversalSwitch,
+    "SWITCH2": SHCUniversalSwitch2,
     "MD": SHCMotionDetector,
     "PRESENCE_SIMULATION_SERVICE": SHCPresenceSimulationSystem,
     "TWINGUARD": SHCTwinguard,

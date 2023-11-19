@@ -29,6 +29,7 @@ from .device_helper import (
     SHCWallThermostat,
     SHCWaterLeakageSensor,
 )
+from .device_service import SHCDeviceService
 from .domain_impl import SHCIntrusionSystem
 from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCRegistrationError
 from .information import SHCInformation

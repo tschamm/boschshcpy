@@ -12,6 +12,7 @@ class SHCDeviceService:
         )
 
         self._callbacks = {}
+        self._event_callbacks = {}
 
     @property
     def id(self):
@@ -35,6 +36,9 @@ class SHCDeviceService:
     def unsubscribe_callback(self, entity):
         self._callbacks.pop(entity, None)
 
+    def register_event(self, event, callback):
+        self._event_callbacks[event] = callback
+
     def summary(self):
         print(f"  Device Service: {self.id}")
         print(f"    State: {self.state}")
@@ -42,7 +46,9 @@ class SHCDeviceService:
 
     def put_state(self, key_value_pairs):
         self._api.put_device_service_state(
-            self.device_id.replace('#','%23'), self.id, {"@type": self.state["@type"], **key_value_pairs}
+            self.device_id.replace("#", "%23"),
+            self.id,
+            {"@type": self.state["@type"], **key_value_pairs},
         )
 
     def put_state_element(self, key, value):
@@ -66,3 +72,10 @@ class SHCDeviceService:
 
             for callback in self._callbacks:
                 self._callbacks[callback]()
+
+            self._process_events(raw_result)
+
+    def _process_events(self, raw_result):
+        if raw_result["id"] == "Keypad":
+            if raw_result["state"]["keyName"] in self._event_callbacks:
+                self._event_callbacks[raw_result["state"]["keyName"]]()

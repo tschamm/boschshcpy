@@ -49,7 +49,7 @@ class SHCSession:
         # Stop polling function
         self.reset_connection_listener = None
 
-        self._callback = None
+        self._scenario_callbacks = {}
 
     def _enumerate_all(self):
         self.authenticate()
@@ -158,12 +158,8 @@ class SHCSession:
                 self._process_long_polling_poll_result(raw_data_model)
             return
         if raw_result["@type"] == "scenarioTriggered":
-            if self._callback is not None:
-                self._callback(
-                    raw_result["id"],
-                    raw_result["name"],
-                    raw_result["lastTimeTriggered"],
-                )
+            if raw_result["id"] in self._scenario_callbacks:
+                self._scenario_callbacks[raw_result["id"]](raw_result)
             return
         if raw_result["@type"] == "device":
             device_id = raw_result["id"]
@@ -235,11 +231,11 @@ class SHCSession:
         else:
             raise SHCSessionError("Not polling!")
 
-    def subscribe_scenario_callback(self, callback):
-        self._callback = callback
+    def subscribe_scenario_callback(self, scenario_id, callback):
+        self._scenario_callbacks[scenario_id] = callback
 
-    def unsubscribe_scenario_callback(self):
-        self._callback = None
+    def unsubscribe_scenario_callback(self, scenario_id):
+        self._scenario_callbacks.pop(scenario_id, None)
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
