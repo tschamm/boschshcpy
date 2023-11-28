@@ -13,6 +13,7 @@ from .exceptions import SHCAuthenticationError, SHCSessionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
+from .userdefinedstate import SHCUserDefinedState
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 
 logger = logging.getLogger("boschshcpy")
@@ -39,6 +40,7 @@ class SHCSession:
         self._devices_by_id = {}
         self._services_by_device_id = defaultdict(list)
         self._domains_by_id = {}
+        self._userdefinedstates_by_id = {}
 
         if not lazy:
             self._enumerate_all()
@@ -50,6 +52,7 @@ class SHCSession:
         self.reset_connection_listener = None
 
         self._scenario_callbacks = {}
+        self._userdefinedstate_callbacks = {}
 
     def _enumerate_all(self):
         self.authenticate()
@@ -57,6 +60,7 @@ class SHCSession:
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
+        self._enumerate_userdefinedstates()
         self._initialize_domains()
 
     def _add_device(self, raw_device):
@@ -103,6 +107,13 @@ class SHCSession:
             scenario_id = raw_scenario["id"]
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
+
+    def _enumerate_userdefinedstates(self):
+        raw_states = self._api.get_userdefinedstates()
+        for raw_state in raw_states:
+            userdefinedstate_id = raw_state["id"]
+            userdefinedstate = SHCUserDefinedState(api=self._api, raw_state=raw_state)
+            self._userdefinedstates_by_id[userdefinedstate_id] = userdefinedstate
 
     def _initialize_domains(self):
         self._domains_by_id["IDS"] = SHCIntrusionSystem(
@@ -184,6 +195,10 @@ class SHCSession:
             if self.intrusion_system is not None:
                 self.intrusion_system.process_long_polling_poll_result(raw_result)
             return
+        if raw_result["@type"] == "userDefinedState":
+            if raw_result["id"] in self._userdefinedstate_callbacks:
+                self._userdefinedstate_callbacks[raw_result["id"]](raw_result)
+            return
         return
 
     def start_polling(self):
@@ -241,6 +256,12 @@ class SHCSession:
     def unsubscribe_scenario_callback(self, scenario_id):
         self._scenario_callbacks.pop(scenario_id, None)
 
+    def subscribe_userdefinedstate_callback(self, userdefinedstate_id, callback):
+        self._userdefinedstate_callbacks[userdefinedstate_id] = callback
+
+    def unsubscribe_userdefinedstate_callback(self, userdefinedstate_id):
+        self._userdefinedstate_callbacks.pop(userdefinedstate_id, None)
+
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
         return list(self._devices_by_id.values())
@@ -271,6 +292,13 @@ class SHCSession:
 
     def scenario(self, scenario_id) -> SHCScenario:
         return self._scenarios_by_id[scenario_id]
+
+    @property
+    def userdefinedstates(self) -> typing.Sequence[SHCUserDefinedState]:
+        return list(self._userdefinedstates_by_id.values())
+
+    def userdefinedstate(self, userdefinedstate_id) -> SHCUserDefinedState:
+        return self._userdefinedstates_by_id[userdefinedstate_id]
 
     def authenticate(self):
         self._shc_information = SHCInformation(api=self._api, zeroconf=self._zeroconf)
