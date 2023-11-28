@@ -197,7 +197,7 @@ class SHCSession:
             return
         if raw_result["@type"] == "userDefinedState":
             if raw_result["id"] in self._userdefinedstate_callbacks:
-                self._userdefinedstate_callbacks[raw_result["id"]](raw_result)
+                self._userdefinedstate_callbacks[raw_result["id"]]()
             return
         return
 

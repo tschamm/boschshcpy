@@ -15,6 +15,10 @@ class SHCUserDefinedState:
         return self._raw_state["name"]
 
     @property
+    def deleted(self):
+        return self._raw_state["deleted"]
+
+    @property
     def state(self):
         return self._raw_state["state"]
 
