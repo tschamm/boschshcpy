@@ -234,12 +234,12 @@ class BypassService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def state(self) -> State:
+    def value(self) -> State:
         return self.State(self.state["state"])
 
     def summary(self):
         super().summary()
-        print(f"    State                    : {self.state}")
+        print(f"    State                    : {self.value}")
 
 
 class VibrationSensorService(SHCDeviceService):

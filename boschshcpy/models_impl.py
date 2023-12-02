@@ -491,7 +491,7 @@ class SHCShutterContact2(SHCShutterContact):
 
     @property
     def bypass(self) -> BypassService.State:
-        return self._bypass_service.state
+        return self._bypass_service.value
 
     @bypass.setter
     def bypass(self, state: bool):
