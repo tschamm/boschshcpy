@@ -4,6 +4,7 @@ import threading
 import time
 import typing
 from collections import defaultdict
+from collections.abc import Callable
 
 from .api import SHCAPI, JSONRPCError
 from .device import SHCDevice
@@ -41,6 +42,7 @@ class SHCSession:
         self._services_by_device_id = defaultdict(list)
         self._domains_by_id = {}
         self._userdefinedstates_by_id = {}
+        self._subscribers = []
 
         if not lazy:
             self._enumerate_all()
@@ -52,7 +54,7 @@ class SHCSession:
         self.reset_connection_listener = None
 
         self._scenario_callbacks = {}
-        self._userdefinedstate_callbacks = {}
+        self._userdefinedstate_callbacks = defaultdict(list)
 
     def _enumerate_all(self):
         self.authenticate()
@@ -63,18 +65,29 @@ class SHCSession:
         self._enumerate_userdefinedstates()
         self._initialize_domains()
 
-    def _add_device(self, raw_device):
+    def _add_device(self, raw_device, update_services=False) -> SHCDevice:
         device_id = raw_device["id"]
+
+        if update_services:
+            self._services_by_device_id.pop(device_id, None)
+            raw_services = self._api.get_device_services(device_id)
+            for service in raw_services:
+                if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
+                    continue
+                device_id = service["deviceId"]
+                self._services_by_device_id[device_id].append(service)
 
         if not self._services_by_device_id[device_id]:
             logger.debug(
                 f"Skipping device id {device_id} which has no services that are supported by this library"
             )
-            return
+            return None
 
-        self._devices_by_id[device_id] = self._device_helper.device_init(
+        device = self._device_helper.device_init(
             raw_device, self._services_by_device_id[device_id]
         )
+        self._devices_by_id[device_id] = device
+        return device
 
     def _update_device(self, raw_device):
         device_id = raw_device["id"]
@@ -183,21 +196,37 @@ class SHCSession:
                 if (
                     "deleted" in raw_result and raw_result["deleted"] == True
                 ):  # Device deleted
-                    # inform on deleted device
                     logger.debug("Deleting device with id %s", device_id)
+                    self._services_by_device_id.pop(device_id, None)
                     self._devices_by_id.pop(device_id, None)
             else:  # New device registered
                 logger.debug("Found new device with id %s", device_id)
-                self._add_device(raw_result)
-                # inform on new device
+                device = self._add_device(raw_result, update_services=True)
+                for instance, callback in self._subscribers:
+                    if isinstance(device, instance):
+                        callback(device)
             return
         if raw_result["@type"] in SHCIntrusionSystem.DOMAIN_STATES:
             if self.intrusion_system is not None:
                 self.intrusion_system.process_long_polling_poll_result(raw_result)
             return
         if raw_result["@type"] == "userDefinedState":
-            if raw_result["id"] in self._userdefinedstate_callbacks:
-                self._userdefinedstate_callbacks[raw_result["id"]]()
+            state_id = raw_result["id"]
+            if state_id in self._userdefinedstates_by_id:
+                self._userdefinedstates_by_id[state_id].update_raw_information(
+                    raw_result
+                )
+            else:
+                userdefinedstate = SHCUserDefinedState(
+                    api=self._api, raw_state=raw_result
+                )
+                self._userdefinedstates_by_id[state_id] = userdefinedstate
+                for instance, callback in self._subscribers:
+                    if isinstance(userdefinedstate, instance):
+                        callback(userdefinedstate)
+            if state_id in self._userdefinedstate_callbacks:
+                for callback in self._userdefinedstate_callbacks[state_id]:
+                    callback()
             return
         return
 
@@ -250,17 +279,22 @@ class SHCSession:
         else:
             raise SHCSessionError("Not polling!")
 
-    def subscribe_scenario_callback(self, scenario_id, callback):
+    def subscribe(self, callback_tuple) -> Callable:
+        self._subscribers.append(callback_tuple)
+
+    def subscribe_scenario_callback(self, scenario_id, callback) -> Callable:
         self._scenario_callbacks[scenario_id] = callback
 
-    def unsubscribe_scenario_callback(self, scenario_id):
+    def unsubscribe_scenario_callback(self, scenario_id) -> Callable:
         self._scenario_callbacks.pop(scenario_id, None)
 
-    def subscribe_userdefinedstate_callback(self, userdefinedstate_id, callback):
-        self._userdefinedstate_callbacks[userdefinedstate_id] = callback
+    def subscribe_userdefinedstate_callback(
+        self, userdefinedstate_id, callback
+    ) -> Callable:
+        self._userdefinedstate_callbacks[userdefinedstate_id].append(callback)
 
-    def unsubscribe_userdefinedstate_callback(self, userdefinedstate_id):
-        self._userdefinedstate_callbacks.pop(userdefinedstate_id, None)
+    def unsubscribe_userdefinedstate_callbacks(self, userdefinedstate_id) -> Callable:
+        self._userdefinedstate_callbacks.pop(userdefinedstate_id)
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:

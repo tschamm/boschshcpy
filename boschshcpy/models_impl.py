@@ -1348,7 +1348,7 @@ MODEL_MAPPING = {
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
 
 
-def build(api, raw_device, raw_device_services):
+def build(api, raw_device, raw_device_services) -> SHCDevice:
     device_model = raw_device["deviceModel"]
     assert device_model in SUPPORTED_MODELS, "Device model is supported"
     return MODEL_MAPPING[device_model](

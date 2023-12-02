@@ -48,7 +48,7 @@ class SHCDeviceHelper:
         for model in SUPPORTED_MODELS:
             self._devices_by_model[model] = {}
 
-    def device_init(self, raw_device, device_services):
+    def device_init(self, raw_device, device_services) -> SHCDevice:
         device_id = raw_device["id"]
         device_model = raw_device["deviceModel"]
         device = []
