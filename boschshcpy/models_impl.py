@@ -350,9 +350,7 @@ class SHCShutterControl(SHCDevice):
         self._service.put_state_element("level", level)
 
     def stop(self):
-        self._service.put_state_element(
-            "operationState", ShutterControlService.State.STOPPED.name
-        )
+        self._service.put_state_element("operationState", "STOPPED")
 
     @property
     def operation_state(self) -> ShutterControlService.State:
