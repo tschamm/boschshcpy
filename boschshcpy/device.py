@@ -126,6 +126,10 @@ class SHCDevice:
             else None
         )
 
+    def update(self):
+        for service in self.device_services:
+            service.short_poll()
+
     def summary(self):
         print(f"Device: {self.id}")
         print(f"  Name          : {self.name}")

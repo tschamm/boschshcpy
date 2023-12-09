@@ -20,10 +20,6 @@ class SHCBatteryDevice(SHCDevice):
             return self._batterylevel_service.warningLevel
         return BatteryLevelService.State.NOT_AVAILABLE
 
-    def update(self):
-        if self.supports_batterylevel:
-            self._batterylevel_service.short_poll()
-
 
 class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService
@@ -50,11 +46,6 @@ class SHCSmokeDetector(SHCBatteryDevice):
         self._smokedetectorcheck_service.put_state_element(
             "value", "SMOKE_TEST_REQUESTED"
         )
-
-    def update(self):
-        self._alarm_service.short_poll()
-        self._smokedetectorcheck_service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"SmokeDetector:")
@@ -105,11 +96,6 @@ class SHCSmartPlug(SHCDevice):
     def powerconsumption(self) -> float:
         return self._powermeter_service.powerconsumption
 
-    def update(self):
-        self._powerswitch_service.short_poll()
-        self._powerswitchprogram_service.short_poll()
-        self._powermeter_service.short_poll()
-
     def summary(self):
         print(f"SmartPlug:")
         super().summary()
@@ -153,12 +139,6 @@ class SHCSmartPlugCompact(SHCDevice):
     def communicationquality(self) -> CommunicationQualityService.State:
         return self._communicationquality_service.value
 
-    def update(self):
-        self._powerswitch_service.short_poll()
-        self._powerswitchprogram_service.short_poll()
-        self._powermeter_service.short_poll()
-        self._communicationquality_service.short_poll()
-
     def summary(self):
         print(f"SmartPlugCompact:")
         super().summary()
@@ -195,11 +175,6 @@ class SHCLightSwitch(SHCDevice):
             "switchState", "ON" if state else "OFF"
         )
 
-    def update(self):
-        self._childprotection_service.short_poll()
-        self._powerswitch_service.short_poll()
-        self._powerswitchprogram_service.short_poll()
-
     def summary(self):
         print(f"LightSwitch:")
         super().summary()
@@ -222,10 +197,6 @@ class SHCLightSwitchBSM(SHCLightSwitch):
     @property
     def powerconsumption(self) -> float:
         return self._powermeter_service.powerconsumption
-
-    def update(self):
-        super().update()
-        self._powermeter_service.short_poll()
 
     def summary(self):
         super().summary()
@@ -254,10 +225,6 @@ class SHCLightControl(SHCDevice):
     @property
     def communicationquality(self) -> CommunicationQualityService.State:
         return self._communicationquality_service.value
-
-    def update(self):
-        self._powermeter_service.short_poll()
-        self._communicationquality_service.short_poll()
 
     def summary(self):
         print(f"LightControl:")
@@ -323,12 +290,6 @@ class SHCMicromoduleRelay(SHCDevice):
     def communicationquality(self) -> CommunicationQualityService.State:
         return self._communicationquality_service.value
 
-    def update(self):
-        self._powerswitch_service.short_poll()
-        self._powerswitchprogram_service.short_poll()
-        self._communicationquality_service.short_poll()
-        self._childprotection_service.short_poll()
-
     def summary(self):
         print(f"MicromoduleRelay:")
         super().summary()
@@ -355,9 +316,6 @@ class SHCShutterControl(SHCDevice):
     @property
     def operation_state(self) -> ShutterControlService.State:
         return self._service.value
-
-    def update(self):
-        self._service.short_poll()
 
     def summary(self):
         print(f"ShutterControl:")
@@ -398,12 +356,6 @@ class SHCMicromoduleShutterControl(SHCShutterControl):
     def communicationquality(self) -> CommunicationQualityService.State:
         return self._communicationquality_service.value
 
-    def update(self):
-        super().update()
-        self._childprotection_service.short_poll()
-        self._powermeter_service.short_poll()
-        self._communicationquality_service.short_poll()
-
     def summary(self):
         super().summary()
 
@@ -443,10 +395,6 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
     def stop_blinds(self):
         self._api.put_shading_shutters_stop(self.id)
 
-    def update(self):
-        super().update()
-        self._blindscontrol_service.short_poll()
-
     def summary(self):
         super().summary()
 
@@ -465,10 +413,6 @@ class SHCShutterContact(SHCBatteryDevice):
     @property
     def state(self) -> ShutterContactService.State:
         return self._service.value
-
-    def update(self):
-        self._service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"ShutterContact:")
@@ -496,11 +440,6 @@ class SHCShutterContact2(SHCShutterContact):
         self._bypass_service.put_state_element(
             "state", "BYPASS_ACTIVE" if state else "BYPASS_INACTIVE"
         )
-
-    def update(self):
-        self._communicationquality_service.short_poll()
-        self._bypass_service.short_poll()
-        super().update()
 
     def summary(self):
         super().summary()
@@ -532,10 +471,6 @@ class SHCShutterContact2Plus(SHCShutterContact2):
     @sensitivity.setter
     def sensitivity(self, state: VibrationSensorService.SensitivityState):
         self._vibrationsensor_service.put_state_element("sensitivity", state.name)
-
-    def update(self):
-        self._vibrationsensor_service.short_poll()
-        super().update()
 
     def summary(self):
         super().summary()
@@ -583,11 +518,6 @@ class SHCCameraEyes(SHCDevice):
     def cameralight(self, state: bool):
         self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
 
-    def update(self):
-        self._privacymode_service.short_poll()
-        self._cameralight_service.short_poll()
-        self._cameranotification_service.short_poll()
-
     def summary(self):
         print(f"CameraEyes:")
         super().summary()
@@ -621,10 +551,6 @@ class SHCCamera360(SHCDevice):
         self._cameranotification_service.put_state_element(
             "value", "ENABLED" if state else "DISABLED"
         )
-
-    def update(self):
-        self._cameranotification_service.short_poll()
-        self._privacymode_service.short_poll()
 
     def summary(self):
         print(f"Camera360:")
@@ -704,15 +630,6 @@ class SHCThermostat(SHCBatteryDevice):
     def silentmode(self, mode: SilentModeService.State):
         self._silentmode_service.put_state_element("mode", mode.name)
 
-    def update(self):
-        self._thermostat_service.short_poll()
-        self._communicationquality_service.short_poll()
-        self._temperatureoffset_service.short_poll()
-        self._temperaturelevel_service.short_poll()
-        self._valvetappet_service.short_poll()
-        self._silentmode_service.short_poll()
-        super().update()
-
     def summary(self):
         print(f"Thermostat:")
         super().summary()
@@ -774,10 +691,6 @@ class SHCClimateControl(SHCDevice):
     def temperature(self) -> float:
         return self._temperaturelevel_service.temperature
 
-    def update(self):
-        self._temperaturelevel_service.short_poll()
-        self._roomclimatecontrol_service.short_poll()
-
     def summary(self):
         print(f"Room Climate Control:")
         super().summary()
@@ -822,9 +735,6 @@ class SHCHeatingCircuit(SHCDevice):
     def on(self) -> bool:
         return self._heating_circuit_service.on
 
-    def update(self):
-        self._heating_circuit_service.short_poll()
-
     def summary(self):
         print(f"Heating Circuit:")
         super().summary()
@@ -845,11 +755,6 @@ class SHCWallThermostat(SHCBatteryDevice):
     @property
     def humidity(self) -> float:
         return self._humiditylevel_service.humidity
-
-    def update(self):
-        self._temperaturelevel_service.short_poll()
-        self._humiditylevel_service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"Wall Thermostat:")
@@ -915,14 +820,6 @@ class SHCRoomThermostat2(SHCBatteryDevice):
     def max_offset(self) -> float:
         return self._temperatureoffset_service.max_offset
 
-    def update(self):
-        self._temperaturelevel_service.short_poll()
-        self._humiditylevel_service.short_poll()
-        self._thermostat_service.short_poll()
-        self._communicationquality_service.short_poll()
-        self._temperatureoffset_service.short_poll()
-        super().update()
-
     def summary(self):
         print(f"Room Thermostat 2:")
         super().summary()
@@ -959,10 +856,6 @@ class SHCUniversalSwitch(SHCBatteryDevice):
     def eventtimestamp(self) -> int:
         return self._keypad_service.eventTimestamp
 
-    def update(self):
-        self._keypad_service.short_poll()
-        super().update()
-
     def summary(self):
         print(f"Universal Switch:")
         super().summary()
@@ -982,9 +875,6 @@ class SHCUniversalSwitch2(SHCUniversalSwitch):
             "UPPER_LEFT_BUTTON",
             "UPPER_RIGHT_BUTTON",
         ]
-
-    def update(self):
-        super().update()
 
     def summary(self):
         print(f"Universal Switch 2:")
@@ -1006,11 +896,6 @@ class SHCMotionDetector(SHCBatteryDevice):
     @property
     def illuminance(self) -> str:
         return self._multi_level_sensor_service.illuminance
-
-    def update(self):
-        self._service.short_poll()
-        self._multi_level_sensor_service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"Motion Detector:")
@@ -1066,11 +951,6 @@ class SHCTwinguard(SHCBatteryDevice):
             "value", "SMOKE_TEST_REQUESTED"
         )
 
-    def update(self):
-        self._airqualitylevel_service.short_poll()
-        self._smokedetectorcheck_service.short_poll()
-        super().update()
-
     def summary(self):
         print(f"Twinguard:")
         super().summary()
@@ -1087,10 +967,6 @@ class SHCSmokeDetectionSystem(SHCDevice):
     @property
     def alarm(self) -> SurveillanceAlarmService.State:
         return self._surveillancealarm_service.value
-
-    def update(self):
-        self._surveillancealarm_service.short_poll()
-        # self._smokedetectioncontrol_service.short_poll()
 
     def summary(self):
         print(f"Smoke Detection System:")
@@ -1113,9 +989,6 @@ class SHCPresenceSimulationSystem(SHCDevice):
     @enabled.setter
     def enabled(self, value: bool):
         self._presencesimulationconfiguration_service.enabled = value
-
-    def update(self):
-        self._presencesimulationconfiguration_service.short_poll()
 
     def summary(self):
         print(f"Presence Simulation System:")
@@ -1248,21 +1121,6 @@ class SHCLight(SHCDevice):
             self._capabilities & self.Capabilities.COLOR_HSB
         ) == self.Capabilities.COLOR_HSB
 
-    def update(self):
-        self._binaryswitch_service.short_poll()
-        if (
-            self._capabilities & self.Capabilities.BRIGHTNESS
-        ) == self.Capabilities.BRIGHTNESS:
-            self._multilevelswitch_service.short_poll()
-        if (
-            self._capabilities & self.Capabilities.COLOR_TEMP
-        ) == self.Capabilities.COLOR_TEMP:
-            self._huecolortemperature_service.short_poll()
-        if (
-            self._capabilities & self.Capabilities.COLOR_HSB
-        ) == self.Capabilities.COLOR_HSB:
-            self._hsbcoloractuator_service.short_poll()
-
     def summary(self):
         print(f"Light:")
         print(f"  Capabilities               : {self._capabilities}")
@@ -1294,12 +1152,6 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
     @property
     def sensor_check_state(self) -> str:
         return self._sensor_check_service.value
-
-    def update(self):
-        self._leakage_service.short_poll()
-        self._tilt_service.short_poll()
-        self._sensor_check_service.short_poll()
-        super().update()
 
     def summary(self):
         print(f"Water Leakage System:")

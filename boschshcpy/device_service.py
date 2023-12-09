@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from .api import SHCAPI
 
 
@@ -10,6 +12,7 @@ class SHCDeviceService:
             if "state" in self._raw_device_service
             else {}
         )
+        self._last_update = None
 
         self._callbacks = {}
         self._event_callbacks = {}
@@ -55,12 +58,18 @@ class SHCDeviceService:
         self.put_state({key: value})
 
     def short_poll(self):
-        self._raw_device_service = self._api.get_device_service(self.device_id, self.id)
-        self._raw_state = (
-            self._raw_device_service["state"]
-            if "state" in self._raw_device_service
-            else {}
-        )
+        if self._last_update is None or (
+            datetime.utcnow() - self._last_update
+        ) > timedelta(seconds=1):
+            self._raw_device_service = self._api.get_device_service(
+                self.device_id, self.id
+            )
+            self._last_update = datetime.utcnow()
+            self._raw_state = (
+                self._raw_device_service["state"]
+                if "state" in self._raw_device_service
+                else {}
+            )
 
     def process_long_polling_poll_result(self, raw_result):
         assert raw_result["@type"] == "DeviceServiceData"
