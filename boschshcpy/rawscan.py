@@ -30,6 +30,7 @@ def main():
 
     parser_device = subparsers.add_parser("devices")
     parser_device = subparsers.add_parser("services")
+    parser_device = subparsers.add_parser("userdefinedstates")
     parser_device = subparsers.add_parser("scenarios")
     parser_device = subparsers.add_parser("rooms")
     parser_device = subparsers.add_parser("info")
@@ -70,6 +71,9 @@ def main():
 
         case "services":
             print(json.dumps(session.api.get_services(), indent=4))
+
+        case "userdefinedstates":
+            print(json.dumps(session.api.get_userdefinedstates(), indent=4))
 
         case "rooms":
             print(json.dumps(session.api.get_rooms(), indent=4))

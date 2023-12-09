@@ -16,11 +16,12 @@ class SHCDevice:
         self._callbacks = {}
         self._device_services_by_id = {}
         if not raw_device_services:
-            self._enumerate_services()
-        else:
-            self._init_services(raw_device_services)
+            raw_device_services = self._enumerate_services()
+
+        self._init_services(raw_device_services)
 
     def _enumerate_services(self):
+        raw_device_services = []
         for device_service_id in self._raw_device["deviceServiceIds"]:
             if device_service_id not in SUPPORTED_DEVICE_SERVICE_IDS:
                 continue
@@ -28,9 +29,8 @@ class SHCDevice:
             raw_device_service_data = self._api.get_device_service(
                 self.id, device_service_id
             )
-            device_service = build(self._api, raw_device_service_data)
-
-            self._device_services_by_id[device_service_id] = device_service
+            raw_device_services.append(raw_device_service_data)
+        return raw_device_services
 
     def _init_services(self, raw_device_services):
         for raw_device_service_data in raw_device_services:
