@@ -1306,6 +1306,66 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         super().summary()
 
 
+class SHCMicromoduleDimmer(SHCDevice):
+    from .services_impl import (
+        PowerSwitchService,
+        MultiLevelSwitchService,
+        CommunicationQualityService,
+        ChildProtectionService,
+        # TBD: ElectricalFaultsService, DimmerConfiguration, SwitchConfiguration (Binary vs. Impulse?)
+        # Remark: With multiple inheritance, redundant code could be reduced (e.g. for all devices with comm. quality and child protection)
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        
+        self._powerswitch_service = self.device_service("PowerSwitchService")
+        self._multilevelswitch_service = self.device_service("MultiLevelSwitch")
+        self._communicationquality_service = self.device_service("CommunicationQualityService")
+        self._childprotection_service = self.device_service("ChildProtectionService")
+
+    @property
+    def brightness(self) -> int:
+        return self._multilevelswitch_service.value
+
+    @brightness.setter
+    def brightness(self, state: int):
+        self._multilevelswitch_service.put_state_element("level", state)
+
+    @property
+    def state(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    @state.setter
+    def state(self, state: bool):
+        self._powerswitch_service.put_state_element(
+            "switchState", "ON" if state else "OFF"
+        )
+    
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+    
+    @property
+    def child_lock(self) -> float:
+        return self._childprotection_service.childLockActive
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._childprotection_service.put_state_element("childLockActive", state)
+    
+    def update(self):
+        self._powerswitch_service.short_poll()
+        self._multilevelswitch_service.short_poll()
+        self._communicationquality_service.short_poll()
+        self._childprotection_service.short_poll()
+    
+    def summary(self):
+        print(f"Micromodule Dimmer:")
+        super().summary()
+    
+    
+
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "SWD2": SHCShutterContact2,
@@ -1341,6 +1401,7 @@ MODEL_MAPPING = {
     "HUE_LIGHT": SHCLight,
     "WLS": SHCWaterLeakageSensor,
     "HEATING_CIRCUIT": SHCHeatingCircuit,
+    "MICROMODULE_DIMMER": SHCMicromoduleDimmer
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
