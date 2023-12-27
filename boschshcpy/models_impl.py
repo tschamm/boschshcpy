@@ -1308,6 +1308,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 
 class SHCMicromoduleDimmer(SHCDevice):
     from .services_impl import (
+        PowerSwitchProgramService,
         PowerSwitchService,
         MultiLevelSwitchService,
         CommunicationQualityService,
@@ -1317,12 +1318,12 @@ class SHCMicromoduleDimmer(SHCDevice):
     )
 
     def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-        
-        self._powerswitch_service = self.device_service("PowerSwitchService")
+        super().__init__(api, raw_device, raw_device_services) 
+        self._powerswitch_service = self.device_service("PowerSwitch")
+        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
         self._multilevelswitch_service = self.device_service("MultiLevelSwitch")
-        self._communicationquality_service = self.device_service("CommunicationQualityService")
-        self._childprotection_service = self.device_service("ChildProtectionService")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._childprotection_service = self.device_service("ChildProtection")
 
     @property
     def brightness(self) -> int:
@@ -1356,9 +1357,11 @@ class SHCMicromoduleDimmer(SHCDevice):
     
     def update(self):
         self._powerswitch_service.short_poll()
+        self._powerswitchprogram_service.short_poll()
         self._multilevelswitch_service.short_poll()
         self._communicationquality_service.short_poll()
         self._childprotection_service.short_poll()
+        super().update()
     
     def summary(self):
         print(f"Micromodule Dimmer:")
@@ -1401,7 +1404,7 @@ MODEL_MAPPING = {
     "HUE_LIGHT": SHCLight,
     "WLS": SHCWaterLeakageSensor,
     "HEATING_CIRCUIT": SHCHeatingCircuit,
-    "MICROMODULE_DIMMER": SHCMicromoduleDimmer
+    "MICROMODULE_DIMMER": SHCMicromoduleDimmer,
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()

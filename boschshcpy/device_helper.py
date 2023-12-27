@@ -295,7 +295,7 @@ class SHCDeviceHelper:
         return list(self._devices_by_model["HEATING_CIRCUIT"].values())
     
     @property
-    def micromodule_dimmer(self) -> typing.Sequence[SHCMicromoduleDimmer]:
+    def micromodule_dimmers(self) -> typing.Sequence[SHCMicromoduleDimmer]:
         if "MICROMODULE_DIMMER" not in SUPPORTED_MODELS:
             return []
-        return list(self._devices_by_model["MICROMODEL_DIMMER"].values())
+        return list(self._devices_by_model["MICROMODULE_DIMMER"].values())
