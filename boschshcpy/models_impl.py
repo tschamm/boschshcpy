@@ -1306,14 +1306,16 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         super().summary()
 
 
-class SHCMicromoduleDimmer(SHCDevice):
+class SHCMicromoduleDimmer(SHCLight):
     from .services_impl import (
         PowerSwitchProgramService,
         PowerSwitchService,
-        MultiLevelSwitchService,
         CommunicationQualityService,
         ChildProtectionService,
-        # TBD: ElectricalFaultsService, DimmerConfiguration, SwitchConfiguration (Binary vs. Impulse?)
+        # Services TBD: 
+        # ElectricalFaultsService, 
+        # DimmerConfiguration, 
+        # SwitchConfiguration,
         # Remark: With multiple inheritance, redundant code could be reduced (e.g. for all devices with comm. quality and child protection)
     )
 
@@ -1321,17 +1323,8 @@ class SHCMicromoduleDimmer(SHCDevice):
         super().__init__(api, raw_device, raw_device_services) 
         self._powerswitch_service = self.device_service("PowerSwitch")
         self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
-        self._multilevelswitch_service = self.device_service("MultiLevelSwitch")
         self._communicationquality_service = self.device_service("CommunicationQuality")
         self._childprotection_service = self.device_service("ChildProtection")
-
-    @property
-    def brightness(self) -> int:
-        return self._multilevelswitch_service.value
-
-    @brightness.setter
-    def brightness(self, state: int):
-        self._multilevelswitch_service.put_state_element("level", state)
 
     @property
     def state(self) -> PowerSwitchService.State:
@@ -1358,7 +1351,6 @@ class SHCMicromoduleDimmer(SHCDevice):
     def update(self):
         self._powerswitch_service.short_poll()
         self._powerswitchprogram_service.short_poll()
-        self._multilevelswitch_service.short_poll()
         self._communicationquality_service.short_poll()
         self._childprotection_service.short_poll()
         super().update()
@@ -1408,7 +1400,6 @@ MODEL_MAPPING = {
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
-
 
 def build(api, raw_device, raw_device_services) -> SHCDevice:
     device_model = raw_device["deviceModel"]
