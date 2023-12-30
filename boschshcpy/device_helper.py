@@ -35,6 +35,7 @@ from .models_impl import (
     SHCUniversalSwitch,
     SHCWallThermostat,
     SHCWaterLeakageSensor,
+    SHCMicromoduleDimmer,
     build,
 )
 
@@ -292,3 +293,9 @@ class SHCDeviceHelper:
         if "HEATING_CIRCUIT" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["HEATING_CIRCUIT"].values())
+    
+    @property
+    def micromodule_dimmers(self) -> typing.Sequence[SHCMicromoduleDimmer]:
+        if "MICROMODULE_DIMMER" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["MICROMODULE_DIMMER"].values())
