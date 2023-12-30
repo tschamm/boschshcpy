@@ -26,18 +26,18 @@ def dimmer_test():
     for device in devices:
         if(device.id == "hdm:ZigBee:0cae5ffffe3a99c3"):
             dimmer = device
+            #dimmer.state = False
     
-    #dimmer.summary()
-    #for dimmer in dimmers:
-        #dimmer.summary()
-        #dimmer.state 
+    
+
+    for dimmer in session.device_helper.micromodule_dimmers:
+        dimmer.summary()
     
     new_brightness = randint(1, 50)
-    dimmer.brightness = new_brightness
+    #dimmer.brightness = new_brightness
     print(new_brightness)
-
-    dimmer.summary()
-    dimmer.state = False
+    dimmer.state = True
+    print(dimmer.state)
 
     exit()  
     

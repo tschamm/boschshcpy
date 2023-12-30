@@ -5,6 +5,7 @@ venv/
 boschshcpy.egg-info/
 boschshcpy_dev.egg-info/
 examples/keystore
+examples/dimmertest.py
 __pycache__
 *.pyc
 .project
