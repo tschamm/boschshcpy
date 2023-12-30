@@ -1326,7 +1326,7 @@ class SHCMicromoduleDimmer(SHCLight):
 
     @property
     def state(self) -> bool:
-        return self._powerswitch_service.value == self.PowerSwitchService.State.ON
+        return (self._powerswitch_service.value == self.PowerSwitchService.State.ON)
 
     @state.setter
     def state(self, state: bool):

@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="boschshcpy",
-    version="0.2.85",
+    version="0.2.86",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
