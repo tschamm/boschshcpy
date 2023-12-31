@@ -1160,7 +1160,6 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 
 class SHCMicromoduleDimmer(SHCLight):
     from .services_impl import (
-        PowerSwitchProgramService,
         PowerSwitchService,
         CommunicationQualityService,
         ChildProtectionService,
@@ -1174,13 +1173,12 @@ class SHCMicromoduleDimmer(SHCLight):
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services) 
         self._powerswitch_service = self.device_service("PowerSwitch")
-        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
         self._communicationquality_service = self.device_service("CommunicationQuality")
         self._childprotection_service = self.device_service("ChildProtection")
 
     @property
-    def state(self) -> PowerSwitchService.State:
-        return self._powerswitch_service.value
+    def state(self) -> bool:
+        return (self._powerswitch_service.value == self.PowerSwitchService.State.ON)
 
     @state.setter
     def state(self, state: bool):
@@ -1199,14 +1197,7 @@ class SHCMicromoduleDimmer(SHCLight):
     @child_lock.setter
     def child_lock(self, state: bool):
         self._childprotection_service.put_state_element("childLockActive", state)
-    
-    def update(self):
-        self._powerswitch_service.short_poll()
-        self._powerswitchprogram_service.short_poll()
-        self._communicationquality_service.short_poll()
-        self._childprotection_service.short_poll()
-        super().update()
-    
+      
     def summary(self):
         print(f"Micromodule Dimmer:")
         super().summary()
