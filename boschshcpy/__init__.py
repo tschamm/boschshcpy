@@ -12,6 +12,7 @@ from .device_helper import (
     SHCShutterContact2Plus,
     SHCShutterControl,
     SHCMicromoduleBlinds,
+    SHCMicromoduleDimmer,
     SHCMicromoduleShutterControl,
     SHCMicromoduleRelay,
     SHCLightControl,
