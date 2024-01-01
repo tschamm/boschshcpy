@@ -18,7 +18,163 @@ class SHCBatteryDevice(SHCDevice):
     def batterylevel(self) -> BatteryLevelService.State:
         if self.supports_batterylevel:
             return self._batterylevel_service.warningLevel
-        return BatteryLevelService.State.NOT_AVAILABLE
+        return self.BatteryLevelService.State.NOT_AVAILABLE
+
+
+class _CommunicationQuality(SHCDevice):
+    from .services_impl import (
+        CommunicationQualityService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
+
+class _PowerMeter(SHCDevice):
+    from .services_impl import (
+        PowerMeterService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._powermeter_service = self.device_service("PowerMeter")
+
+    @property
+    def energyconsumption(self) -> float:
+        return self._powermeter_service.energyconsumption
+
+    @property
+    def powerconsumption(self) -> float:
+        return self._powermeter_service.powerconsumption
+
+
+class _ChildProtection(SHCDevice):
+    from .services_impl import (
+        ChildProtectionService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._childprotection_service = self.device_service("ChildProtection")
+
+    @property
+    def child_lock(self) -> bool:
+        return self._childprotection_service.childLockActive
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._childprotection_service.put_state_element("childLockActive", state)
+
+
+class _Thermostat(SHCDevice):
+    from .services_impl import (
+        ThermostatService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._thermostat_service = self.device_service("Thermostat")
+
+    @property
+    def child_lock(self) -> ThermostatService.State:
+        return self._thermostat_service.childLock
+
+    @child_lock.setter
+    def child_lock(self, state: bool):
+        self._thermostat_service.put_state_element(
+            "childLock", "ON" if state else "OFF"
+        )
+
+
+class _PowerSwitch(SHCDevice):
+    from .services_impl import (
+        PowerSwitchService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._powerswitch_service = self.device_service("PowerSwitch")
+
+    @property
+    def switchstate(self) -> PowerSwitchService.State:
+        return self._powerswitch_service.value
+
+    @switchstate.setter
+    def switchstate(self, state: bool):
+        self._powerswitch_service.put_state_element(
+            "switchState", "ON" if state else "OFF"
+        )
+
+
+class _PowerSwitchProgram(SHCDevice):
+    from .services_impl import (
+        PowerSwitchProgramService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
+
+    # To be implemented
+
+
+class _TemperatureLevel(SHCDevice):
+    from .services_impl import TemperatureLevelService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._temperaturelevel_service = self.device_service("TemperatureLevel")
+
+    @property
+    def temperature(self) -> float:
+        return self._temperaturelevel_service.temperature
+
+
+class _HumidityLevel(SHCDevice):
+    from .services_impl import HumidityLevelService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._humiditylevel_service = self.device_service("HumidityLevel")
+
+    @property
+    def humidity(self) -> float:
+        return self._humiditylevel_service.humidity
+
+
+class _TemperatureOffset(SHCDevice):
+    from .services_impl import (
+        TemperatureOffsetService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._temperatureoffset_service = self.device_service("TemperatureOffset")
+
+    @property
+    def offset(self) -> float:
+        return self._temperatureoffset_service.offset
+
+    @offset.setter
+    def offset(self, value: float):
+        self._temperatureoffset_service.offset = value
+
+    @property
+    def step_size(self) -> float:
+        return self._temperatureoffset_service.step_size
+
+    @property
+    def min_offset(self) -> float:
+        return self._temperatureoffset_service.min_offset
+
+    @property
+    def max_offset(self) -> float:
+        return self._temperatureoffset_service.max_offset
 
 
 class SHCSmokeDetector(SHCBatteryDevice):
@@ -47,36 +203,16 @@ class SHCSmokeDetector(SHCBatteryDevice):
             "value", "SMOKE_TEST_REQUESTED"
         )
 
-    def summary(self):
-        print(f"SmokeDetector:")
-        super().summary()
 
-
-class SHCSmartPlug(SHCDevice):
+class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
     from .services_impl import (
-        PowerMeterService,
-        PowerSwitchProgramService,
-        PowerSwitchService,
         RoutingService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
 
-        self._powerswitch_service = self.device_service("PowerSwitch")
         self._routing_service = self.device_service("Routing")
-        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
-        self._powermeter_service = self.device_service("PowerMeter")
-
-    @property
-    def state(self) -> PowerSwitchService.State:
-        return self._powerswitch_service.value
-
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
 
     @property
     def routing(self) -> RoutingService.State:
@@ -88,156 +224,30 @@ class SHCSmartPlug(SHCDevice):
             "value", "ENABLED" if state else "DISABLED"
         )
 
-    @property
-    def energyconsumption(self) -> float:
-        return self._powermeter_service.energyconsumption
 
-    @property
-    def powerconsumption(self) -> float:
-        return self._powermeter_service.powerconsumption
-
-    def summary(self):
-        print(f"SmartPlug:")
-        super().summary()
+class SHCSmartPlugCompact(
+    _CommunicationQuality, _PowerMeter, _PowerSwitch, _PowerSwitchProgram
+):
+    pass
 
 
-class SHCSmartPlugCompact(SHCDevice):
+class SHCLightSwitch(_ChildProtection, _PowerSwitch, _PowerSwitchProgram):
+    pass
+
+
+class SHCLightSwitchBSM(SHCLightSwitch, _PowerMeter):
+    pass
+
+
+class SHCLightControl(_CommunicationQuality, _PowerMeter):
+    pass
+
+
+class SHCMicromoduleRelay(
+    _CommunicationQuality, _ChildProtection, _PowerSwitch, _PowerSwitchProgram
+):
     from .services_impl import (
-        PowerMeterService,
-        PowerSwitchProgramService,
-        PowerSwitchService,
-        CommunicationQualityService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-
-        self._powerswitch_service = self.device_service("PowerSwitch")
-        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
-        self._powermeter_service = self.device_service("PowerMeter")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-
-    @property
-    def state(self) -> PowerSwitchService.State:
-        return self._powerswitch_service.value
-
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
-
-    @property
-    def energyconsumption(self) -> float:
-        return self._powermeter_service.energyconsumption
-
-    @property
-    def powerconsumption(self) -> float:
-        return self._powermeter_service.powerconsumption
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-
-    def summary(self):
-        print(f"SmartPlugCompact:")
-        super().summary()
-
-
-class SHCLightSwitch(SHCDevice):
-    from .services_impl import (
-        PowerSwitchProgramService,
-        PowerSwitchService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-
-        self._powerswitch_service = self.device_service("PowerSwitch")
-        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
-        self._childprotection_service = self.device_service("ChildProtection")
-
-    @property
-    def child_lock(self) -> float:
-        return self._childprotection_service.childLockActive
-
-    @child_lock.setter
-    def child_lock(self, state: bool):
-        self._childprotection_service.put_state_element("childLockActive", state)
-
-    @property
-    def state(self) -> PowerSwitchService.State:
-        return self._powerswitch_service.value
-
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
-
-    def summary(self):
-        print(f"LightSwitch:")
-        super().summary()
-
-
-class SHCLightSwitchBSM(SHCLightSwitch):
-    from .services_impl import (
-        PowerMeterService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-
-        self._powermeter_service = self.device_service("PowerMeter")
-
-    @property
-    def energyconsumption(self) -> float:
-        return self._powermeter_service.energyconsumption
-
-    @property
-    def powerconsumption(self) -> float:
-        return self._powermeter_service.powerconsumption
-
-    def summary(self):
-        super().summary()
-
-
-class SHCLightControl(SHCDevice):
-    from .services_impl import (
-        PowerMeterService,
-        CommunicationQualityService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-
-        self._powermeter_service = self.device_service("PowerMeter")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-
-    @property
-    def energyconsumption(self) -> float:
-        return self._powermeter_service.energyconsumption
-
-    @property
-    def powerconsumption(self) -> float:
-        return self._powermeter_service.powerconsumption
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-
-    def summary(self):
-        print(f"LightControl:")
-        super().summary()
-
-
-class SHCMicromoduleRelay(SHCDevice):
-    from .services_impl import (
-        CommunicationQualityService,
-        PowerSwitchService,
         ImpulseSwitchService,
-        ChildProtectionService,
-        PowerSwitchProgramService,
     )
 
     class RelayType(Enum):
@@ -248,10 +258,6 @@ class SHCMicromoduleRelay(SHCDevice):
         super().__init__(api, raw_device, raw_device_services)
 
         self._impulseswitch_service = self.device_service("ImpulseSwitch")
-        self._powerswitch_service = self.device_service("PowerSwitch")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-        self._childprotection_service = self.device_service("ChildProtection")
-        self._powerswitchprogram_service = self.device_service("PowerSwitchProgram")
 
     @property
     def relay_type(self) -> RelayType:
@@ -261,38 +267,12 @@ class SHCMicromoduleRelay(SHCDevice):
             else self.RelayType.SWITCH
         )
 
-    @property
-    def state(self) -> PowerSwitchService.State:
-        return self._powerswitch_service.value
-
-    @state.setter
-    def state(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
-
     def trigger_impulse_state(self):
         self._impulseswitch_service.put_state_element("impulseState", True)
 
     @property
     def instant_of_last_impulse(self) -> str:
         return self._impulseswitch_service.instant_of_last_impulse
-
-    @property
-    def child_lock(self) -> float:
-        return self._childprotection_service.childLockActive
-
-    @child_lock.setter
-    def child_lock(self, state: bool):
-        self._childprotection_service.put_state_element("childLockActive", state)
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-
-    def summary(self):
-        print(f"MicromoduleRelay:")
-        super().summary()
 
 
 class SHCShutterControl(SHCDevice):
@@ -317,47 +297,11 @@ class SHCShutterControl(SHCDevice):
     def operation_state(self) -> ShutterControlService.State:
         return self._service.value
 
-    def summary(self):
-        print(f"ShutterControl:")
-        super().summary()
 
-
-class SHCMicromoduleShutterControl(SHCShutterControl):
-    from .services_impl import (
-        PowerMeterService,
-        CommunicationQualityService,
-        ChildProtectionService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-
-        self._childprotection_service = self.device_service("ChildProtection")
-        self._powermeter_service = self.device_service("PowerMeter")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-
-    @property
-    def child_lock(self) -> float:
-        return self._childprotection_service.childLockActive
-
-    @child_lock.setter
-    def child_lock(self, state: bool):
-        self._childprotection_service.put_state_element("childLockActive", state)
-
-    @property
-    def energyconsumption(self) -> float:
-        return self._powermeter_service.energyconsumption
-
-    @property
-    def powerconsumption(self) -> float:
-        return self._powermeter_service.powerconsumption
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-
-    def summary(self):
-        super().summary()
+class SHCMicromoduleShutterControl(
+    SHCShutterControl, _CommunicationQuality, _ChildProtection, _PowerMeter
+):
+    pass
 
 
 class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
@@ -395,9 +339,6 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
     def stop_blinds(self):
         self._api.put_shading_shutters_stop(self.id)
 
-    def summary(self):
-        super().summary()
-
 
 class SHCShutterContact(SHCBatteryDevice):
     from .services_impl import ShutterContactService
@@ -414,22 +355,13 @@ class SHCShutterContact(SHCBatteryDevice):
     def state(self) -> ShutterContactService.State:
         return self._service.value
 
-    def summary(self):
-        print(f"ShutterContact:")
-        super().summary()
 
-
-class SHCShutterContact2(SHCShutterContact):
-    from .services_impl import CommunicationQualityService, BypassService
+class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
+    from .services_impl import BypassService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
-        self._communicationquality_service = self.device_service("CommunicationQuality")
         self._bypass_service = self.device_service("Bypass")
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
 
     @property
     def bypass(self) -> BypassService.State:
@@ -440,9 +372,6 @@ class SHCShutterContact2(SHCShutterContact):
         self._bypass_service.put_state_element(
             "state", "BYPASS_ACTIVE" if state else "BYPASS_INACTIVE"
         )
-
-    def summary(self):
-        super().summary()
 
 
 class SHCShutterContact2Plus(SHCShutterContact2):
@@ -471,56 +400,6 @@ class SHCShutterContact2Plus(SHCShutterContact2):
     @sensitivity.setter
     def sensitivity(self, state: VibrationSensorService.SensitivityState):
         self._vibrationsensor_service.put_state_element("sensitivity", state.name)
-
-    def summary(self):
-        super().summary()
-
-
-class SHCCameraEyes(SHCDevice):
-    from .services_impl import (
-        CameraLightService,
-        CameraNotificationService,
-        PrivacyModeService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-
-        self._privacymode_service = self.device_service("PrivacyMode")
-        self._cameranotification_service = self.device_service("CameraNotification")
-        self._cameralight_service = self.device_service("CameraLight")
-
-    @property
-    def privacymode(self) -> PrivacyModeService.State:
-        return self._privacymode_service.value
-
-    @privacymode.setter
-    def privacymode(self, state: bool):
-        self._privacymode_service.put_state_element(
-            "value", "DISABLED" if state else "ENABLED"
-        )
-
-    @property
-    def cameranotification(self) -> CameraNotificationService.State:
-        return self._cameranotification_service.value
-
-    @cameranotification.setter
-    def cameranotification(self, state: bool):
-        self._cameranotification_service.put_state_element(
-            "value", "ENABLED" if state else "DISABLED"
-        )
-
-    @property
-    def cameralight(self) -> CameraLightService.State:
-        return self._cameralight_service.value
-
-    @cameralight.setter
-    def cameralight(self, state: bool):
-        self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
-
-    def summary(self):
-        print(f"CameraEyes:")
-        super().summary()
 
 
 class SHCCamera360(SHCDevice):
@@ -552,63 +431,42 @@ class SHCCamera360(SHCDevice):
             "value", "ENABLED" if state else "DISABLED"
         )
 
-    def summary(self):
-        print(f"Camera360:")
-        super().summary()
 
-
-class SHCThermostat(SHCBatteryDevice):
+class SHCCameraEyes(SHCCamera360):
     from .services_impl import (
-        TemperatureLevelService,
+        CameraLightService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._cameralight_service = self.device_service("CameraLight")
+
+    @property
+    def cameralight(self) -> CameraLightService.State:
+        return self._cameralight_service.value
+
+    @cameralight.setter
+    def cameralight(self, state: bool):
+        self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
+
+
+class SHCThermostat(
+    SHCBatteryDevice,
+    _CommunicationQuality,
+    _Thermostat,
+    _TemperatureLevel,
+    _TemperatureOffset,
+):
+    from .services_impl import (
         ValveTappetService,
         SilentModeService,
-        CommunicationQualityService,
-        ThermostatService,
         TemperatureOffsetService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
-        self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._valvetappet_service = self.device_service("ValveTappet")
         self._silentmode_service = self.device_service("SilentMode")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-        self._thermostat_service = self.device_service("Thermostat")
-        self._temperatureoffset_service = self.device_service("TemperatureOffset")
-
-    @property
-    def child_lock(self) -> ThermostatService.State:
-        return self._thermostat_service.childLock
-
-    @child_lock.setter
-    def child_lock(self, state: bool):
-        self._thermostat_service.put_state_element(
-            "childLock", "ON" if state else "OFF"
-        )
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-
-    @property
-    def offset(self) -> float:
-        return self._temperatureoffset_service.offset
-
-    @offset.setter
-    def offset(self, value: float):
-        self._temperatureoffset_service.offset = value
-
-    @property
-    def step_size(self) -> float:
-        return self._temperatureoffset_service.step_size
-
-    @property
-    def min_offset(self) -> float:
-        return self._temperatureoffset_service.min_offset
-
-    @property
-    def max_offset(self) -> float:
-        return self._temperatureoffset_service.max_offset
 
     @property
     def position(self) -> int:
@@ -619,10 +477,6 @@ class SHCThermostat(SHCBatteryDevice):
         return self._valvetappet_service.value
 
     @property
-    def temperature(self) -> float:
-        return self._temperaturelevel_service.temperature
-
-    @property
     def silentmode(self) -> SilentModeService.State:
         return self._silentmode_service.mode
 
@@ -630,17 +484,12 @@ class SHCThermostat(SHCBatteryDevice):
     def silentmode(self, mode: SilentModeService.State):
         self._silentmode_service.put_state_element("mode", mode.name)
 
-    def summary(self):
-        print(f"Thermostat:")
-        super().summary()
 
-
-class SHCClimateControl(SHCDevice):
-    from .services_impl import RoomClimateControlService, TemperatureLevelService
+class SHCClimateControl(_TemperatureLevel):
+    from .services_impl import RoomClimateControlService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
-        self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._roomclimatecontrol_service = self.device_service("RoomClimateControl")
 
     @property
@@ -687,14 +536,6 @@ class SHCClimateControl(SHCDevice):
     def summer_mode(self, value: bool):
         self._roomclimatecontrol_service.summer_mode = value
 
-    @property
-    def temperature(self) -> float:
-        return self._temperaturelevel_service.temperature
-
-    def summary(self):
-        print(f"Room Climate Control:")
-        super().summary()
-
 
 class SHCHeatingCircuit(SHCDevice):
     from .services_impl import HeatingCircuitService
@@ -735,94 +576,18 @@ class SHCHeatingCircuit(SHCDevice):
     def on(self) -> bool:
         return self._heating_circuit_service.on
 
-    def summary(self):
-        print(f"Heating Circuit:")
-        super().summary()
+
+class SHCWallThermostat(SHCBatteryDevice, _TemperatureLevel, _HumidityLevel):
+    pass
 
 
-class SHCWallThermostat(SHCBatteryDevice):
-    from .services_impl import HumidityLevelService, TemperatureLevelService
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-        self._temperaturelevel_service = self.device_service("TemperatureLevel")
-        self._humiditylevel_service = self.device_service("HumidityLevel")
-
-    @property
-    def temperature(self) -> float:
-        return self._temperaturelevel_service.temperature
-
-    @property
-    def humidity(self) -> float:
-        return self._humiditylevel_service.humidity
-
-    def summary(self):
-        print(f"Wall Thermostat:")
-        super().summary()
-
-
-class SHCRoomThermostat2(SHCBatteryDevice):
-    from .services_impl import (
-        TemperatureLevelService,
-        HumidityLevelService,
-        CommunicationQualityService,
-        ThermostatService,
-        TemperatureOffsetService,
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services)
-        self._temperaturelevel_service = self.device_service("TemperatureLevel")
-        self._humiditylevel_service = self.device_service("HumidityLevel")
-        self._thermostat_service = self.device_service("Thermostat")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-        self._temperatureoffset_service = self.device_service("TemperatureOffset")
-
-    @property
-    def temperature(self) -> float:
-        return self._temperaturelevel_service.temperature
-
-    @property
-    def humidity(self) -> float:
-        return self._humiditylevel_service.humidity
-
-    @property
-    def child_lock(self) -> ThermostatService.State:
-        return self._thermostat_service.childLock
-
-    @child_lock.setter
-    def child_lock(self, state: bool):
-        self._thermostat_service.put_state_element(
-            "childLock", "ON" if state else "OFF"
-        )
-
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-
-    @property
-    def offset(self) -> float:
-        return self._temperatureoffset_service.offset
-
-    @offset.setter
-    def offset(self, value: float):
-        self._temperatureoffset_service.offset = value
-
-    @property
-    def step_size(self) -> float:
-        return self._temperatureoffset_service.step_size
-
-    @property
-    def min_offset(self) -> float:
-        return self._temperatureoffset_service.min_offset
-
-    @property
-    def max_offset(self) -> float:
-        return self._temperatureoffset_service.max_offset
-
-    def summary(self):
-        print(f"Room Thermostat 2:")
-        super().summary()
+class SHCRoomThermostat2(
+    SHCWallThermostat,
+    _CommunicationQuality,
+    _Thermostat,
+    _TemperatureOffset,
+):
+    pass
 
 
 class SHCUniversalSwitch(SHCBatteryDevice):
@@ -856,10 +621,6 @@ class SHCUniversalSwitch(SHCBatteryDevice):
     def eventtimestamp(self) -> int:
         return self._keypad_service.eventTimestamp
 
-    def summary(self):
-        print(f"Universal Switch:")
-        super().summary()
-
 
 class SHCUniversalSwitch2(SHCUniversalSwitch):
     from .services_impl import KeypadService
@@ -875,10 +636,6 @@ class SHCUniversalSwitch2(SHCUniversalSwitch):
             "UPPER_LEFT_BUTTON",
             "UPPER_RIGHT_BUTTON",
         ]
-
-    def summary(self):
-        print(f"Universal Switch 2:")
-        super().summary()
 
 
 class SHCMotionDetector(SHCBatteryDevice):
@@ -896,10 +653,6 @@ class SHCMotionDetector(SHCBatteryDevice):
     @property
     def illuminance(self) -> str:
         return self._multi_level_sensor_service.illuminance
-
-    def summary(self):
-        print(f"Motion Detector:")
-        super().summary()
 
 
 class SHCTwinguard(SHCBatteryDevice):
@@ -951,10 +704,6 @@ class SHCTwinguard(SHCBatteryDevice):
             "value", "SMOKE_TEST_REQUESTED"
         )
 
-    def summary(self):
-        print(f"Twinguard:")
-        super().summary()
-
 
 class SHCSmokeDetectionSystem(SHCDevice):
     from .services_impl import SurveillanceAlarmService
@@ -967,10 +716,6 @@ class SHCSmokeDetectionSystem(SHCDevice):
     @property
     def alarm(self) -> SurveillanceAlarmService.State:
         return self._surveillancealarm_service.value
-
-    def summary(self):
-        print(f"Smoke Detection System:")
-        super().summary()
 
 
 class SHCPresenceSimulationSystem(SHCDevice):
@@ -989,10 +734,6 @@ class SHCPresenceSimulationSystem(SHCDevice):
     @enabled.setter
     def enabled(self, value: bool):
         self._presencesimulationconfiguration_service.enabled = value
-
-    def summary(self):
-        print(f"Presence Simulation System:")
-        super().summary()
 
 
 class SHCLight(SHCDevice):
@@ -1025,11 +766,11 @@ class SHCLight(SHCDevice):
             self._capabilities |= self.Capabilities.COLOR_HSB
 
     @property
-    def state(self) -> bool:
+    def binarystate(self) -> bool:
         return self._binaryswitch_service.value
 
-    @state.setter
-    def state(self, state: bool):
+    @binarystate.setter
+    def binarystate(self, state: bool):
         self._binaryswitch_service.put_state_element("on", True if state else False)
 
     @property
@@ -1121,11 +862,6 @@ class SHCLight(SHCDevice):
             self._capabilities & self.Capabilities.COLOR_HSB
         ) == self.Capabilities.COLOR_HSB
 
-    def summary(self):
-        print(f"Light:")
-        print(f"  Capabilities               : {self._capabilities}")
-        super().summary()
-
 
 class SHCWaterLeakageSensor(SHCBatteryDevice):
     from .services_impl import WaterLeakageSensorService, WaterLeakageSensorTiltService
@@ -1153,56 +889,27 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
     def sensor_check_state(self) -> str:
         return self._sensor_check_service.value
 
-    def summary(self):
-        print(f"Water Leakage System:")
-        super().summary()
 
-
-class SHCMicromoduleDimmer(SHCLight):
-    from .services_impl import (
-        PowerSwitchService,
-        CommunicationQualityService,
-        ChildProtectionService,
-        # Services TBD: 
-        # ElectricalFaultsService, 
-        # DimmerConfiguration, 
-        # SwitchConfiguration,
-        # Remark: With multiple inheritance, redundant code could be reduced (e.g. for all devices with comm. quality and child protection)
-    )
-
-    def __init__(self, api, raw_device, raw_device_services):
-        super().__init__(api, raw_device, raw_device_services) 
-        self._powerswitch_service = self.device_service("PowerSwitch")
-        self._communicationquality_service = self.device_service("CommunicationQuality")
-        self._childprotection_service = self.device_service("ChildProtection")
+class SHCMicromoduleDimmer(
+    SHCLight, _CommunicationQuality, _ChildProtection, _PowerSwitch
+):
+    # from .services_impl import (
+    #     # Services TBD:
+    #     # ElectricalFaultsService,
+    #     # DimmerConfiguration,
+    #     # SwitchConfiguration,
+    # )
 
     @property
-    def state(self) -> bool:
-        return (self._powerswitch_service.value == self.PowerSwitchService.State.ON)
+    def binarystate(self) -> bool:
+        return self._powerswitch_service.value == self.PowerSwitchService.State.ON
 
-    @state.setter
-    def state(self, state: bool):
+    @binarystate.setter
+    def binarystate(self, state: bool):
         self._powerswitch_service.put_state_element(
             "switchState", "ON" if state else "OFF"
         )
-    
-    @property
-    def communicationquality(self) -> CommunicationQualityService.State:
-        return self._communicationquality_service.value
-    
-    @property
-    def child_lock(self) -> float:
-        return self._childprotection_service.childLockActive
 
-    @child_lock.setter
-    def child_lock(self, state: bool):
-        self._childprotection_service.put_state_element("childLockActive", state)
-      
-    def summary(self):
-        print(f"Micromodule Dimmer:")
-        super().summary()
-    
-    
 
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
@@ -1243,6 +950,7 @@ MODEL_MAPPING = {
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()
+
 
 def build(api, raw_device, raw_device_services) -> SHCDevice:
     device_model = raw_device["deviceModel"]
