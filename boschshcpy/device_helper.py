@@ -200,6 +200,8 @@ class SHCDeviceHelper:
             devices.extend(self._devices_by_model["THB"].values())
         if "BWTH" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["BWTH"].values())
+        if "BWTH24" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["BWTH24"].values())
         return devices
 
     @property
