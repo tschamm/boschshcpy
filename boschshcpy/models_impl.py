@@ -481,8 +481,10 @@ class SHCThermostat(
         return self._silentmode_service.mode
 
     @silentmode.setter
-    def silentmode(self, mode: SilentModeService.State):
-        self._silentmode_service.put_state_element("mode", mode.name)
+    def silentmode(self, state: bool):
+        self._silentmode_service.put_state_element(
+            "mode", "MODE_SILENT" if state else "MODE_NORMAL"
+        )
 
 
 class SHCClimateControl(_TemperatureLevel):
