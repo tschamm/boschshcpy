@@ -1,7 +1,7 @@
+import importlib.resources
 import json
 import logging
 
-import pkg_resources
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
@@ -52,8 +52,8 @@ class SHCAPI:
         self._requests_session.headers.update(
             {"api-version": "3.2", "Content-Type": "application/json"}
         )
-        self._requests_session.verify = pkg_resources.resource_filename(
-            "boschshcpy", "tls_ca_chain.pem"
+        self._requests_session.verify = str(
+            importlib.resources.files("boschshcpy") / "tls_ca_chain.pem"
         )
 
         import urllib3
