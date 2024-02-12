@@ -936,6 +936,7 @@ MODEL_MAPPING = {
     "TRV_GEN2": SHCThermostat,
     "THB": SHCWallThermostat,
     "BWTH": SHCWallThermostat,
+    "BWTH24": SHCWallThermostat,
     "RTH2_BAT": SHCRoomThermostat2,
     "RTH2_230": SHCRoomThermostat2,
     "WRC2": SHCUniversalSwitch,
