@@ -176,6 +176,32 @@ class _TemperatureOffset(SHCDevice):
     def max_offset(self) -> float:
         return self._temperatureoffset_service.max_offset
 
+class _SilentMode(SHCDevice):
+    from .services_impl import (
+        SilentModeService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._silentmode_service = self.device_service("SilentMode")
+
+    @property
+    def supports_silentmode(self):
+        return self._silentmode_service is not None
+
+    @property
+    def silentmode(self) -> SilentModeService.State:
+        if self.supports_silentmode:
+            return self._silentmode_service.mode
+
+    @silentmode.setter
+    def silentmode(self, state: bool):
+        if self.supports_silentmode:
+            self._silentmode_service.put_state_element(
+                "mode", "MODE_SILENT" if state else "MODE_NORMAL"
+            )
+
+
 
 class SHCSmokeDetector(SHCBatteryDevice):
     from .services_impl import AlarmService, SmokeDetectorCheckService
@@ -453,20 +479,19 @@ class SHCCameraEyes(SHCCamera360):
 class SHCThermostat(
     SHCBatteryDevice,
     _CommunicationQuality,
+    _SilentMode,
     _Thermostat,
     _TemperatureLevel,
     _TemperatureOffset,
 ):
     from .services_impl import (
         ValveTappetService,
-        SilentModeService,
         TemperatureOffsetService,
     )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._valvetappet_service = self.device_service("ValveTappet")
-        self._silentmode_service = self.device_service("SilentMode")
 
     @property
     def position(self) -> int:
@@ -475,17 +500,6 @@ class SHCThermostat(
     @property
     def valvestate(self) -> ValveTappetService.State:
         return self._valvetappet_service.value
-
-    @property
-    def silentmode(self) -> SilentModeService.State:
-        return self._silentmode_service.mode
-
-    @silentmode.setter
-    def silentmode(self, state: bool):
-        self._silentmode_service.put_state_element(
-            "mode", "MODE_SILENT" if state else "MODE_NORMAL"
-        )
-
 
 class SHCClimateControl(_TemperatureLevel):
     from .services_impl import RoomClimateControlService
