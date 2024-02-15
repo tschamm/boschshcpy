@@ -4,8 +4,8 @@ import logging
 import os.path
 import sys
 
-import pkg_resources
 import requests
+from importlib.resources import files
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
@@ -40,9 +40,7 @@ class SHCRegisterClient:
                 "Systempassword": password_base64.decode("utf-8"),
             }
         )
-        self._requests_session.verify = pkg_resources.resource_filename(
-            "boschshcpy", "tls_ca_chain.pem"
-        )
+        self._requests_session.verify = files('boschshcpy').joinpath('tls_ca_chain.pem')
 
         import urllib3
 
