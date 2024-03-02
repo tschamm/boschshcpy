@@ -16,7 +16,8 @@ import boschshcpy
 def registering():
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
     helper = SHCRegisterClient(args.ip_address, args.password)
-    result = helper.register(args.id, args.name, args.access_cert)
+    #result = helper.register(args.id, args.name, args.access_cert)
+    result = helper.register(args.id, args.name)
 
     if result != None:
         print('successful registered new device with token {}'.format(result["token"]))
