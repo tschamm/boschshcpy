@@ -1,4 +1,4 @@
-#import typing
+import typing
 import logging
 
 logger = logging.getLogger("boschshcpy")
@@ -8,12 +8,24 @@ class SHCMessage:
         self.api = api
         self._raw_message = raw_message
 
+    class MessageCode:
+        def __init__(self, message_code):
+            self._message_code = message_code
+
+        @property
+        def name(self):
+            return self._message_code["name"]
+
+        @property
+        def category(self):
+            return self._message_code["category"]
+
     @property
     def id(self):
         return self._raw_message["id"]
 
     @property
-    def message_code(self):
+    def message_code(self) -> MessageCode:
         return self._raw_message["messageCode"]
 
     @property
@@ -49,3 +61,4 @@ class SHCMessage:
         logger.debug(
             f"Got long polling result, not yet supported {message_id}"
         )
+

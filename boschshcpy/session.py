@@ -382,6 +382,7 @@ class SHCSession:
             "device_service",
             "rooms",
             "scenarios",
+            "messages",
             "info",
             "information",
             "public_information",
