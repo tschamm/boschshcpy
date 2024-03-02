@@ -38,3 +38,4 @@ from .register_client import SHCRegisterClient
 from .scenario import SHCScenario
 from .session import SHCSession
 from .userdefinedstate import SHCUserDefinedState
+from .message import SHCMessage

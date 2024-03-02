@@ -157,6 +157,12 @@ class SHCAPI:
             api_url, expected_element_type="userDefinedState"
         )
 
+    def get_messages(self):
+        api_url = f"{self._api_root}/messages"
+        return self._get_api_result_or_fail(
+            api_url, expected_element_type="message"
+        )
+
     def get_devices(self):
         api_url = f"{self._api_root}/devices"
         return self._get_api_result_or_fail(api_url, expected_element_type="device")
