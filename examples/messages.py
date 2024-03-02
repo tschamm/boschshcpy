@@ -5,6 +5,7 @@
 import os, sys
 import time
 import logging
+from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
@@ -17,7 +18,9 @@ def api_test():
     #session.information.summary()
     logger.debug("getting messages")
     for _message in session.messages:
-        print(_message.summary())
+        print(f"Timestamp of message: {datetime.fromtimestamp(_message.timestamp/1000.0)}")
+        _message.summary()
+        
 
 if __name__ == "__main__":
     import argparse, sys

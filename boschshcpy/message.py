@@ -39,8 +39,9 @@ class SHCMessage:
         print(f"  MessageCode: {self.message_code}")
         _flags_string = "; ".join(self.flags)
         print(f"  Flags      : {_flags_string}")
-        _arguments_string = "; ".join(self.arguments)
-        print(f"  Arguments  : {_arguments_string}")
+        #_arguments_string = "; ".join(self.arguments)
+        #print(f"  Arguments  : {_arguments_string}")
+        print(f"  Arguments  : {self.arguments}")
 
     def process_long_polling_result(self, raw_result):
         assert raw_result["@type"] == "message"
