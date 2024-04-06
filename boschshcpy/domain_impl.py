@@ -22,6 +22,7 @@ class SHCIntrusionSystem:
         PRE_ALARM = "PRE_ALARM"
         ALARM_ON = "ALARM_ON"
         ALARM_MUTED = "ALARM_MUTED"
+        PRE_ALARM = "PRE_ALARM"
 
     class Profile(Enum):
         FULL_PROTECTION = 0
