@@ -294,11 +294,13 @@ class SHCMicromoduleRelay(
         )
 
     def trigger_impulse_state(self):
-        self._impulseswitch_service.put_state_element("impulseState", True)
+        if self._impulseswitch_service:
+            self._impulseswitch_service.put_state_element("impulseState", True)
 
     @property
     def instant_of_last_impulse(self) -> str:
-        return self._impulseswitch_service.instant_of_last_impulse
+        if self._impulseswitch_service:
+            return self._impulseswitch_service.instant_of_last_impulse
 
 
 class SHCShutterControl(SHCDevice):
@@ -925,13 +927,15 @@ class SHCMicromoduleDimmer(
 
     @property
     def binarystate(self) -> bool:
-        return self._powerswitch_service.value == self.PowerSwitchService.State.ON
+        if self._powerswitch_service:
+            return self._powerswitch_service.value == self.PowerSwitchService.State.ON
 
     @binarystate.setter
     def binarystate(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
+        if self._powerswitch_service:
+            self._powerswitch_service.put_state_element(
+                "switchState", "ON" if state else "OFF"
+            )
 
 
 MODEL_MAPPING = {
