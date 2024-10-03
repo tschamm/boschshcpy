@@ -19,7 +19,6 @@ class SHCIntrusionSystem:
 
     class AlarmState(Enum):
         ALARM_OFF = "ALARM_OFF"
-        PRE_ALARM = "PRE_ALARM"
         ALARM_ON = "ALARM_ON"
         ALARM_MUTED = "ALARM_MUTED"
         PRE_ALARM = "PRE_ALARM"
