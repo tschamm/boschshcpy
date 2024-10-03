@@ -176,6 +176,7 @@ class _TemperatureOffset(SHCDevice):
     def max_offset(self) -> float:
         return self._temperatureoffset_service.max_offset
 
+
 class _SilentMode(SHCDevice):
     from .services_impl import (
         SilentModeService,
@@ -200,7 +201,6 @@ class _SilentMode(SHCDevice):
             self._silentmode_service.put_state_element(
                 "mode", "MODE_SILENT" if state else "MODE_NORMAL"
             )
-
 
 
 class SHCSmokeDetector(SHCBatteryDevice):
@@ -449,13 +449,15 @@ class SHCCamera360(SHCDevice):
 
     @property
     def cameranotification(self) -> CameraNotificationService.State:
-        return self._cameranotification_service.value
+        if self._cameranotification_service:
+            return self._cameranotification_service.value
 
     @cameranotification.setter
     def cameranotification(self, state: bool):
-        self._cameranotification_service.put_state_element(
-            "value", "ENABLED" if state else "DISABLED"
-        )
+        if self._cameranotification_service:
+            self._cameranotification_service.put_state_element(
+                "value", "ENABLED" if state else "DISABLED"
+            )
 
 
 class SHCCameraEyes(SHCCamera360):
@@ -469,11 +471,15 @@ class SHCCameraEyes(SHCCamera360):
 
     @property
     def cameralight(self) -> CameraLightService.State:
-        return self._cameralight_service.value
+        if self._cameralight_service:
+            return self._cameralight_service.value
 
     @cameralight.setter
     def cameralight(self, state: bool):
-        self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
+        if self._cameralight_service:
+            self._cameralight_service.put_state_element(
+                "value", "ON" if state else "OFF"
+            )
 
 
 class SHCThermostat(
@@ -500,6 +506,7 @@ class SHCThermostat(
     @property
     def valvestate(self) -> ValveTappetService.State:
         return self._valvetappet_service.value
+
 
 class SHCClimateControl(_TemperatureLevel):
     from .services_impl import RoomClimateControlService
