@@ -176,6 +176,7 @@ class _TemperatureOffset(SHCDevice):
     def max_offset(self) -> float:
         return self._temperatureoffset_service.max_offset
 
+
 class _SilentMode(SHCDevice):
     from .services_impl import (
         SilentModeService,
@@ -200,7 +201,6 @@ class _SilentMode(SHCDevice):
             self._silentmode_service.put_state_element(
                 "mode", "MODE_SILENT" if state else "MODE_NORMAL"
             )
-
 
 
 class SHCSmokeDetector(SHCBatteryDevice):
@@ -294,11 +294,13 @@ class SHCMicromoduleRelay(
         )
 
     def trigger_impulse_state(self):
-        self._impulseswitch_service.put_state_element("impulseState", True)
+        if self._impulseswitch_service:
+            self._impulseswitch_service.put_state_element("impulseState", True)
 
     @property
     def instant_of_last_impulse(self) -> str:
-        return self._impulseswitch_service.instant_of_last_impulse
+        if self._impulseswitch_service:
+            return self._impulseswitch_service.instant_of_last_impulse
 
 
 class SHCShutterControl(SHCDevice):
@@ -449,13 +451,15 @@ class SHCCamera360(SHCDevice):
 
     @property
     def cameranotification(self) -> CameraNotificationService.State:
-        return self._cameranotification_service.value
+        if self._cameranotification_service:
+            return self._cameranotification_service.value
 
     @cameranotification.setter
     def cameranotification(self, state: bool):
-        self._cameranotification_service.put_state_element(
-            "value", "ENABLED" if state else "DISABLED"
-        )
+        if self._cameranotification_service:
+            self._cameranotification_service.put_state_element(
+                "value", "ENABLED" if state else "DISABLED"
+            )
 
 
 class SHCCameraEyes(SHCCamera360):
@@ -469,11 +473,15 @@ class SHCCameraEyes(SHCCamera360):
 
     @property
     def cameralight(self) -> CameraLightService.State:
-        return self._cameralight_service.value
+        if self._cameralight_service:
+            return self._cameralight_service.value
 
     @cameralight.setter
     def cameralight(self, state: bool):
-        self._cameralight_service.put_state_element("value", "ON" if state else "OFF")
+        if self._cameralight_service:
+            self._cameralight_service.put_state_element(
+                "value", "ON" if state else "OFF"
+            )
 
 
 class SHCThermostat(
@@ -500,6 +508,7 @@ class SHCThermostat(
     @property
     def valvestate(self) -> ValveTappetService.State:
         return self._valvetappet_service.value
+
 
 class SHCClimateControl(_TemperatureLevel):
     from .services_impl import RoomClimateControlService
@@ -918,13 +927,15 @@ class SHCMicromoduleDimmer(
 
     @property
     def binarystate(self) -> bool:
-        return self._powerswitch_service.value == self.PowerSwitchService.State.ON
+        if self._powerswitch_service:
+            return self._powerswitch_service.value == self.PowerSwitchService.State.ON
 
     @binarystate.setter
     def binarystate(self, state: bool):
-        self._powerswitch_service.put_state_element(
-            "switchState", "ON" if state else "OFF"
-        )
+        if self._powerswitch_service:
+            self._powerswitch_service.put_state_element(
+                "switchState", "ON" if state else "OFF"
+            )
 
 
 MODEL_MAPPING = {
