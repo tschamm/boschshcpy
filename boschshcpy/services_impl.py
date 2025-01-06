@@ -796,6 +796,7 @@ class CommunicationQualityService(SHCDeviceService):
         MEDIUM = "MEDIUM"
         NORMAL = "NORMAL"
         UNKNOWN = "UNKNOWN"
+        FETCHING = "FETCHING"
 
     @property
     def value(self) -> State:
