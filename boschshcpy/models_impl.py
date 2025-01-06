@@ -800,92 +800,66 @@ class SHCLight(SHCDevice):
 
     @property
     def brightness(self) -> int:
-        if (
-            self._capabilities & self.Capabilities.BRIGHTNESS
-        ) == self.Capabilities.BRIGHTNESS:
+        if self.supports_brightness:
             return self._multilevelswitch_service.value
         return 0
 
     @brightness.setter
     def brightness(self, state: int):
-        if (
-            self._capabilities & self.Capabilities.BRIGHTNESS
-        ) == self.Capabilities.BRIGHTNESS:
+        if self.supports_brightness:
             self._multilevelswitch_service.put_state_element("level", state)
 
     @property
     def color(self) -> int:
-        if (
-            self._capabilities & self.Capabilities.COLOR_TEMP
-        ) == self.Capabilities.COLOR_TEMP:
+        if self.supports_color_temp:
             return self._huecolortemperature_service.value
         return 0
 
     @color.setter
     def color(self, state: int):
-        if (
-            self._capabilities & self.Capabilities.COLOR_TEMP
-        ) == self.Capabilities.COLOR_TEMP:
+        if self.supports_color_temp:
             self._huecolortemperature_service.put_state_element(
                 "colorTemperature", state
             )
 
     @property
     def rgb(self) -> int:
-        if (
-            self._capabilities & self.Capabilities.COLOR_HSB
-        ) == self.Capabilities.COLOR_HSB:
+        if self.supports_color_hsb:
             return self._hsbcoloractuator_service.value
         return 0
 
     @rgb.setter
     def rgb(self, state: int):
-        if (
-            self._capabilities & self.Capabilities.COLOR_HSB
-        ) == self.Capabilities.COLOR_HSB:
+        if self.supports_color_hsb:
             self._hsbcoloractuator_service.put_state_element("rgb", state)
 
     @property
     def min_color_temperature(self) -> int:
-        if (
-            self._capabilities & self.Capabilities.COLOR_TEMP
-        ) == self.Capabilities.COLOR_TEMP:
+        if self.supports_color_temp:
             return self._huecolortemperature_service.min_value
-        if (
-            self._capabilities & self.Capabilities.COLOR_HSB
-        ) == self.Capabilities.COLOR_HSB:
+        if self.supports_color_hsb:
             return self._hsbcoloractuator_service.min_value
         return 0
 
     @property
     def max_color_temperature(self) -> int:
-        if (
-            self._capabilities & self.Capabilities.COLOR_TEMP
-        ) == self.Capabilities.COLOR_TEMP:
+        if self.supports_color_temp:
             return self._huecolortemperature_service.max_value
-        if (
-            self._capabilities & self.Capabilities.COLOR_HSB
-        ) == self.Capabilities.COLOR_HSB:
+        if self.supports_color_hsb:
             return self._hsbcoloractuator_service.max_value
         return 0
 
     @property
     def supports_brightness(self) -> bool:
-        return (
-            self._capabilities & self.Capabilities.BRIGHTNESS
-        ) == self.Capabilities.BRIGHTNESS
+        return bool(self._capabilities & self.Capabilities.BRIGHTNESS)
 
     @property
     def supports_color_temp(self) -> bool:
-        return (
-            self._capabilities & self.Capabilities.COLOR_TEMP
-        ) == self.Capabilities.COLOR_TEMP
+        return bool(self._capabilities & self.Capabilities.COLOR_TEMP)
 
     @property
     def supports_color_hsb(self) -> bool:
-        return (
-            self._capabilities & self.Capabilities.COLOR_HSB
-        ) == self.Capabilities.COLOR_HSB
+        return bool(self._capabilities & self.Capabilities.COLOR_HSB)
 
 
 class SHCWaterLeakageSensor(SHCBatteryDevice):
