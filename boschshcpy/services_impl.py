@@ -282,6 +282,7 @@ class ValveTappetService(SHCDeviceService):
         RUN_TO_START_POSITION = "RUN_TO_START_POSITION"
         IN_START_POSITION = "IN_START_POSITION"
         NOT_AVAILABLE = "NOT_AVAILABLE"
+        NO_VALVE_BODY_ERROR = "NO_VALVE_BODY_ERROR"
 
     @property
     def position(self) -> int:
