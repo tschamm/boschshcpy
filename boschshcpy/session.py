@@ -190,6 +190,11 @@ class SHCSession:
                     raw_result["arguments"]["deviceServiceDataModel"]
                 )
                 self._process_long_polling_poll_result(raw_data_model)
+            else:
+                # callback is missing when receiving new message
+                message_id = raw_result["id"]
+                message = SHCMessage(api=self._api, raw_message=raw_result)
+                self._messages_by_id[message_id] = message
             return
         if raw_result["@type"] == "scenarioTriggered":
             if raw_result["id"] in self._scenario_callbacks:
@@ -413,7 +418,7 @@ class SHCSession:
 
             case "scenarios":
                 return self._api.get_scenarios()
-            
+
             case "messages":
                 return self._api.get_messages()
 
