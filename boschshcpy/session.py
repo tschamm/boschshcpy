@@ -15,6 +15,7 @@ from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
 from .message import SHCMessage
+from .emma import SHCEmma
 from .userdefinedstate import SHCUserDefinedState
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 
@@ -45,6 +46,7 @@ class SHCSession:
         self._messages_by_id = {}
         self._userdefinedstates_by_id = {}
         self._subscribers = []
+        self._emma: SHCEmma = SHCEmma(self._api)
 
         if not lazy:
             self._enumerate_all()
@@ -67,6 +69,7 @@ class SHCSession:
         self._enumerate_messages()
         self._enumerate_userdefinedstates()
         self._initialize_domains()
+        self._initialize_emma()
 
     def _add_device(self, raw_device, update_services=False) -> SHCDevice:
         device_id = raw_device["id"]
@@ -146,6 +149,9 @@ class SHCSession:
             self._api.get_domain_intrusion_detection(),
             self.information.macAddress,
         )
+
+    def _initialize_emma(self):
+        self._emma = SHCEmma(self._api, self._shc_information, None)
 
     def _long_poll(self, wait_seconds=10):
         if self._poll_id is None:
@@ -245,6 +251,13 @@ class SHCSession:
                 for callback in self._userdefinedstate_callbacks[state_id]:
                     callback()
             return
+        if raw_result["@type"] == "link":
+            link_id = raw_result["id"]
+            if link_id == "com.bosch.tt.emma.applink":
+                self._emma = SHCEmma(self._api, self.information, raw_result)
+                for instance, callback in self._subscribers:
+                    if isinstance(self._emma, instance):
+                        callback(self._emma)
         return
 
     def start_polling(self):
@@ -347,6 +360,10 @@ class SHCSession:
     @property
     def messages(self) -> typing.Sequence[SHCMessage]:
         return list(self._messages_by_id.values())
+
+    @property
+    def emma(self) -> SHCEmma:
+        return self._emma
 
     @property
     def userdefinedstates(self) -> typing.Sequence[SHCUserDefinedState]:

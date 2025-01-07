@@ -57,6 +57,8 @@ def main():
             print("Starting polling for {} seconds".format(duration))
             session.start_polling()
             time.sleep(duration)
+            if session.emma:
+                session.emma.summary()
             session.stop_polling()
             print("Stopping polling")
         else:
