@@ -1,15 +1,21 @@
 from .api import SHCAPI
+from .information import SHCInformation
 from .exceptions import SHCException
 
 
 class SHCUserDefinedState:
-    def __init__(self, api: SHCAPI, raw_state):
+    def __init__(self, api: SHCAPI, info: SHCInformation, raw_state):
         self._api = api
+        self._info = info
         self._raw_state = raw_state
 
     @property
     def id(self):
         return self._raw_state["id"]
+
+    @property
+    def root_device_id(self):
+        return self._info.macAddress
 
     @property
     def name(self):

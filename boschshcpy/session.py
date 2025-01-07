@@ -135,7 +135,9 @@ class SHCSession:
         raw_states = self._api.get_userdefinedstates()
         for raw_state in raw_states:
             userdefinedstate_id = raw_state["id"]
-            userdefinedstate = SHCUserDefinedState(api=self._api, raw_state=raw_state)
+            userdefinedstate = SHCUserDefinedState(
+                api=self._api, info=self.information, raw_state=raw_state
+            )
             self._userdefinedstates_by_id[userdefinedstate_id] = userdefinedstate
 
     def _initialize_domains(self):
@@ -233,7 +235,7 @@ class SHCSession:
                 )
             else:
                 userdefinedstate = SHCUserDefinedState(
-                    api=self._api, raw_state=raw_result
+                    api=self._api, info=self.information, raw_state=raw_result
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
                 for instance, callback in self._subscribers:
