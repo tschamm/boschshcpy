@@ -254,10 +254,7 @@ class SHCSession:
         if raw_result["@type"] == "link":
             link_id = raw_result["id"]
             if link_id == "com.bosch.tt.emma.applink":
-                self._emma = SHCEmma(self._api, self.information, raw_result)
-                for instance, callback in self._subscribers:
-                    if isinstance(self._emma, instance):
-                        callback(self._emma)
+                self._emma.update_emma_data(raw_result)
         return
 
     def start_polling(self):

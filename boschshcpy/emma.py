@@ -1,5 +1,6 @@
 import logging
 from .device import SHCDevice
+from .exceptions import SHCException
 from .information import SHCInformation
 
 logger = logging.getLogger("boschshcpy")
@@ -37,6 +38,7 @@ class SHCEmma(SHCDevice):
 
         super().__init__(api=api, raw_device=_emma_raw_device, raw_device_services=None)
         self.api = api
+        self._shc_info = shc_info
         self._raw_result = raw_result
 
     @property
@@ -54,6 +56,16 @@ class SHCEmma(SHCDevice):
     @property
     def parsedInformation(self) -> str:
         return self.localizedInformation.split(" W")[0]
+
+    def update_emma_data(self, raw_result):
+        if self._shc_info is None:
+            raise SHCException("Error due to missing initialization!")
+
+        self._raw_result = raw_result
+        self._raw_device["status"] = "AVAILABLE"
+
+        for callback in self._callbacks:
+            self._callbacks[callback]()
 
     def summary(self):
         super().summary()
