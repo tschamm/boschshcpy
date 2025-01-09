@@ -50,12 +50,23 @@ class SHCEmma(SHCDevice):
         return self._raw_result["localizedTitles"]["en"]
 
     @property
+    def localizedSubtitles(self) -> str:
+        return self._raw_result["localizedSubTitles"]["en"]
+
+    @property
     def localizedInformation(self) -> str:
         return self._raw_result["localizedInformation"]["en"]
 
     @property
-    def parsedInformation(self) -> str:
-        return self.localizedInformation.split(" W")[0]
+    def value(self) -> int | None:
+        try:
+            value = int(self.localizedInformation.split(" W")[0])
+            sign = -1.0 if self.localizedSubtitles == "Grid Supply" else 1.0
+            return sign * value
+        except ValueError:
+            return None
+        else:
+            return None
 
     def update_emma_data(self, raw_result):
         if self._shc_info is None:
@@ -73,4 +84,5 @@ class SHCEmma(SHCDevice):
         print(f"  Name     : {self.name}")
         print(f"  Version  : {self.version}")
         print(f"  Title    : {self.localizedTitles}")
-        print(f"  Info     : {self.parsedInformation}")
+        print(f"  Subtitle : {self.localizedSubtitles}")
+        print(f"  Info     : {self.value}")
