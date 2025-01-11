@@ -289,13 +289,21 @@ class SHCMicromoduleRelay(
     def relay_type(self) -> RelayType:
         return (
             self.RelayType.BUTTON
-            if self.profile == "GENERIC"
+            if self._impulseswitch_service is not None
             else self.RelayType.SWITCH
         )
 
     def trigger_impulse_state(self):
         if self._impulseswitch_service:
             self._impulseswitch_service.put_state_element("impulseState", True)
+
+    @property
+    def impulse_length(self) -> int:
+        return self._impulseswitch_service.impulse_length
+
+    @impulse_length.setter
+    def impulse_length(self, impulse_length: int):
+        self._impulseswitch_service.put_state_element("impulseLength", impulse_length)
 
     @property
     def instant_of_last_impulse(self) -> str:

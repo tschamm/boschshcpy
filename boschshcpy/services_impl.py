@@ -615,6 +615,10 @@ class ImpulseSwitchService(SHCDeviceService):
         return self.state["impulseState"]
 
     @property
+    def impulse_length(self) -> int:
+        return self.state["impulseLength"]
+
+    @property
     def instant_of_last_impulse(self) -> str:
         if not "instantOfLastImpulse" in self.state:
             return None
@@ -909,6 +913,9 @@ SERVICE_MAPPING = {
 }
 
 #    "SmokeDetectionControl": SmokeDetectionControlService,
+#    "ElectricalFaults": ElectricalFaultsService,
+#    "SwitchConfiguration": SwitchConfigurationService,
+#    "Linking": LinkingService,
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
