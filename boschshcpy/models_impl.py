@@ -941,6 +941,7 @@ MODEL_MAPPING = {
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
     "TRV_GEN2": SHCThermostat,
+    "TRV_GEN2_DUAL": SHCThermostat,
     "THB": SHCWallThermostat,
     "BWTH": SHCWallThermostat,
     "BWTH24": SHCWallThermostat,

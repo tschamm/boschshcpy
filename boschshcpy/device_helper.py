@@ -191,6 +191,8 @@ class SHCDeviceHelper:
             devices.extend(self._devices_by_model["TRV"].values())
         if "TRV_GEN2" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["TRV_GEN2"].values())
+        if "TRV_GEN2_DUAL" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["TRV_GEN2_DUAL"].values())
         return devices
 
     @property
