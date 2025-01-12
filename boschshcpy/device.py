@@ -149,7 +149,9 @@ class SHCDevice:
         assert raw_result["@type"] == "DeviceServiceData"
         device_service_id = raw_result["id"]
         if device_service_id in self._device_services_by_id.keys():
-            device_service = self._device_services_by_id[device_service_id]
+            device_service: SHCDeviceService = self._device_services_by_id[
+                device_service_id
+            ]
             device_service.process_long_polling_poll_result(raw_result)
         else:
             logger.debug(
