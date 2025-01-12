@@ -331,7 +331,7 @@ class SHCShutterControl(SHCDevice):
 
     @property
     def operation_state(self) -> ShutterControlService.State:
-        return self._service.value
+        return self._service.operation_state
 
 
 class SHCMicromoduleShutterControl(
