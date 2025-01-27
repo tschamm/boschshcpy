@@ -923,6 +923,7 @@ class SHCMicromoduleDimmer(
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "SWD2": SHCShutterContact2,
+    "SWD2_DUAL": SHCShutterContact2,
     "SWD2_PLUS": SHCShutterContact2Plus,
     "BBL": SHCShutterControl,
     "MICROMODULE_AWNING": SHCMicromoduleShutterControl,
