@@ -935,6 +935,7 @@ MODEL_MAPPING = {
     "MICROMODULE_LIGHT_CONTROL": SHCLightControl,
     "MICROMODULE_RELAY": SHCMicromoduleRelay,
     "PLUG_COMPACT": SHCSmartPlugCompact,
+    "PLUG_COMPACT_DUAL": SHCSmartPlugCompact,
     "SD": SHCSmokeDetector,
     "SMOKE_DETECTOR2": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
