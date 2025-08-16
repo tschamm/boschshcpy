@@ -81,6 +81,8 @@ class SHCDeviceHelper:
         devices = []
         if "SWD2" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["SWD2"].values())
+        if "SWD2_DUAL" in SUPPORTED_MODELS:
+            devices.extend(self._devices_by_model["SWD2_DUAL"].values())
         if "SWD2_PLUS" in SUPPORTED_MODELS:
             devices.extend(self._devices_by_model["SWD2_PLUS"].values())
         if "SWD2_DUAL" in SUPPORTED_MODELS:
