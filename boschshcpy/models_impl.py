@@ -492,6 +492,39 @@ class SHCCameraEyes(SHCCamera360):
             )
 
 
+class SHCCameraOutdoorGen2(SHCCamera360):
+    from .services_impl import CameraAmbientLightService, CameraFrontLightService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._cameraambientlight_service = self.device_service("CameraAmbientLight")
+        self._camerafrontlight_service = self.device_service("CameraFrontLight")
+
+    @property
+    def cameraambientlight(self) -> CameraAmbientLightService.State:
+        if self._cameraambientlight_service:
+            return self._cameraambientlight_service.value
+
+    @cameraambientlight.setter
+    def cameraambientlight(self, state: bool):
+        if self._cameraambientlight_service:
+            self._cameraambientlight_service.put_state_element(
+                "value", "ON" if state else "OFF"
+            )
+
+    @property
+    def camerafrontlight(self) -> CameraFrontLightService.State:
+        if self._camerafrontlight_service:
+            return self._camerafrontlight_service.value
+
+    @camerafrontlight.setter
+    def camerafrontlight(self, state: bool):
+        if self._camerafrontlight_service:
+            self._camerafrontlight_service.put_state_element(
+                "value", "ON" if state else "OFF"
+            )
+
+
 class SHCThermostat(
     SHCBatteryDevice,
     _CommunicationQuality,
@@ -940,6 +973,7 @@ MODEL_MAPPING = {
     "SMOKE_DETECTOR2": SHCSmokeDetector,
     "CAMERA_EYES": SHCCameraEyes,
     "CAMERA_360": SHCCamera360,
+    "CAMERA_OUTDOOR_GEN2": SHCCameraOutdoorGen2,
     "ROOM_CLIMATE_CONTROL": SHCClimateControl,
     "TRV": SHCThermostat,
     "TRV_GEN2": SHCThermostat,

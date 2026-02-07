@@ -561,6 +561,14 @@ class CameraLightService(SHCDeviceService):
         print(f"    value                    : {self.value}")
 
 
+class CameraAmbientLightService(CameraLightService):
+    pass
+
+
+class CameraFrontLightService(CameraLightService):
+    pass
+
+
 class PrivacyModeService(SHCDeviceService):
     class State(Enum):
         ENABLED = "ENABLED"
@@ -868,6 +876,8 @@ SERVICE_MAPPING = {
     "BlindsSceneControl": BlindsSceneControlService,
     "Bypass": BypassService,
     "CameraLight": CameraLightService,
+    "CameraAmbientLight": CameraAmbientLightService,
+    "CameraFrontLight": CameraFrontLightService,
     "CameraNotification": CameraNotificationService,
     "ChildProtection": ChildProtectionService,
     "CommunicationQuality": CommunicationQualityService,

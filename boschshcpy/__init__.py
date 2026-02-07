@@ -3,6 +3,7 @@ from .device_helper import (
     SHCBatteryDevice,
     SHCCamera360,
     SHCCameraEyes,
+    SHCCameraOutdoorGen2,
     SHCClimateControl,
     SHCDeviceHelper,
     SHCLight,

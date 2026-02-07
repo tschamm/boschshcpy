@@ -10,6 +10,7 @@ from .models_impl import (
     SHCBatteryDevice,
     SHCCamera360,
     SHCCameraEyes,
+    SHCCameraOutdoorGen2,
     SHCClimateControl,
     SHCHeatingCircuit,
     SHCLight,
@@ -252,6 +253,12 @@ class SHCDeviceHelper:
         if "CAMERA_360" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["CAMERA_360"].values())
+
+    @property
+    def camera_outdoor_gen2(self) -> typing.Sequence[SHCCameraOutdoorGen2]:
+        if "CAMERA_OUTDOOR_GEN2" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["CAMERA_OUTDOOR_GEN2"].values())
 
     @property
     def ledvance_lights(self) -> typing.Sequence[SHCLight]:
