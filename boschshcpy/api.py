@@ -47,7 +47,9 @@ class SHCAPI:
 
         # Settings for all API calls
         self._requests_session = requests.Session()
-        self._requests_session.mount("https://", HostNameIgnoringAdapter())
+        self._requests_session.mount(
+            "https://", HostNameIgnoringAdapter(pool_connections=20)
+        )
         self._requests_session.cert = (self._certificate, self._key)
         self._requests_session.headers.update(
             {"api-version": "3.2", "Content-Type": "application/json"}
@@ -159,9 +161,7 @@ class SHCAPI:
 
     def get_messages(self):
         api_url = f"{self._api_root}/messages"
-        return self._get_api_result_or_fail(
-            api_url, expected_element_type="message"
-        )
+        return self._get_api_result_or_fail(api_url, expected_element_type="message")
 
     def get_devices(self):
         api_url = f"{self._api_root}/devices"

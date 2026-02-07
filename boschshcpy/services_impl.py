@@ -487,7 +487,7 @@ class ShutterControlService(SHCDeviceService):
 
     @property
     def level(self) -> float:
-        return self.state["level"]
+        return self.state["level"] if "level" in self.state else 0.0
 
     def summary(self):
         super().summary()
