@@ -337,7 +337,35 @@ class SHCShutterControl(SHCDevice):
 class SHCMicromoduleShutterControl(
     SHCShutterControl, _CommunicationQuality, _ChildProtection, _PowerMeter
 ):
-    pass
+    from .services_impl import KeypadService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._keypad_service = self.device_service("Keypad")
+
+    @property
+    def keystates(self) -> dict[str]:
+        return ["UNDEFINED_BUTTON"]
+
+    @property
+    def eventtypes(self) -> dict[str]:
+        return ["SWITCH_OFF", "SWITCH_ON"]
+
+    @property
+    def keycode(self) -> int:
+        return self._keypad_service.keyCode
+
+    @property
+    def keyname(self) -> KeypadService.KeyState:
+        return self._keypad_service.keyName
+
+    @property
+    def eventtype(self) -> KeypadService.KeyEvent:
+        return self._keypad_service.eventType
+
+    @property
+    def eventtimestamp(self) -> int:
+        return self._keypad_service.eventTimestamp
 
 
 class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):

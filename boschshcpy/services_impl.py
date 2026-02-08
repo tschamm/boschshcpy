@@ -631,11 +631,14 @@ class KeypadService(SHCDeviceService):
         UPPER_BUTTON = "UPPER_BUTTON"
         UPPER_LEFT_BUTTON = "UPPER_LEFT_BUTTON"
         UPPER_RIGHT_BUTTON = "UPPER_RIGHT_BUTTON"
+        UNDEFINED_BUTTON = "UNDEFINED_BUTTON"
 
     class KeyEvent(Enum):
         PRESS_SHORT = "PRESS_SHORT"
         PRESS_LONG = "PRESS_LONG"
         PRESS_LONG_RELEASED = "PRESS_LONG_RELEASED"
+        SWITCH_ON = "SWITCH_ON"
+        SWITCH_OFF = "SWITCH_OFF"
 
     @property
     def keyCode(self) -> int:
