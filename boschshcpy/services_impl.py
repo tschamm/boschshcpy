@@ -656,6 +656,10 @@ class KeypadService(SHCDeviceService):
             return None
         return self.KeyEvent(self.state["eventType"])
 
+    @eventType.setter
+    def eventType(self, value: KeyEvent):
+        self.state["eventType"] = value.value
+
     @property
     def eventTimestamp(self) -> int:
         if not "eventTimestamp" in self.state:

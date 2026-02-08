@@ -363,6 +363,10 @@ class SHCMicromoduleShutterControl(
     def eventtype(self) -> KeypadService.KeyEvent:
         return self._keypad_service.eventType
 
+    @eventtype.setter
+    def eventtype(self, value: KeypadService.KeyEvent):
+        self._keypad_service.eventType = value
+
     @property
     def eventtimestamp(self) -> int:
         return self._keypad_service.eventTimestamp
