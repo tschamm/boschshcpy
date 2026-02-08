@@ -1,3 +1,4 @@
+from .certificate import parse_certificate
 from .device import SHCDevice
 from .device_helper import (
     SHCBatteryDevice,
