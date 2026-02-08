@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="boschshcpy",
-    version="0.2.109",
+    version="0.2.110",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
@@ -34,7 +34,7 @@ setup(
     ],
     python_requires=">=3.10, <4",
     install_requires=[
-        "cryptography>=3.3.2",
+        "cryptography>=41",
         "getmac>=0.8.2,<1",
         "requests>=2.22",
         "zeroconf>=0.28.0",

@@ -33,7 +33,12 @@ from .device_helper import (
 )
 from .device_service import SHCDeviceService
 from .domain_impl import SHCIntrusionSystem
-from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCRegistrationError
+from .exceptions import (
+    SHCAuthenticationError,
+    SHCConnectionError,
+    SHCRegistrationError,
+    SHCCertificateError,
+)
 from .information import SHCInformation
 from .register_client import SHCRegisterClient
 from .scenario import SHCScenario
