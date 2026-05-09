@@ -8,6 +8,7 @@ from .device_helper import (
     SHCDeviceHelper,
     SHCLight,
     SHCMotionDetector,
+    SHCMotionDetector2,
     SHCShutterContact,
     SHCShutterContact2,
     SHCShutterContact2Plus,

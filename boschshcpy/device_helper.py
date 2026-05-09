@@ -15,6 +15,7 @@ from .models_impl import (
     SHCHeatingCircuit,
     SHCLight,
     SHCMotionDetector,
+    SHCMotionDetector2,
     SHCShutterContact,
     SHCShutterContact2,
     SHCShutterContact2Plus,
@@ -226,6 +227,12 @@ class SHCDeviceHelper:
         if "MD" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["MD"].values())
+
+    @property
+    def motion_detectors2(self) -> typing.Sequence[SHCMotionDetector2]:
+        if "MD2" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["MD2"].values())
 
     @property
     def twinguards(self) -> typing.Sequence[SHCTwinguard]:

@@ -753,6 +753,90 @@ class SHCMotionDetector(SHCBatteryDevice):
         return self._multi_level_sensor_service.illuminance
 
 
+class SHCMotionDetector2(SHCBatteryDevice):
+    from .services_impl import (
+        LatestMotionService,
+        MultiLevelSensorService,
+        MultiLevelSwitchService,
+        BinarySwitchService,
+        DetectionTestService,
+        LatestTamperService,
+        TemperatureLevelService,
+        PollControlService,
+        PirSensorConfigurationService,
+        OccupancyDetectionService,
+        CommunicationQualityService,
+        PetImmunityService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._multi_level_switch_service = self.device_service("MultiLevelSwitch")
+        self._binaryswitch_service = self.device_service("BinarySwitch")
+        self._detectiontest_service = self.device_service("DetectionTest")
+        self._latestmotion_service = self.device_service("LatestMotion")
+        self._multi_level_sensor_service = self.device_service("MultiLevelSensor")
+        self._latesttamper_service = self.device_service("LatestTamper")
+        self._temperaturelevel_service = self.device_service("TemperatureLevel")
+        self._pollcontrol_service = self.device_service("PollControl")
+        self._pirsensorconfiguration_service = self.device_service("PirSensorConfiguration")
+        self._occupancydetection_service = self.device_service("OccupancyDetection")
+        self._communicationquality_service = self.device_service("CommunicationQuality")
+        self._petimmunity_service = self.device_service("PetImmunity")
+
+    @property
+    def latestmotion(self) -> str:
+        return self._latestmotion_service.latestMotionDetected
+
+    @property
+    def illuminance(self) -> int:
+        return self._multi_level_sensor_service.illuminance
+
+    @property
+    def multi_level_switch(self) -> int:
+        return self._multi_level_switch_service.value
+
+    @property
+    def binaryswitch(self) -> bool:
+        return self._binaryswitch_service.value
+
+    @property
+    def detection_state(self) -> DetectionTestService.DetectionState:
+        return self._detectiontest_service.detection_state
+
+    @property
+    def temperature(self) -> float:
+        return self._temperaturelevel_service.temperature
+
+    @property
+    def long_poll_interval(self) -> PollControlService.PollControlState:
+        return self._pollcontrol_service.longPollInterval
+
+    @property
+    def motion_sensitivity(self) -> PirSensorConfigurationService.MotionSensitivity:
+        return self._pirsensorconfiguration_service.motionSensitivity
+
+    @property
+    def occupied(self) -> bool:
+        return self._occupancydetection_service.isOccupied
+
+    @property
+    def last_occupancy_change_time(self) -> str:
+        return self._occupancydetection_service.lastOccupancyChangeTime
+
+    @property
+    def communicationquality(self) -> CommunicationQualityService.State:
+        return self._communicationquality_service.value
+
+    @property
+    def pet_immunity_enabled(self) -> bool:
+        return self._petimmunity_service.enabled
+
+    @property
+    def last_tamper_time(self) -> str:
+        return self._latesttamper_service.last_tamper_time
+
+
 class SHCTwinguard(SHCBatteryDevice):
     from .services_impl import AirQualityLevelService, SmokeDetectorCheckService
 
@@ -1018,6 +1102,7 @@ MODEL_MAPPING = {
     "WRC2": SHCUniversalSwitch,
     "SWITCH2": SHCUniversalSwitch2,
     "MD": SHCMotionDetector,
+    "MD2": SHCMotionDetector2,
     "PRESENCE_SIMULATION_SERVICE": SHCPresenceSimulationSystem,
     "TWINGUARD": SHCTwinguard,
     "SMOKE_DETECTION_SYSTEM": SHCSmokeDetectionSystem,
