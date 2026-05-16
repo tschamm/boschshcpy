@@ -688,6 +688,108 @@ class LatestMotionService(SHCDeviceService):
         print(f"    latestMotionDetected     : {self.latestMotionDetected}")
 
 
+class DetectionTestService(SHCDeviceService):
+    class DetectionState(Enum):
+        DETECTION_TEST_STARTED = "DETECTION_TEST_STARTED"
+        DETECTION_TEST_STOPPED = "DETECTION_TEST_STOPPED"
+
+    @property
+    def detection_state(self) -> DetectionState:
+        return self.DetectionState(self.state["detectionState"])
+
+    def summary(self):
+        super().summary()
+        print(f"    detectionState           : {self.detection_state}")
+
+
+class LatestTamperService(SHCDeviceService):
+    @property
+    def tamper_protection_enabled(self) -> bool:
+        return self.state["tamperProtectionEnabled"]
+
+    @property
+    def was_tampered(self) -> bool:
+        return self.state["wasTampered"]
+
+    @property
+    def last_tamper_time(self) -> str:
+        return (
+            self.state["lastTamperTime"]
+            if "lastTamperTime" in self.state
+            else "n/a"
+        )
+
+    def summary(self):
+        super().summary()
+        print(f"    tamperProtectionEnabled  : {self.tamper_protection_enabled}")
+        print(f"    wasTampered              : {self.was_tampered}")
+        print(f"    lastTamperTime           : {self.last_tamper_time}")
+
+
+class PollControlService(SHCDeviceService):
+    class PollControlState(Enum):
+        LONG = "LONG"
+        SHORT = "SHORT"
+    
+    @property
+    def longPollInterval(self) -> PollControlState:
+        return self.PollControlState(self.state["longPollInterval"])
+
+    def summary(self):
+        super().summary()
+        print(f"    longPollInterval         : {self.longPollInterval}")
+
+
+class PirSensorConfigurationService(SHCDeviceService):
+    class MotionSensitivity(Enum):
+        HIGH = "HIGH"
+        MIDDLE = "MIDDLE"
+        LOW = "LOW"
+   
+    @property
+    def motionSensitivity(self) -> MotionSensitivity:
+        return self.MotionSensitivity(self.state["motionSensitivity"])
+
+    def summary(self):
+        super().summary()
+        print(f"    motionSensitivity        : {self.motionSensitivity}")
+
+
+class OccupancyDetectionService(SHCDeviceService):
+    @property
+    def isOccupied(self) -> bool:
+        return self.state["isOccupied"]
+
+    @property
+    def lastOccupancyChangeTime(self) -> str:
+        return (
+            self.state["lastOccupancyChangeTime"]
+            if "lastOccupancyChangeTime" in self.state
+            else "n/a"
+        )
+
+    def summary(self):
+        super().summary()
+        print(f"    isOccupied                : {self.isOccupied}")
+        print(f"    lastOccupancyChangeTime   : {self.lastOccupancyChangeTime}")
+
+
+class PetImmunityService(SHCDeviceService):
+    @property
+    def enabled(self) -> bool:
+        return self.state["enabled"]
+
+    def summary(self):
+        super().summary()
+        print(f"    enabled                  : {self.enabled}")
+
+
+class SmartSensitivityControlService(SHCDeviceService):
+    def summary(self):
+        super().summary()
+        print(f"    not yet implemented!")
+
+
 class AirQualityLevelService(SHCDeviceService):
     class RatingState(Enum):
         GOOD = "GOOD"
@@ -882,12 +984,13 @@ SERVICE_MAPPING = {
     "BlindsControl": BlindsControlService,
     "BlindsSceneControl": BlindsSceneControlService,
     "Bypass": BypassService,
-    "CameraLight": CameraLightService,
     "CameraAmbientLight": CameraAmbientLightService,
     "CameraFrontLight": CameraFrontLightService,
+    "CameraLight": CameraLightService,
     "CameraNotification": CameraNotificationService,
     "ChildProtection": ChildProtectionService,
     "CommunicationQuality": CommunicationQualityService,
+    "DetectionTest": DetectionTestService,
     "HeatingCircuit": HeatingCircuitService,
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
@@ -895,8 +998,13 @@ SERVICE_MAPPING = {
     "ImpulseSwitch": ImpulseSwitchService,
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
-    "MultiLevelSwitch": MultiLevelSwitchService,
+    "LatestTamper": LatestTamperService,
     "MultiLevelSensor": MultiLevelSensorService,
+    "MultiLevelSwitch": MultiLevelSwitchService,
+    "OccupancyDetection": OccupancyDetectionService,
+    "PetImmunity": PetImmunityService,
+    "PirSensorConfiguration": PirSensorConfigurationService,
+    "PollControl": PollControlService,
     "PowerMeter": PowerMeterService,
     "PowerSwitch": PowerSwitchService,
     "PowerSwitchProgram": PowerSwitchProgramService,
@@ -915,14 +1023,15 @@ SERVICE_MAPPING = {
     "ValveTappet": ValveTappetService,
     "VibrationSensor": VibrationSensorService,
     "WaterLeakageSensor": WaterLeakageSensorService,
-    "WaterLeakageSensorTilt": WaterLeakageSensorTiltService,
     "WaterLeakageSensorCheck": WaterLeakageSensorCheckService,
+    "WaterLeakageSensorTilt": WaterLeakageSensorTiltService,
 }
 
 #    "SmokeDetectionControl": SmokeDetectionControlService,
 #    "ElectricalFaults": ElectricalFaultsService,
 #    "SwitchConfiguration": SwitchConfigurationService,
 #    "Linking": LinkingService,
+#    "SmartSensitivityControl": SmartSensitivityControlService,
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
