@@ -166,8 +166,8 @@ class SHCSession:
         except JSONRPCError as json_rpc_error:
             if json_rpc_error.code == -32001:
                 self._poll_id = None
-                logger.warning(
-                    f"SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
+                logger.debug(
+                    "SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
                 )
                 return False
             else:
@@ -264,9 +264,7 @@ class SHCSession:
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
-                            logger.warning(
-                                "_long_poll returned False. Waiting 1 second."
-                            )
+                            logger.debug("_long_poll returned False. Waiting 1 second.")
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
