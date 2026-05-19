@@ -634,6 +634,18 @@ class SHCClimateControl(_TemperatureLevel):
     def summer_mode(self, value: bool):
         self._roomclimatecontrol_service.summer_mode = value
 
+    @property
+    def cooling_mode(self) -> bool:
+        return self._roomclimatecontrol_service.cooling_mode
+
+    @cooling_mode.setter
+    def cooling_mode(self, value: bool):
+        self._roomclimatecontrol_service.cooling_mode = value
+
+    @property
+    def supports_cooling(self) -> bool:
+        return self._roomclimatecontrol_service.supports_cooling
+
 
 class SHCHeatingCircuit(SHCDevice):
     from .services_impl import HeatingCircuitService
