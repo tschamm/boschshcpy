@@ -110,16 +110,24 @@ class RoomClimateControlService(SHCDeviceService):
         self.put_state_element("summerMode", value)
 
     @property
+    def room_control_mode(self) -> str:
+        return self.state.get("roomControlMode", "HEATING")
+
+    @room_control_mode.setter
+    def room_control_mode(self, value: str):
+        self.put_state_element("roomControlMode", value)
+
+    @property
     def cooling_mode(self) -> bool:
-        return self.state.get("coolingMode", False)
+        return self.room_control_mode == "COOLING"
 
     @cooling_mode.setter
     def cooling_mode(self, value: bool):
-        self.put_state_element("coolingMode", value)
+        self.room_control_mode = "COOLING" if value else "HEATING"
 
     @property
     def supports_cooling(self) -> bool:
-        return "coolingMode" in self.state
+        return "roomControlMode" in self.state
 
     @property
     def supports_boost_mode(self) -> bool:
@@ -142,6 +150,7 @@ class RoomClimateControlService(SHCDeviceService):
         print(f"    Low                      : {self.low}")
         print(f"    Boost Mode               : {self.boost_mode}")
         print(f"    Summer Mode              : {self.summer_mode}")
+        print(f"    Room Control Mode        : {self.room_control_mode}")
         print(f"    Cooling Mode             : {self.cooling_mode}")
         print(f"    Supports Cooling         : {self.supports_cooling}")
         print(f"    Supports Boost Mode      : {self.supports_boost_mode}")

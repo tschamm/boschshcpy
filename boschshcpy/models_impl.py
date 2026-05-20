@@ -635,6 +635,14 @@ class SHCClimateControl(_TemperatureLevel):
         self._roomclimatecontrol_service.summer_mode = value
 
     @property
+    def room_control_mode(self) -> str:
+        return self._roomclimatecontrol_service.room_control_mode
+
+    @room_control_mode.setter
+    def room_control_mode(self, value: str):
+        self._roomclimatecontrol_service.room_control_mode = value
+
+    @property
     def cooling_mode(self) -> bool:
         return self._roomclimatecontrol_service.cooling_mode
 
