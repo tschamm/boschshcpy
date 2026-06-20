@@ -824,9 +824,17 @@ class SHCMotionDetector2(SHCBatteryDevice):
     def multi_level_switch(self) -> int:
         return self._multi_level_switch_service.value
 
+    @multi_level_switch.setter
+    def multi_level_switch(self, value: int):
+        self._multi_level_switch_service.put_state_element("level", value)
+
     @property
     def binaryswitch(self) -> bool:
         return self._binaryswitch_service.value
+
+    @binaryswitch.setter
+    def binaryswitch(self, value: bool):
+        self._binaryswitch_service.put_state_element("on", bool(value))
 
     @property
     def detection_state(self) -> DetectionTestService.DetectionState:
@@ -859,6 +867,10 @@ class SHCMotionDetector2(SHCBatteryDevice):
     @property
     def pet_immunity_enabled(self) -> bool:
         return self._petimmunity_service.enabled
+
+    @pet_immunity_enabled.setter
+    def pet_immunity_enabled(self, value: bool):
+        self._petimmunity_service.enabled = value
 
     @property
     def last_tamper_time(self) -> str:

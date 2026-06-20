@@ -825,6 +825,10 @@ class PetImmunityService(SHCDeviceService):
     def enabled(self) -> bool:
         return self.state["enabled"]
 
+    @enabled.setter
+    def enabled(self, value: bool):
+        self.put_state_element("enabled", value)
+
     def summary(self):
         super().summary()
         print(f"    enabled                  : {self.enabled}")
