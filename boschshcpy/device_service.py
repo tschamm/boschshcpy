@@ -80,7 +80,7 @@ class SHCDeviceService:
                 assert raw_result["state"]["@type"] == self.state["@type"]
             self._raw_state = raw_result["state"]  # Update state
 
-            for callback in self._callbacks:
+            for callback in list(self._callbacks):
                 self._callbacks[callback]()
 
             self._process_events(raw_result)

@@ -131,7 +131,9 @@ class _TemperatureLevel(SHCDevice):
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
 
     @property
-    def temperature(self) -> float:
+    def temperature(self) -> float | None:
+        if self._temperaturelevel_service is None:
+            return None
         return self._temperaturelevel_service.temperature
 
 
@@ -143,7 +145,13 @@ class _HumidityLevel(SHCDevice):
         self._humiditylevel_service = self.device_service("HumidityLevel")
 
     @property
-    def humidity(self) -> float:
+    def supports_humidity(self) -> bool:
+        return self._humiditylevel_service is not None
+
+    @property
+    def humidity(self) -> float | None:
+        if self._humiditylevel_service is None:
+            return None
         return self._humiditylevel_service.humidity
 
 
