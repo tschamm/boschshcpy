@@ -270,15 +270,15 @@ class SHCSession:
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
-                        logger.info(
+                        logger.debug(
                             "Stopping polling thread after expected runtime error."
                         )
-                        logger.info(f"Error description: {err}. {err.args}")
-                        logger.info(f"Attempting unsubscribe...")
+                        logger.debug(f"Error description: {err}. {err.args}")
+                        logger.debug(f"Attempting unsubscribe...")
                         try:
                             self._maybe_unsubscribe()
                         except Exception as ex:
-                            logger.info(f"Unsubscribe not successful: {ex}")
+                            logger.debug(f"Unsubscribe not successful: {ex}")
 
                     except Exception as ex:
                         logger.error(
