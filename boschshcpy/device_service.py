@@ -81,7 +81,9 @@ class SHCDeviceService:
             self._raw_state = raw_result["state"]  # Update state
 
             for callback in list(self._callbacks):
-                self._callbacks[callback]()
+                fn = self._callbacks.get(callback)
+                if fn is not None:
+                    fn()
 
             self._process_events(raw_result)
 
