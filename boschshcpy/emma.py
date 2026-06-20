@@ -51,21 +51,26 @@ class SHCEmma(SHCDevice):
 
     @property
     def localizedSubtitles(self) -> str:
-        return self._raw_result["localizedSubTitles"]["en"]
+        # Bosch has used both "localizedSubtitles" and "localizedSubTitles" —
+        # accept either spelling and never raise KeyError on an odd payload.
+        subs = (
+            self._raw_result.get("localizedSubtitles")
+            or self._raw_result.get("localizedSubTitles")
+            or {}
+        )
+        return subs.get("en", "")
 
     @property
     def localizedInformation(self) -> str:
         return self._raw_result["localizedInformation"]["en"]
 
     @property
-    def value(self) -> int | None:
+    def value(self) -> float | None:
         try:
             value = int(self.localizedInformation.split(" W")[0])
             sign = -1.0 if self.localizedSubtitles == "Grid Supply" else 1.0
             return sign * value
-        except ValueError:
-            return None
-        else:
+        except (ValueError, KeyError, TypeError):
             return None
 
     def update_emma_data(self, raw_result):
