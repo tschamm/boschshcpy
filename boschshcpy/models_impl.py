@@ -699,7 +699,7 @@ class SHCHeatingCircuit(SHCDevice):
         return self._heating_circuit_service.on
 
 
-class SHCWallThermostat(SHCBatteryDevice, _TemperatureLevel, _HumidityLevel):
+class SHCWallThermostat(SHCBatteryDevice, _TemperatureLevel, _HumidityLevel, _Thermostat):
     pass
 
 

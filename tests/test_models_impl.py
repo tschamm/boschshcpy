@@ -1979,6 +1979,86 @@ class TestSHCWallThermostat:
         assert obj.temperature == 21.5
         assert obj.humidity == 48.0
 
+    def test_child_lock_on(self):
+        """THB Thermostat service childLock=ON -> child_lock == ThermostatService.State.ON."""
+        from boschshcpy.models_impl import SHCWallThermostat
+        from boschshcpy.services_impl import (
+            TemperatureLevelService, HumidityLevelService,
+            BatteryLevelService, ThermostatService,
+        )
+
+        def _svc(cls, sid, state):
+            s = cls.__new__(cls)
+            s._api = None
+            s._raw_device_service = {"id": sid, "deviceId": "d1", "path": "/x", "state": state}
+            s._raw_state = state
+            s._last_update = None; s._callbacks = {}; s._event_callbacks = {}
+            return s
+
+        tl = _svc(TemperatureLevelService, "TemperatureLevel", {"@type": "x", "temperature": 22.0})
+        hl = _svc(HumidityLevelService, "HumidityLevel", {"@type": "x", "humidity": 50.0})
+        th = _svc(ThermostatService, "Thermostat", {"@type": "childLockState", "childLock": "ON"})
+        bat = BatteryLevelService.__new__(BatteryLevelService)
+        bat._api = None
+        bat._raw_device_service = {"id": "BatteryLevel", "deviceId": "d1", "path": "/x", "state": {}}
+        bat._raw_state = {}
+        bat._last_update = None; bat._callbacks = {}; bat._event_callbacks = {}
+
+        obj = SHCWallThermostat.__new__(SHCWallThermostat)
+        obj._raw_device = _fake_raw_device(model="THB")
+        obj._device_services_by_id = {
+            "TemperatureLevel": tl, "HumidityLevel": hl,
+            "Thermostat": th, "BatteryLevel": bat,
+        }
+        obj._callbacks = {}
+        obj._api = None
+        obj._temperaturelevel_service = tl
+        obj._humiditylevel_service = hl
+        obj._thermostat_service = th
+        obj._batterylevel_service = bat
+
+        assert obj.child_lock == ThermostatService.State.ON
+
+    def test_child_lock_off(self):
+        """THB Thermostat service childLock=OFF -> child_lock == ThermostatService.State.OFF."""
+        from boschshcpy.models_impl import SHCWallThermostat
+        from boschshcpy.services_impl import (
+            TemperatureLevelService, HumidityLevelService,
+            BatteryLevelService, ThermostatService,
+        )
+
+        def _svc(cls, sid, state):
+            s = cls.__new__(cls)
+            s._api = None
+            s._raw_device_service = {"id": sid, "deviceId": "d1", "path": "/x", "state": state}
+            s._raw_state = state
+            s._last_update = None; s._callbacks = {}; s._event_callbacks = {}
+            return s
+
+        tl = _svc(TemperatureLevelService, "TemperatureLevel", {"@type": "x", "temperature": 22.0})
+        hl = _svc(HumidityLevelService, "HumidityLevel", {"@type": "x", "humidity": 50.0})
+        th = _svc(ThermostatService, "Thermostat", {"@type": "childLockState", "childLock": "OFF"})
+        bat = BatteryLevelService.__new__(BatteryLevelService)
+        bat._api = None
+        bat._raw_device_service = {"id": "BatteryLevel", "deviceId": "d1", "path": "/x", "state": {}}
+        bat._raw_state = {}
+        bat._last_update = None; bat._callbacks = {}; bat._event_callbacks = {}
+
+        obj = SHCWallThermostat.__new__(SHCWallThermostat)
+        obj._raw_device = _fake_raw_device(model="THB")
+        obj._device_services_by_id = {
+            "TemperatureLevel": tl, "HumidityLevel": hl,
+            "Thermostat": th, "BatteryLevel": bat,
+        }
+        obj._callbacks = {}
+        obj._api = None
+        obj._temperaturelevel_service = tl
+        obj._humiditylevel_service = hl
+        obj._thermostat_service = th
+        obj._batterylevel_service = bat
+
+        assert obj.child_lock == ThermostatService.State.OFF
+
 
 # ---------------------------------------------------------------------------
 # SHCSilentMode (via _SilentMode mixin, tested in context of thermostat above)
