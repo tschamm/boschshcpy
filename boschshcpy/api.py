@@ -6,7 +6,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-from .exceptions import SHCSessionError
+from .exceptions import SHCConnectionError, SHCSessionError
 
 logger = logging.getLogger("boschshcpy")
 
@@ -84,17 +84,25 @@ class SHCAPI:
             else:
                 if len(result.content) > 0:
                     result = json.loads(result.content)
-                    if expected_type is not None:
-                        assert result["@type"] == expected_type
+                    if expected_type is not None and result.get("@type") != expected_type:
+                        raise SHCSessionError(
+                            f"Unexpected @type in API response: expected "
+                            f"{expected_type!r}, got {result.get('@type')!r}"
+                        )
                     if expected_element_type is not None:
                         for result_ in result:
-                            assert result_["@type"] == expected_element_type
+                            if result_.get("@type") != expected_element_type:
+                                raise SHCSessionError(
+                                    f"Unexpected @type in API response element: "
+                                    f"expected {expected_element_type!r}, got "
+                                    f"{result_.get('@type')!r}"
+                                )
 
                     return result
                 else:
                     return {}
         except requests.exceptions.SSLError as e:
-            raise Exception(f"API call returned SSLError: {e}.")
+            raise SHCConnectionError(f"API call returned SSLError: {e}.") from e
 
     def _put_api_or_fail(self, api_url, body, timeout=30):
         result = self._requests_session.put(
@@ -201,6 +209,14 @@ class SHCAPI:
         api_url = f"{self._api_root}/{path}"
         self._post_api_or_fail(api_url, body=data)
 
+    @staticmethod
+    def _check_jsonrpc_version(result, method):
+        if result[0].get("jsonrpc") != "2.0":
+            raise SHCSessionError(
+                f"Unexpected JSON-RPC version in {method} response: "
+                f"{result[0].get('jsonrpc')!r}"
+            )
+
     def long_polling_subscribe(self):
         data = [
             {
@@ -210,7 +226,7 @@ class SHCAPI:
             }
         ]
         result = self._post_api_or_fail(self._rpc_root, data)
-        assert result[0]["jsonrpc"] == "2.0"
+        self._check_jsonrpc_version(result, "RE/subscribe")
         if "error" in result[0].keys():
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
@@ -227,7 +243,7 @@ class SHCAPI:
             }
         ]
         result = self._post_api_or_fail(self._rpc_root, data, wait_seconds + 5)
-        assert result[0]["jsonrpc"] == "2.0"
+        self._check_jsonrpc_version(result, "RE/longPoll")
         if "error" in result[0].keys():
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
@@ -238,7 +254,7 @@ class SHCAPI:
     def long_polling_unsubscribe(self, poll_id):
         data = [{"jsonrpc": "2.0", "method": "RE/unsubscribe", "params": [poll_id]}]
         result = self._post_api_or_fail(self._rpc_root, data)
-        assert result[0]["jsonrpc"] == "2.0"
+        self._check_jsonrpc_version(result, "RE/unsubscribe")
         if "error" in result[0].keys():
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
