@@ -39,12 +39,18 @@ def parse_certificate(cert_path: str) -> CertificateInfo:
         raise SHCCertificateError(f"Invalid certificate: {cert_path}") from exc
 
     now = datetime.now(timezone.utc)
-    # Use *_utc properties when available (cryptography >= 41), fallback otherwise.
-    not_before = getattr(cert, "not_valid_before_utc", cert.not_valid_before_utc)
-    if not_before.tzinfo is None:
-        not_before = not_before.replace(tzinfo=timezone.utc)
-    not_after = getattr(cert, "not_valid_after_utc", cert.not_valid_after_utc)
-    if not_after.tzinfo is None:
-        not_after = not_after.replace(tzinfo=timezone.utc)
+    # cryptography >= 42 exposes timezone-aware *_utc properties; older releases
+    # only have the (now deprecated) naive not_valid_* properties. Branch on
+    # availability with hasattr. Do NOT use
+    # getattr(cert, "not_valid_after_utc", cert.not_valid_after_utc): the default
+    # expression is evaluated eagerly, so it raises AttributeError /
+    # CryptographyDeprecationWarning even when the _utc property is present
+    # (root cause of the Python 3.13+ startup crash).
+    if hasattr(cert, "not_valid_before_utc"):
+        not_before = cert.not_valid_before_utc
+        not_after = cert.not_valid_after_utc
+    else:  # pragma: no cover - exercised only on cryptography < 42
+        not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
+        not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
     days_remaining = int((not_after - now).total_seconds() // 86400)
     return CertificateInfo(not_before, not_after, days_remaining)
