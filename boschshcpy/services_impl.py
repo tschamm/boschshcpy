@@ -140,6 +140,10 @@ class RoomClimateControlService(SHCDeviceService):
         else:
             return False
 
+    @property
+    def has_demand(self) -> bool:
+        return bool(self.state.get("hasDemand", False))
+
     def summary(self):
         super().summary()
         print(f"    Operation Mode           : {self.operation_mode}")

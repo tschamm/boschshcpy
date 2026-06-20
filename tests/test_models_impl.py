@@ -999,6 +999,24 @@ class TestSHCClimateControl:
         d = self._make(room_control="HEATING")
         assert d.room_control_mode == "HEATING"
 
+    def test_has_demand_true(self):
+        """hasDemand=True in state → has_demand property returns True."""
+        d = self._make()
+        d._roomclimatecontrol_service._raw_state["hasDemand"] = True
+        assert d.has_demand is True
+
+    def test_has_demand_false(self):
+        """hasDemand=False in state → has_demand property returns False."""
+        d = self._make()
+        d._roomclimatecontrol_service._raw_state["hasDemand"] = False
+        assert d.has_demand is False
+
+    def test_has_demand_absent_defaults_false(self):
+        """hasDemand absent from state → has_demand defaults to False."""
+        d = self._make()
+        d._roomclimatecontrol_service._raw_state.pop("hasDemand", None)
+        assert d.has_demand is False
+
 
 # ---------------------------------------------------------------------------
 # SHCHeatingCircuit

@@ -2048,3 +2048,44 @@ def test_blinds_scene_only_angle_present_level_defaults():
     svc = _make_svc(BlindsSceneControlService, {"angle": 45.0})
     assert svc.angle == 45.0
     assert svc.level == 0.0
+
+
+# ---------------------------------------------------------------------------
+# RoomClimateControlService.has_demand
+# ---------------------------------------------------------------------------
+
+class _FakeRCCService:
+    """Minimal stub so we can test has_demand without network/SHC."""
+    def __init__(self, state):
+        self.state = state
+
+
+def _make_rcc_service(state):
+    from boschshcpy.services_impl import RoomClimateControlService
+    svc = RoomClimateControlService.__new__(RoomClimateControlService)
+    svc._state = state
+    # Patch .state property access (services_impl uses self.state dict directly)
+    type(svc).state = property(lambda self: self._state)
+    return svc
+
+
+def test_has_demand_true():
+    svc = _make_rcc_service({"hasDemand": True})
+    assert svc.has_demand is True
+
+
+def test_has_demand_false():
+    svc = _make_rcc_service({"hasDemand": False})
+    assert svc.has_demand is False
+
+
+def test_has_demand_absent_defaults_false():
+    """Missing hasDemand key → defaults to False."""
+    svc = _make_rcc_service({})
+    assert svc.has_demand is False
+
+
+def test_has_demand_truthy_int():
+    """Non-bool truthy value in state is coerced to True."""
+    svc = _make_rcc_service({"hasDemand": 1})
+    assert svc.has_demand is True

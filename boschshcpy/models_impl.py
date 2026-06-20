@@ -658,6 +658,10 @@ class SHCClimateControl(_TemperatureLevel):
     def supports_cooling(self) -> bool:
         return self._roomclimatecontrol_service.supports_cooling
 
+    @property
+    def has_demand(self) -> bool:
+        return self._roomclimatecontrol_service.has_demand
+
 
 class SHCHeatingCircuit(SHCDevice):
     from .services_impl import HeatingCircuitService
