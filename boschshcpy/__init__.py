@@ -6,6 +6,7 @@ from .device_helper import (
     SHCCameraOutdoorGen2,
     SHCClimateControl,
     SHCDeviceHelper,
+    SHCHeatingCircuit,
     SHCLight,
     SHCMotionDetector,
     SHCMotionDetector2,
