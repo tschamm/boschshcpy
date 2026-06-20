@@ -48,11 +48,13 @@ def main():
     parser_service.add_argument("device_id", help="Specify the device id.")
     parser_service.add_argument("service_id", help="Specify the service id.")
 
-    args = parser.parse_args()
-
+    # Print help when called with no arguments (subparsers.required would
+    # otherwise make argparse exit with an error before we get here).
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit()
+
+    args = parser.parse_args()
 
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
     try:

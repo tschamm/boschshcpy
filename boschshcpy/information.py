@@ -159,6 +159,7 @@ class SHCInformation:
             )
         elif self.shcIpAddress is not None:
             host = self.shcIpAddress
+            mac_address = None
             try:
                 mac_address = get_mac_address(ip=host)
                 if not mac_address:

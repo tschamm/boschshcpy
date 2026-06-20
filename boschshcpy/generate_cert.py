@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -19,7 +19,7 @@ def generate_certificate(client_id, orgname) -> x509.Certificate:
         ]
     )
 
-    utc_now = datetime.utcnow()
+    utc_now = datetime.now(timezone.utc)
     cert = (
         x509.CertificateBuilder()
         .serial_number(1000)

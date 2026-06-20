@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from .api import SHCAPI
 
@@ -59,12 +59,12 @@ class SHCDeviceService:
 
     def short_poll(self):
         if self._last_update is None or (
-            datetime.utcnow() - self._last_update
+            datetime.now(timezone.utc) - self._last_update
         ) > timedelta(seconds=1):
             self._raw_device_service = self._api.get_device_service(
                 self.device_id, self.id
             )
-            self._last_update = datetime.utcnow()
+            self._last_update = datetime.now(timezone.utc)
             self._raw_state = (
                 self._raw_device_service["state"]
                 if "state" in self._raw_device_service

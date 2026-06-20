@@ -125,11 +125,12 @@ def main():
         default="boschshcpy_client",
     )
     parser.add_argument("-ip", "--ip_address", help="IP of the smart home controller.")
-    args = parser.parse_args()
 
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit()
+
+    args = parser.parse_args()
 
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
     helper = SHCRegisterClient(args.ip_address, args.password)
