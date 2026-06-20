@@ -11,7 +11,13 @@ def test_valvetappet_no_motor_error_member():
 
 
 def test_valvetappet_known_members_still_parse():
-    for value in ("NO_VALVE_BODY_ERROR", "IN_START_POSITION", "NOT_AVAILABLE"):
+    for value in (
+        "NO_VALVE_BODY_ERROR",
+        "NO_MOTOR_ERROR",
+        "VALVE_TOO_TIGHT",
+        "IN_START_POSITION",
+        "NOT_AVAILABLE",
+    ):
         assert ValveTappetService.State(value).value == value
 
 

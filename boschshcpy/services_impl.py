@@ -307,6 +307,7 @@ class ValveTappetService(SHCDeviceService):
         NOT_AVAILABLE = "NOT_AVAILABLE"
         NO_VALVE_BODY_ERROR = "NO_VALVE_BODY_ERROR"
         NO_MOTOR_ERROR = "NO_MOTOR_ERROR"
+        VALVE_TOO_TIGHT = "VALVE_TOO_TIGHT"
 
     @property
     def position(self) -> int:
