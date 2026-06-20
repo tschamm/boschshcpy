@@ -48,7 +48,7 @@ class SHCAPI:
         # Settings for all API calls
         self._requests_session = requests.Session()
         self._requests_session.mount(
-            "https://", HostNameIgnoringAdapter(pool_connections=20)
+            "https://", HostNameIgnoringAdapter(pool_connections=20, pool_maxsize=20)
         )
         self._requests_session.cert = (self._certificate, self._key)
         self._requests_session.headers.update(
