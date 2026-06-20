@@ -2863,3 +2863,73 @@ class TestOccupancyDetectionAbsent:
         svc._raw_state = svc._raw_device_service["state"]
         svc._last_update = None; svc._callbacks = {}; svc._event_callbacks = {}
         assert svc.lastOccupancyChangeTime == "n/a"
+
+
+# ---------------------------------------------------------------------------
+# BUG 1 — SHCMicromoduleRelay.impulse_length getter+setter crash when
+# relay_type == SWITCH (i.e. _impulseswitch_service is None).
+# Regression: confirmed AttributeError before fix, None-guarded after.
+# ---------------------------------------------------------------------------
+
+class TestSHCMicromoduleRelaySwitch:
+    """SWITCH relay has no ImpulseSwitch service — impulse_* must not crash."""
+
+    def _make_switch_relay(self):
+        from boschshcpy.models_impl import SHCMicromoduleRelay
+        from boschshcpy.services_impl import (
+            PowerSwitchService, CommunicationQualityService,
+            ChildProtectionService, PowerSwitchProgramService,
+        )
+
+        def _svc(cls, svc_id, state):
+            s = cls.__new__(cls)
+            s._api = None
+            s._raw_device_service = {"id": svc_id, "deviceId": "d1", "path": "/x", "state": state}
+            s._raw_state = state
+            s._last_update = None; s._callbacks = {}; s._event_callbacks = {}
+            return s
+
+        ps = _svc(PowerSwitchService, "PowerSwitch", {"@type": "x", "switchState": "ON", "automaticPowerOffTime": 0})
+        cq = _svc(CommunicationQualityService, "CommunicationQuality", {"@type": "x", "quality": "GOOD"})
+        cp = _svc(ChildProtectionService, "ChildProtection", {"@type": "x", "childLockActive": False})
+        prog = _svc(PowerSwitchProgramService, "PowerSwitchProgram", {"@type": "x", "operationMode": "MANUAL"})
+
+        obj = SHCMicromoduleRelay.__new__(SHCMicromoduleRelay)
+        obj._raw_device = _fake_raw_device(model="MICROMODULE_RELAY")
+        obj._device_services_by_id = {
+            "PowerSwitch": ps, "CommunicationQuality": cq,
+            "ChildProtection": cp, "PowerSwitchProgram": prog,
+        }
+        obj._callbacks = {}
+        obj._api = None
+        obj._powerswitch_service = ps
+        obj._communicationquality_service = cq
+        obj._childprotection_service = cp
+        obj._powerswitchprogram_service = prog
+        obj._impulseswitch_service = None  # SWITCH relay: no ImpulseSwitch service
+        return obj
+
+    def test_relay_type_is_switch_when_no_impulse_service(self):
+        from boschshcpy.models_impl import SHCMicromoduleRelay
+        d = self._make_switch_relay()
+        assert d.relay_type == SHCMicromoduleRelay.RelayType.SWITCH
+
+    def test_impulse_length_getter_returns_none_for_switch(self):
+        """Regression: AttributeError on None._impulseswitch_service.impulse_length."""
+        d = self._make_switch_relay()
+        assert d.impulse_length is None
+
+    def test_impulse_length_setter_noops_for_switch(self):
+        """Regression: AttributeError on None._impulseswitch_service.put_state_element."""
+        d = self._make_switch_relay()
+        d.impulse_length = 500  # must not raise
+
+    def test_instant_of_last_impulse_returns_none_for_switch(self):
+        """instant_of_last_impulse already had a guard — verify it still returns None."""
+        d = self._make_switch_relay()
+        assert d.instant_of_last_impulse is None
+
+    def test_trigger_impulse_state_noops_for_switch(self):
+        """trigger_impulse_state already had a guard — verify it still does not raise."""
+        d = self._make_switch_relay()
+        d.trigger_impulse_state()  # must not raise

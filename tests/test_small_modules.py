@@ -103,10 +103,11 @@ def test_shcinformation_update_state_available():
     assert info.updateState == SHCInformation.UpdateState.UPDATE_AVAILABLE
 
 
-def test_shcinformation_update_state_invalid_raises():
+def test_shcinformation_update_state_invalid_returns_none():
+    # BUG 4 fix: unknown swUpdateState values used to raise ValueError;
+    # after the fix they return None so HA doesn't crash on new FW.
     info = _make_shc_info(sw_state="INVALID_STATE")
-    with pytest.raises(ValueError):
-        _ = info.updateState
+    assert info.updateState is None
 
 
 def test_shcinformation_shc_ip_address():
@@ -690,6 +691,69 @@ def test_shclistener_zeroconf_error_in_get_service_info():
     listener.waiting = True
     listener.service_update(_FailZeroconf(), "_http._tcp.local.", "TestDevice._http._tcp.local.", ServiceStateChange.Added)
     assert listener.shc_services == {}
+
+
+# ===========================================================================
+# BUG 4 regression — SHCInformation.version / .updateState crash on missing
+# or unknown softwareUpdateState fields (older/newer FW).
+# Confirmed: KeyError + ValueError before fix; .get() + try/except after.
+# ===========================================================================
+
+def test_shcinformation_version_field_absent_returns_none():
+    """Regression: KeyError on pub_info['softwareUpdateState']['swInstalledVersion'] when absent."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    obj._pub_info = {}  # no softwareUpdateState at all
+    assert obj.version is None
+
+
+def test_shcinformation_version_sw_installed_absent_returns_none():
+    """Regression: KeyError when softwareUpdateState exists but swInstalledVersion missing."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    obj._pub_info = {"softwareUpdateState": {"swUpdateState": "NO_UPDATE_AVAILABLE"}}
+    assert obj.version is None
+
+
+def test_shcinformation_version_present_returns_value():
+    """Happy path: version returns the string when present."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    obj._pub_info = {"softwareUpdateState": {"swInstalledVersion": "9.40.102", "swUpdateState": "NO_UPDATE_AVAILABLE"}}
+    assert obj.version == "9.40.102"
+
+
+def test_shcinformation_update_state_field_absent_returns_none():
+    """Regression: KeyError on pub_info['softwareUpdateState']['swUpdateState'] when absent."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    obj._pub_info = {}  # no softwareUpdateState at all
+    assert obj.updateState is None
+
+
+def test_shcinformation_update_state_sw_update_state_absent_returns_none():
+    """Regression: swUpdateState key missing inside softwareUpdateState."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    obj._pub_info = {"softwareUpdateState": {"swInstalledVersion": "9.40.102"}}
+    assert obj.updateState is None
+
+
+def test_shcinformation_update_state_unknown_value_returns_none():
+    """Regression: ValueError on UpdateState('FUTURE_STATE') → None, not crash."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    obj._pub_info = {"softwareUpdateState": {"swInstalledVersion": "9.40.102", "swUpdateState": "FUTURE_BOSCH_STATE"}}
+    assert obj.updateState is None
+
+
+def test_shcinformation_update_state_known_values():
+    """Happy path: all four known UpdateState values parse correctly."""
+    from boschshcpy.information import SHCInformation
+    obj = SHCInformation.__new__(SHCInformation)
+    for val in ("NO_UPDATE_AVAILABLE", "DOWNLOADING", "UPDATE_IN_PROGRESS", "UPDATE_AVAILABLE"):
+        obj._pub_info = {"softwareUpdateState": {"swInstalledVersion": "9.40.102", "swUpdateState": val}}
+        assert obj.updateState == SHCInformation.UpdateState(val)
 
 
 def test_shclistener_bosch_shc_service_sets_waiting_false():

@@ -409,6 +409,55 @@ def test_domain_build_ids_model_mapping():
     assert MODEL_MAPPING["IDS"] is SHCIntrusionSystem
 
 
+# ===========================================================================
+# BUG 3 regression — bare Enum() calls raise ValueError on unknown values.
+# All three properties (arming_state, alarm_state, active_configuration_profile)
+# must return a safe default instead of crashing.
+#
+# Consumer (alarm_control_panel.py) impact analysis:
+#   arming_state unknown  → default SYSTEM_DISARMED → panel shows DISARMED (safe)
+#   alarm_state unknown   → default ALARM_OFF       → no false trigger (safe)
+#   profile unknown       → default FULL_PROTECTION → ARMED_AWAY sub-state (safe,
+#                           no worse than showing wrong sub-mode when already ARMED)
+#
+# alarm_state_incidents: spec marks "incidents" optional → KeyError fixed to .get([]).
+# ===========================================================================
+
+def test_ids_unknown_arming_state_returns_disarmed():
+    """Regression: ValueError on ArmingState('UNKNOWN_FUTURE') → safe DISARMED."""
+    svc = _make_ids()
+    svc._raw_arming_state = {"state": "UNKNOWN_FUTURE_VALUE", "remainingTimeUntilArmed": 0}
+    assert svc.arming_state == SHCIntrusionSystem.ArmingState.SYSTEM_DISARMED
+
+
+def test_ids_unknown_alarm_state_returns_alarm_off():
+    """Regression: ValueError on AlarmState('NEW_BOSCH_STATE') → safe ALARM_OFF."""
+    svc = _make_ids()
+    svc._raw_alarm_state = {"value": "NEW_BOSCH_STATE", "incidents": []}
+    assert svc.alarm_state == SHCIntrusionSystem.AlarmState.ALARM_OFF
+
+
+def test_ids_unknown_profile_returns_full_protection():
+    """Regression: ValueError on Profile(int('99')) → safe FULL_PROTECTION."""
+    svc = _make_ids()
+    svc._raw_active_configuration_profile = {"profileId": "99"}
+    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.FULL_PROTECTION
+
+
+def test_ids_non_int_profile_returns_full_protection():
+    """Regression: ValueError on Profile(int('custom')) → safe FULL_PROTECTION."""
+    svc = _make_ids()
+    svc._raw_active_configuration_profile = {"profileId": "custom"}
+    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.FULL_PROTECTION
+
+
+def test_ids_alarm_state_incidents_key_absent_no_keyerror():
+    """Regression: KeyError on _raw_alarm_state['incidents'] when key absent."""
+    svc = _make_ids()
+    svc._raw_alarm_state = {"value": "ALARM_OFF"}  # no 'incidents' key
+    assert svc.alarm_state_incidents == []
+
+
 def test_ids_summary(capsys):
     svc = _make_ids()
     svc.summary()

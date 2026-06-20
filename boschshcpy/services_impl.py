@@ -565,7 +565,7 @@ class BlindsControlService(SHCDeviceService):
 class BlindsSceneControlService(SHCDeviceService):
     @property
     def level(self) -> float:
-        return self.state["level"]
+        return self.state.get("level", 0.0)
 
     @level.setter
     def level(self, value: float):
@@ -573,7 +573,7 @@ class BlindsSceneControlService(SHCDeviceService):
 
     @property
     def angle(self) -> float:
-        return self.state["angle"]
+        return self.state.get("angle", 0.0)
 
     @angle.setter
     def angle(self, value: float):

@@ -299,10 +299,14 @@ class SHCMicromoduleRelay(
 
     @property
     def impulse_length(self) -> int:
+        if self._impulseswitch_service is None:
+            return None
         return self._impulseswitch_service.impulse_length
 
     @impulse_length.setter
     def impulse_length(self, impulse_length: int):
+        if self._impulseswitch_service is None:
+            return
         self._impulseswitch_service.put_state_element("impulseLength", impulse_length)
 
     @property

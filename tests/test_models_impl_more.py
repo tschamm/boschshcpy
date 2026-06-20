@@ -698,7 +698,8 @@ class TestMicromoduleBlinds:
 
     def test_blinds_type(self):
         obj, _ = self._make()
-        assert obj.blinds_type == "EXTERIOR_BLINDS"               # line 405
+        from boschshcpy.services_impl import BlindsControlService
+        assert obj.blinds_type == BlindsControlService.BlindsType.EXTERIOR_BLINDS
 
     def test_stop_blinds(self):
         obj, calls = self._make()

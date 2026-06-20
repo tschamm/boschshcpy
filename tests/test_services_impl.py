@@ -2016,3 +2016,35 @@ def test_battery_level_multiple_faults_uses_first():
     faults = {"entries": [{"type": "LOW_BATTERY"}, {"type": "CRITICAL_LOW"}]}
     svc = _make_svc(BatteryLevelService, {}, faults=faults)
     assert svc.warningLevel == BatteryLevelService.State.LOW_BATTERY
+
+
+# ===========================================================================
+# BUG 2 regression — BlindsSceneControlService.level/.angle KeyError when
+# the spec-optional fields are absent from the state dict.
+# Confirmed: KeyError before fix; .get("level", 0.0) / .get("angle", 0.0) after.
+# ===========================================================================
+
+def test_blinds_scene_level_absent_defaults_zero():
+    """Regression: KeyError on state['level'] when 'level' key missing."""
+    svc = _make_svc(BlindsSceneControlService, {})
+    assert svc.level == 0.0
+
+
+def test_blinds_scene_angle_absent_defaults_zero():
+    """Regression: KeyError on state['angle'] when 'angle' key missing."""
+    svc = _make_svc(BlindsSceneControlService, {})
+    assert svc.angle == 0.0
+
+
+def test_blinds_scene_only_level_present_angle_defaults():
+    """level present, angle absent — angle must not KeyError."""
+    svc = _make_svc(BlindsSceneControlService, {"level": 0.75})
+    assert svc.level == 0.75
+    assert svc.angle == 0.0
+
+
+def test_blinds_scene_only_angle_present_level_defaults():
+    """angle present, level absent — level must not KeyError."""
+    svc = _make_svc(BlindsSceneControlService, {"angle": 45.0})
+    assert svc.angle == 45.0
+    assert svc.level == 0.0
