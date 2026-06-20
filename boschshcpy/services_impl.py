@@ -504,15 +504,24 @@ class ShutterControlService(SHCDeviceService):
 
     @property
     def operation_state(self) -> State:
+        # Shutter Control I (old model) does not report an operationState at all
+        # — only Shutter Control II does. Per the Bosch API spec (Shutter-local
+        # vs Shutter-II), treat its absence as STOPPED so consumers that read
+        # operation_state on every update don't crash with a KeyError.
+        if "operationState" not in self.state:
+            return self.State.STOPPED
         return self.State(self.state["operationState"])
 
     @property
     def calibrated(self) -> bool:
-        return self.state["calibrated"]
+        # Shutter Control I does not expose `calibrated`; default to False.
+        return self.state.get("calibrated", False)
 
     @property
     def level(self) -> float:
-        return self.state["level"] if "level" in self.state else 0.0
+        # Shutter Control I reports level as a STRING ("0.000".."1.000"); Shutter
+        # Control II as a number. Coerce to float so position math works for both.
+        return float(self.state.get("level", 0.0))
 
     def summary(self):
         super().summary()

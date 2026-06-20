@@ -1918,3 +1918,45 @@ def test_shutter_control_init_via_constructor():
     svc = ShutterControlService(api=api, raw_device_service=raw)
     assert svc.operation_state == ShutterControlService.State.STOPPED
     assert svc.calibrated is True
+
+
+# ---------------------------------------------------------------------------
+# Regression: issue #311 — Shutter Control I (old model) has no operationState
+# and reports level as a string. The cover integration reads operation_state on
+# every update, so a KeyError there makes the entity stop working.
+# Confirmed against the Bosch API spec (Shutter-local vs Shutter-II).
+# ---------------------------------------------------------------------------
+
+def test_shutter_control_i_missing_operation_state_returns_stopped():
+    """Shutter Control I state has no operationState -> STOPPED, never KeyError."""
+    svc = _make_svc(ShutterControlService, {"level": "1.000"})
+    assert svc.operation_state == ShutterControlService.State.STOPPED
+
+
+def test_shutter_control_ii_operation_state_parsed():
+    """Shutter Control II still parses its operationState normally."""
+    svc = _make_svc(ShutterControlService, {"operationState": "MOVING", "level": 0.5})
+    assert svc.operation_state == ShutterControlService.State.MOVING
+
+
+def test_shutter_control_i_level_string_coerced_to_float():
+    """Shutter Control I reports level as a string -> coerced to float."""
+    svc = _make_svc(ShutterControlService, {"level": "1.000"})
+    assert svc.level == 1.0
+    assert isinstance(svc.level, float)
+
+
+def test_shutter_control_ii_level_number_preserved():
+    svc = _make_svc(ShutterControlService, {"level": 0.59, "operationState": "STOPPED"})
+    assert svc.level == 0.59
+
+
+def test_shutter_control_level_absent_defaults_zero():
+    svc = _make_svc(ShutterControlService, {})
+    assert svc.level == 0.0
+
+
+def test_shutter_control_i_calibrated_absent_false():
+    """Shutter Control I does not expose `calibrated` -> default False, no KeyError."""
+    svc = _make_svc(ShutterControlService, {"level": "0.500"})
+    assert svc.calibrated is False
