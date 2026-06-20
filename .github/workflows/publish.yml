@@ -1,15 +1,22 @@
 name: Publish to PyPI
 
-# Builds and publishes to PyPI on a version tag, using PyPI Trusted Publishing
-# (OIDC) — no API token/secret stored in the repo.
+# Publishes to PyPI via PyPI Trusted Publishing (OIDC) — no API token/secret.
 #
-# ONE-TIME SETUP (PyPI side): on https://pypi.org/manage/project/boschshcpy/settings/publishing/
-# add a GitHub trusted publisher: owner=tschamm, repo=boschshcpy,
-# workflow=publish.yml. After that, pushing a `vX.Y.Z` tag publishes automatically.
+# DISABLED ON TAGS until the trusted publisher is configured PyPI-side. The
+# project Owner (tschamm) must add it once at
+# https://pypi.org/manage/project/boschshcpy/settings/publishing/ —
+# provider GitHub, owner=tschamm, repo=boschshcpy, workflow=publish.yml,
+# environment blank. Auto-publishing on a tag without that config only produces
+# a red "invalid-publisher" run, so until then releases are published manually
+# (twine) and this workflow is run on demand via "Run workflow".
+#
+# AFTER the trusted publisher exists: switch the trigger back to
+#   on:\n    push:\n      tags: ["v*"]
+# and tag-pushes will publish automatically (and `skip-existing` keeps it green
+# if a version was already uploaded manually).
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
@@ -27,3 +34,7 @@ jobs:
           python -m build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Tolerate a version that was already uploaded (e.g. via the manual
+          # twine fallback during the OIDC transition) instead of failing.
+          skip-existing: true
