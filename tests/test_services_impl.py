@@ -484,7 +484,7 @@ def test_blinds_target_angle_setter():
 
 def test_blinds_type():
     svc = _make_svc(BlindsControlService, {"currentAngle": 0.0, "targetAngle": 0.0, "blindsType": "DEGREE_90"})
-    assert svc.blinds_type == "DEGREE_90"
+    assert svc.blinds_type == BlindsControlService.BlindsType.DEGREE_90
 
 
 # ===========================================================================
@@ -1960,3 +1960,59 @@ def test_shutter_control_i_calibrated_absent_false():
     """Shutter Control I does not expose `calibrated` -> default False, no KeyError."""
     svc = _make_svc(ShutterControlService, {"level": "0.500"})
     assert svc.calibrated is False
+
+
+# ===========================================================================
+# BUG #311 regression tests — crash on spec-allowed values / missing optional fields
+# ===========================================================================
+
+
+def test_pir_sensor_motion_sensitivity_unknown():
+    """BUG 1: MotionSensitivity.UNKNOWN missing — crash when Bosch sends it."""
+    svc = _make_svc(PirSensorConfigurationService, {"motionSensitivity": "UNKNOWN"})
+    assert svc.motionSensitivity == PirSensorConfigurationService.MotionSensitivity.UNKNOWN
+
+
+def test_poll_control_state_unknown():
+    """BUG 2: PollControlState.UNKNOWN missing — crash when Bosch sends it."""
+    svc = _make_svc(PollControlService, {"longPollInterval": "UNKNOWN"})
+    assert svc.longPollInterval == PollControlService.PollControlState.UNKNOWN
+
+
+def test_detection_test_state_unknown():
+    """BUG 3: DetectionState.DETECTION_TEST_UNKNOWN missing — crash when Bosch sends it."""
+    svc = _make_svc(DetectionTestService, {"detectionState": "DETECTION_TEST_UNKNOWN"})
+    assert svc.detection_state == DetectionTestService.DetectionState.DETECTION_TEST_UNKNOWN
+
+
+def test_blinds_type_degree_360():
+    """BUG 4a: BlindsType.DEGREE_360 missing — crash on Shutter-II device."""
+    svc = _make_svc(BlindsControlService, {"blindsType": "DEGREE_360", "currentAngle": 45.0, "targetAngle": 90.0})
+    assert svc.blinds_type == BlindsControlService.BlindsType.DEGREE_360
+
+
+def test_blinds_optional_fields_absent_no_keyerror():
+    """BUG 4b: currentAngle/targetAngle/blindsType optional — KeyError on empty state."""
+    svc = _make_svc(BlindsControlService, {})
+    assert svc.current_angle == 0.0
+    assert svc.target_angle == 0.0
+    assert svc.blinds_type is None
+
+
+def test_room_climate_supports_boost_mode_absent():
+    """BUG 5: supportsBoostMode optional — KeyError when field absent."""
+    svc = _make_svc(RoomClimateControlService, {})
+    assert svc.supports_boost_mode is False
+
+
+def test_battery_level_empty_faults_entries_no_assert():
+    """BUG 6a: assert len==1 crashes on 0 entries — should return OK."""
+    svc = _make_svc(BatteryLevelService, {}, faults={"entries": []})
+    assert svc.warningLevel == BatteryLevelService.State.OK
+
+
+def test_battery_level_multiple_faults_uses_first():
+    """BUG 6b: assert len==1 crashes on 2+ entries — should use first entry."""
+    faults = {"entries": [{"type": "LOW_BATTERY"}, {"type": "CRITICAL_LOW"}]}
+    svc = _make_svc(BatteryLevelService, {}, faults=faults)
+    assert svc.warningLevel == BatteryLevelService.State.LOW_BATTERY

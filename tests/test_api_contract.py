@@ -88,12 +88,9 @@ ENUM_MAP = {
 # guessed semantic is not). Tracked here so the test stays green AND the gap is
 # visible; a NEW gap (not in this list) fails the test loudly.
 KNOWN_DISCREPANCIES = {
-    "motionSensitivity": {"UNKNOWN"},
-    "blindsType": {"DEGREE_360"},
     "detectionState": {
         "DETECTION_STATE_START",
         "DETECTION_STATE_STOP",
-        "DETECTION_TEST_UNKNOWN",
     },
 }
 

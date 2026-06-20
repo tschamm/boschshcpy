@@ -131,7 +131,7 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def supports_boost_mode(self) -> bool:
-        return self.state["supportsBoostMode"]
+        return self.state.get("supportsBoostMode", False)
 
     @property
     def show_setpoint_temperature(self) -> bool:
@@ -534,22 +534,27 @@ class BlindsControlService(SHCDeviceService):
     class BlindsType(Enum):
         DEGREE_90 = "DEGREE_90"
         DEGREE_180 = "DEGREE_180"
+        DEGREE_360 = "DEGREE_360"
+        EXTERIOR_BLINDS = "EXTERIOR_BLINDS"
 
     @property
     def current_angle(self) -> float:
-        return self.state["currentAngle"]
+        return self.state.get("currentAngle", 0.0)
 
     @property
     def target_angle(self) -> float:
-        return self.state["targetAngle"]
+        return self.state.get("targetAngle", 0.0)
 
     @target_angle.setter
     def target_angle(self, value: float):
         self.put_state_element("targetAngle", value)
 
     @property
-    def blinds_type(self) -> BlindsType:
-        return self.state["blindsType"]
+    def blinds_type(self):
+        raw = self.state.get("blindsType")
+        if raw is None:
+            return None
+        return self.BlindsType(raw)
 
     def summary(self):
         super().summary()
@@ -726,6 +731,7 @@ class DetectionTestService(SHCDeviceService):
     class DetectionState(Enum):
         DETECTION_TEST_STARTED = "DETECTION_TEST_STARTED"
         DETECTION_TEST_STOPPED = "DETECTION_TEST_STOPPED"
+        DETECTION_TEST_UNKNOWN = "DETECTION_TEST_UNKNOWN"
 
     @property
     def detection_state(self) -> DetectionState:
@@ -764,6 +770,7 @@ class PollControlService(SHCDeviceService):
     class PollControlState(Enum):
         LONG = "LONG"
         SHORT = "SHORT"
+        UNKNOWN = "UNKNOWN"
     
     @property
     def longPollInterval(self) -> PollControlState:
@@ -779,6 +786,7 @@ class PirSensorConfigurationService(SHCDeviceService):
         HIGH = "HIGH"
         MIDDLE = "MIDDLE"
         LOW = "LOW"
+        UNKNOWN = "UNKNOWN"
    
     @property
     def motionSensitivity(self) -> MotionSensitivity:
@@ -910,10 +918,8 @@ class BatteryLevelService(SHCDeviceService):
             if "faults" in self._raw_device_service
             else None
         )
-        if not faults:
+        if not faults or not faults.get("entries"):
             return self.State("OK")
-        assert len(faults["entries"]) == 1
-        assert "type" in faults["entries"][0]
         return self.State(faults["entries"][0]["type"])
 
     def summary(self):
