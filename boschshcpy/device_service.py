@@ -57,7 +57,7 @@ class SHCDeviceService:
     def put_state_element(self, key, value):
         self.put_state({key: value})
 
-    def short_poll(self):
+    def short_poll(self, fire_callbacks=False):
         if self._last_update is None or (
             datetime.now(timezone.utc) - self._last_update
         ) > timedelta(seconds=1):
@@ -70,6 +70,25 @@ class SHCDeviceService:
                 if "state" in self._raw_device_service
                 else {}
             )
+            # #183: after a poll-id resubscribe (the SHC rotates poll IDs ~every
+            # 24 h) the session refresh loop calls device.update(fire_callbacks=
+            # True) → short_poll(fire_callbacks=True) for every service so that
+            # listeners (e.g. HA entity on_state_changed closures) receive any
+            # state that changed during the gap.  Without firing callbacks the
+            # entities stay visually stale ("wired to a dead pipe").
+            #
+            # fire_callbacks defaults to False so the ordinary HA poll path
+            # (SHCSwitch.update() → device.update() on should_poll=True camera
+            # switches, every ~30 s) keeps its quiet pre-fix behaviour: HA reads
+            # the refreshed _raw_state via the entity property and writes its own
+            # state itself.  Firing here on every poll would fan out redundant
+            # schedule_update_ha_state() calls to every co-registered entity.
+            # At initial setup _callbacks is empty, so firing is a no-op anyway.
+            if fire_callbacks:
+                for cb in list(self._callbacks):
+                    fn = self._callbacks.get(cb)
+                    if fn is not None:
+                        fn()
 
     def process_long_polling_poll_result(self, raw_result):
         assert raw_result["@type"] == "DeviceServiceData"

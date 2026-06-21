@@ -126,9 +126,9 @@ class SHCDevice:
             else None
         )
 
-    def update(self):
+    def update(self, fire_callbacks=False):
         for service in self.device_services:
-            service.short_poll()
+            service.short_poll(fire_callbacks=fire_callbacks)
 
     def summary(self):
         print(f"Device: {self.id}")

@@ -605,6 +605,170 @@ class TestSHCDeviceServiceShortPoll:
         assert svc._last_update is not None
         assert svc._last_update.tzinfo is not None  # aware, not naive utcnow()
 
+    # --- #183: short_poll(fire_callbacks=True) notifies HA on the resubscribe path ---
+
+    def test_short_poll_fires_callbacks_when_opted_in(self):
+        """#183: short_poll(fire_callbacks=True) must invoke all registered
+        callbacks after updating _raw_state.
+
+        This is the core of the resubscribe-refresh fix: session.py calls
+        device.update(fire_callbacks=True) → service.short_poll(fire_callbacks=
+        True) after a poll-id resubscribe.  Without firing callbacks the HA
+        entity closures are never invoked and the device stays visually stale.
+        """
+        api = _fake_api()
+        new_raw = _raw_service(
+            "PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"}
+        )
+        api.get_device_service.return_value = new_raw
+        state = {"@type": "powerSwitchState", "switchState": "ON"}
+        raw = _raw_service("PowerSwitch", state=state)
+        svc = SHCDeviceService(api=api, raw_device_service=raw)
+
+        fired = []
+        svc.subscribe_callback("entity-a", lambda: fired.append("a"))
+        svc.subscribe_callback("entity-b", lambda: fired.append("b"))
+
+        svc.short_poll(fire_callbacks=True)
+
+        assert set(fired) == {"a", "b"}, "Both callbacks must fire when opted in"
+        # State was updated first, then callbacks fired
+        assert svc.state["switchState"] == "OFF"
+
+    def test_short_poll_default_does_not_fire_callbacks(self):
+        """REGRESSION (bug-hunt): the ordinary HA poll path calls short_poll()
+        with the default fire_callbacks=False — it must update _raw_state but
+        NOT fire callbacks.  Firing on every ~30 s poll of a should_poll=True
+        camera switch would fan out redundant schedule_update_ha_state() calls
+        to every co-registered entity on the device."""
+        api = _fake_api()
+        new_raw = _raw_service(
+            "PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"}
+        )
+        api.get_device_service.return_value = new_raw
+        state = {"@type": "powerSwitchState", "switchState": "ON"}
+        raw = _raw_service("PowerSwitch", state=state)
+        svc = SHCDeviceService(api=api, raw_device_service=raw)
+
+        fired = []
+        svc.subscribe_callback("entity-a", lambda: fired.append("a"))
+
+        svc.short_poll()  # default fire_callbacks=False
+
+        assert fired == [], "Default short_poll must NOT fire callbacks"
+        # but state IS refreshed so HA's own poll write picks up the new value
+        assert svc.state["switchState"] == "OFF"
+
+    def test_short_poll_no_callbacks_registered_is_noop(self):
+        """At initial setup _callbacks is empty; short_poll(fire_callbacks=True)
+        must not raise."""
+        api = _fake_api()
+        api.get_device_service.return_value = _raw_service(
+            "PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"}
+        )
+        raw = _raw_service("PowerSwitch", state={"@type": "powerSwitchState", "switchState": "ON"})
+        svc = SHCDeviceService(api=api, raw_device_service=raw)
+        assert svc._callbacks == {}
+
+        svc.short_poll(fire_callbacks=True)  # must not raise
+
+        assert svc.state["switchState"] == "OFF"
+
+    def test_short_poll_throttled_does_not_fire_callbacks(self):
+        """A throttled short_poll (within 1 s) must NOT fire callbacks even when
+        opted in (no API call, no state change)."""
+        api = _fake_api()
+        new_raw = _raw_service(
+            "PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"}
+        )
+        api.get_device_service.return_value = new_raw
+        state = {"@type": "powerSwitchState", "switchState": "ON"}
+        raw = _raw_service("PowerSwitch", state=state)
+        svc = SHCDeviceService(api=api, raw_device_service=raw)
+
+        fired = []
+        svc.subscribe_callback("entity-a", lambda: fired.append("a"))
+
+        svc.short_poll(fire_callbacks=True)  # first call — fires
+        assert fired == ["a"]
+
+        # Second call within 1 s — throttled; no API call, no callback
+        fired.clear()
+        svc.short_poll(fire_callbacks=True)
+        assert fired == [], "Throttled short_poll must not fire callbacks"
+
+    def test_short_poll_callback_unsubscribe_during_iteration_is_safe(self):
+        """Unsubscribing a callback from within another callback during short_poll
+        must not raise RuntimeError (list() snapshot semantics)."""
+        api = _fake_api()
+        api.get_device_service.return_value = _raw_service(
+            "PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"}
+        )
+        raw = _raw_service("PowerSwitch", state={"@type": "powerSwitchState", "switchState": "ON"})
+        svc = SHCDeviceService(api=api, raw_device_service=raw)
+
+        calls = []
+
+        def cb_a():
+            calls.append("a")
+            svc.unsubscribe_callback("entity-b")  # mutate dict while iterating
+
+        def cb_b():
+            calls.append("b")
+
+        svc.subscribe_callback("entity-a", cb_a)
+        svc.subscribe_callback("entity-b", cb_b)
+
+        svc.short_poll(fire_callbacks=True)  # must not raise RuntimeError
+
+        assert "a" in calls  # cb_a always fires
+
+    def test_device_update_fire_callbacks_propagates_to_services(self):
+        """Via SHCDevice.update(fire_callbacks=True): every service fires its own
+        callbacks; with the default it stays quiet."""
+        api = _fake_api()
+        svc1_raw = _raw_service("PowerSwitch", state={"@type": "powerSwitchState", "switchState": "ON"})
+        svc2_raw = _raw_service("PowerMeter", device_id="dev-1",
+                                state={"@type": "powerMeterState", "powerConsumption": 0.0})
+        svc1_updated = _raw_service("PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"})
+        svc2_updated = _raw_service("PowerMeter", device_id="dev-1",
+                                    state={"@type": "powerMeterState", "powerConsumption": 10.5})
+
+        def get_device_service_side_effect(device_id, service_id):
+            return svc1_updated if service_id == "PowerSwitch" else svc2_updated
+
+        api.get_device_service.side_effect = get_device_service_side_effect
+
+        dev = _make_device(services=[svc1_raw, svc2_raw], api=api)
+
+        fired = []
+        dev.device_service("PowerSwitch").subscribe_callback("e1", lambda: fired.append("switch"))
+        dev.device_service("PowerMeter").subscribe_callback("e2", lambda: fired.append("meter"))
+
+        dev.update(fire_callbacks=True)
+
+        assert "switch" in fired
+        assert "meter" in fired
+
+    def test_device_update_default_quiet(self):
+        """REGRESSION: SHCDevice.update() with the default must NOT fire any
+        callbacks (the ordinary HA poll path)."""
+        api = _fake_api()
+        svc_raw = _raw_service("PowerSwitch", state={"@type": "powerSwitchState", "switchState": "ON"})
+        svc_updated = _raw_service("PowerSwitch", state={"@type": "powerSwitchState", "switchState": "OFF"})
+        api.get_device_service.return_value = svc_updated
+
+        dev = _make_device(services=[svc_raw], api=api)
+
+        fired = []
+        dev.device_service("PowerSwitch").subscribe_callback("e1", lambda: fired.append("switch"))
+
+        dev.update()  # default fire_callbacks=False
+
+        assert fired == [], "Default device.update() must stay quiet"
+        # state still refreshed
+        assert dev.device_service("PowerSwitch").state["switchState"] == "OFF"
+
 
 # ---------------------------------------------------------------------------
 # SHCDeviceService — summary smoke test

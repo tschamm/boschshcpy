@@ -1156,8 +1156,10 @@ class TestResubscribeRefresh:
         result = s._long_poll()
 
         assert result is True
-        dev1.update.assert_called_once()
-        dev2.update.assert_called_once()
+        # #183: resubscribe refresh must opt in to callback firing so HA entity
+        # closures are notified of state that changed during the poll-id gap.
+        dev1.update.assert_called_once_with(fire_callbacks=True)
+        dev2.update.assert_called_once_with(fire_callbacks=True)
 
     def test_refresh_not_called_again_on_next_normal_poll(self):
         """After one resubscribe-refresh cycle, subsequent polls must NOT re-refresh."""

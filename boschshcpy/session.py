@@ -178,7 +178,11 @@ class SHCSession:
                 )
                 for device in list(self._devices_by_id.values()):
                     try:
-                        device.update()
+                        # fire_callbacks=True so listeners (HA entity closures)
+                        # are notified of any state that changed during the
+                        # poll-id gap (#183).  The ordinary HA poll path calls
+                        # device.update() without this flag and stays quiet.
+                        device.update(fire_callbacks=True)
                     except Exception as ex:  # noqa: BLE001
                         logger.warning(
                             "Short-poll refresh failed for device %s after resubscribe: %s",
