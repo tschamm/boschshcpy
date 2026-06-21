@@ -1,40 +1,60 @@
 name: Publish to PyPI
 
-# Publishes to PyPI via PyPI Trusted Publishing (OIDC) — no API token/secret.
+# Two-job build → publish, mirroring the camera-tool release pipeline.
+# Publishes via PyPI Trusted Publishing (OIDC) — no API token/secret.
 #
-# DISABLED ON TAGS until the trusted publisher is configured PyPI-side. The
-# project Owner (tschamm) must add it once at
+# TRIGGER: kept on workflow_dispatch (manual) until the PyPI Trusted Publisher
+# is registered for this project. The Owner (tschamm) adds it once at
 # https://pypi.org/manage/project/boschshcpy/settings/publishing/ —
-# provider GitHub, owner=tschamm, repo=boschshcpy, workflow=publish.yml,
-# environment blank. Auto-publishing on a tag without that config only produces
-# a red "invalid-publisher" run, so until then releases are published manually
-# (twine) and this workflow is run on demand via "Run workflow".
+#   provider GitHub · owner=tschamm · repo=boschshcpy ·
+#   workflow=publish.yml · environment=pypi
+# Auto-publishing on a tag BEFORE that config only yields a red
+# "invalid-publisher" run, so releases stay manual (twine) for now.
 #
-# AFTER the trusted publisher exists: switch the trigger back to
-#   on:\n    push:\n      tags: ["v*"]
-# and tag-pushes will publish automatically (and `skip-existing` keeps it green
-# if a version was already uploaded manually).
+# AFTER the trusted publisher exists: uncomment the `push: tags` trigger below.
+# `skip-existing: true` keeps it green if a version was already uploaded
+# manually during the transition.
 
 on:
   workflow_dispatch:
+  # push:
+  #   tags: ["v*.*.*"]
 
 jobs:
-  build-and-publish:
+  build:
+    name: Build distribution
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # required for trusted publishing (OIDC)
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Build
-        run: |
-          python -m pip install --upgrade pip build
-          python -m build
+      - name: Install build
+        run: python -m pip install --upgrade build
+      - name: Build wheel and sdist
+        run: python -m build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # required for trusted publishing (OIDC)
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # Tolerate a version that was already uploaded (e.g. via the manual
-          # twine fallback during the OIDC transition) instead of failing.
+          # Tolerate a version already uploaded via the manual twine fallback.
           skip-existing: true

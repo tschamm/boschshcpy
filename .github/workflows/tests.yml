@@ -4,6 +4,10 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -13,11 +17,13 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: setup.py
       - name: Install
         run: |
           python -m pip install --upgrade pip
@@ -26,5 +32,7 @@ jobs:
       - name: Test
         run: pytest tests/ -q
       - name: Lint (informational)
+        # Pre-existing F401 re-exports in __init__.py keep this non-blocking,
+        # matching upstream's flake8-only convention.
         continue-on-error: true
         run: flake8 --max-line-length=100 --extend-ignore=E501,W503 boschshcpy
