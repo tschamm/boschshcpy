@@ -23,10 +23,23 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
-    def __init__(self, controller_ip: str, certificate, key, lazy=False, zeroconf=None):
+    def __init__(
+        self,
+        controller_ip: str,
+        certificate,
+        key,
+        lazy=False,
+        zeroconf=None,
+        long_poll_timeout: int = 10,
+        verify_hostname: bool = False,
+    ):
         # API
+        self._long_poll_timeout = long_poll_timeout
         self._api = SHCAPI(
-            controller_ip=controller_ip, certificate=certificate, key=key
+            controller_ip=controller_ip,
+            certificate=certificate,
+            key=key,
+            verify_hostname=verify_hostname,
         )
         self._device_helper = SHCDeviceHelper(self._api)
 
@@ -153,7 +166,9 @@ class SHCSession:
     def _initialize_emma(self):
         self._emma = SHCEmma(self._api, self._shc_information, None)
 
-    def _long_poll(self, wait_seconds=10):
+    def _long_poll(self, wait_seconds=None):
+        if wait_seconds is None:
+            wait_seconds = self._long_poll_timeout
         resubscribed = False
         if self._poll_id is None:
             self._poll_id = self.api.long_polling_subscribe()
@@ -315,7 +330,7 @@ class SHCSession:
                         time.sleep(15.0)
 
             self._polling_thread = threading.Thread(
-                target=polling_thread_main, name="SHCPollingThread"
+                target=polling_thread_main, name="SHCPollingThread", daemon=True
             )
             self._polling_thread.start()
 
@@ -326,7 +341,17 @@ class SHCSession:
         if self._polling_thread is not None:
             logger.debug(f"Unsubscribing from long poll")
             self._stop_polling_thread = True
-            self._polling_thread.join()
+            # The polling thread may be blocked inside a long-poll HTTP call
+            # (timeout = long_poll_timeout + 5). Bound the join so an in-flight
+            # poll can't wedge HA shutdown for the full timeout; the daemon
+            # thread is reaped by the interpreter if it outlives the join.
+            self._polling_thread.join(timeout=self._long_poll_timeout + 10)
+            if self._polling_thread.is_alive():
+                logger.warning(
+                    "Long-poll thread did not stop within %ss; it will be "
+                    "reaped on interpreter exit",
+                    self._long_poll_timeout + 10,
+                )
 
             self._maybe_unsubscribe()
             self._polling_thread = None

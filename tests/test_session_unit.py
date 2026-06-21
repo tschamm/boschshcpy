@@ -33,6 +33,7 @@ def _bare_session() -> SHCSession:
     s._poll_id = None
     s._shc_information = None
     s._zeroconf = None
+    s._long_poll_timeout = 10
     s._rooms_by_id = {}
     s._scenarios_by_id = {}
     s._devices_by_id = {}

@@ -58,12 +58,13 @@ def _patched_init(lazy=False, zeroconf=None):
 
 class TestInitApiConstruction:
     def test_shcapi_called_with_correct_args(self):
-        """Line 28-30: SHCAPI(controller_ip=..., certificate=..., key=...) called."""
+        """SHCAPI called with controller_ip/certificate/key and verify_hostname=False."""
         _, _, mock_api_class, *_ = _patched_init(lazy=True)
         mock_api_class.assert_called_once_with(
             controller_ip="192.0.2.1",
             certificate="/fake/cert.pem",
             key="/fake/key.pem",
+            verify_hostname=False,
         )
 
     def test_api_attribute_is_shcapi_instance(self):

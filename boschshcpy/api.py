@@ -37,7 +37,7 @@ class HostNameIgnoringAdapter(HTTPAdapter):
 
 
 class SHCAPI:
-    def __init__(self, controller_ip: str, certificate, key):
+    def __init__(self, controller_ip: str, certificate, key, verify_hostname: bool = False):
         self._certificate = certificate
         self._key = key
         self._controller_ip = controller_ip
@@ -47,9 +47,11 @@ class SHCAPI:
 
         # Settings for all API calls
         self._requests_session = requests.Session()
-        self._requests_session.mount(
-            "https://", HostNameIgnoringAdapter(pool_connections=20, pool_maxsize=20)
-        )
+        if verify_hostname:
+            adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20)
+        else:
+            adapter = HostNameIgnoringAdapter(pool_connections=20, pool_maxsize=20)
+        self._requests_session.mount("https://", adapter)
         self._requests_session.cert = (self._certificate, self._key)
         self._requests_session.headers.update(
             {"api-version": "3.2", "Content-Type": "application/json"}
