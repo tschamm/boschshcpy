@@ -514,28 +514,6 @@ class TestPutEndpoints:
         with pytest.raises(SHCSessionError):
             api.put_device_service_state("d", "s", {})
 
-    # put_shading_shutters_stop -------------------------------------------------
-    def test_put_shading_shutters_stop_url(self):
-        api = _make_api()
-        api._requests_session.put.return_value = _fake_response(None)
-        api.put_shading_shutters_stop("hdm:ZigBee:shutter1")
-        url = api._requests_session.put.call_args[0][0]
-        assert url == f"{_API_ROOT}/shading/shutters/hdm:ZigBee:shutter1/stop"
-
-    def test_put_shading_shutters_stop_sends_none_body(self):
-        api = _make_api()
-        api._requests_session.put.return_value = _fake_response(None)
-        api.put_shading_shutters_stop("hdm:ZigBee:shutter1")
-        _, kwargs = api._requests_session.put.call_args
-        assert json.loads(kwargs["data"]) is None
-
-    def test_put_shading_shutters_stop_nok_raises(self):
-        api = _make_api()
-        api._requests_session.put.return_value = _fake_response(None, status_code=403)
-        with pytest.raises(SHCSessionError):
-            api.put_shading_shutters_stop("hdm:ZigBee:shutter1")
-
-
 # ──────────────────────────────────────────────────────────────────────────────
 # POST endpoint methods
 # ──────────────────────────────────────────────────────────────────────────────

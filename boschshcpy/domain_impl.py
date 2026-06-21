@@ -22,6 +22,7 @@ class SHCIntrusionSystem:
         ALARM_ON = "ALARM_ON"
         ALARM_MUTED = "ALARM_MUTED"
         PRE_ALARM = "PRE_ALARM"
+        UNKNOWN = "UNKNOWN"
 
     class Profile(Enum):
         FULL_PROTECTION = 0
@@ -36,7 +37,9 @@ class SHCIntrusionSystem:
         self._raw_active_configuration_profile = raw_domain_state[
             "activeConfigurationProfile"
         ]
-        self._raw_security_gap_state = raw_domain_state["securityGapState"]
+        self._raw_security_gap_state = raw_domain_state.get(
+            "securityGapState", {"securityGaps": []}
+        )
         self._root_device_id = root_device_id
 
         self._callbacks = {}
@@ -145,7 +148,9 @@ class SHCIntrusionSystem:
         self._raw_active_configuration_profile = raw_domain_state[
             "activeConfigurationProfile"
         ]
-        self._raw_security_gap_state = raw_domain_state["securityGapState"]
+        self._raw_security_gap_state = raw_domain_state.get(
+            "securityGapState", {"securityGaps": []}
+        )
 
     def process_long_polling_poll_result(self, raw_result):
         if raw_result["@type"] == "armingState":

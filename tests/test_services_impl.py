@@ -500,7 +500,9 @@ def test_blinds_scene_level_setter():
     svc = _make_svc(BlindsSceneControlService, {"level": 0.5, "angle": 0.0})
     svc.level = 1.0
     svc._api.put_device_service_state.assert_called_once_with(
-        "test-device", "BlindsSceneControlService", {"@type": "testType", "level": 1.0}
+        "test-device",
+        "BlindsSceneControlService",
+        {"@type": "testType", "level": 1.0, "angle": 0.0},
     )
 
 
@@ -513,7 +515,9 @@ def test_blinds_scene_angle_setter():
     svc = _make_svc(BlindsSceneControlService, {"level": 0.0, "angle": 0.0})
     svc.angle = 60.0
     svc._api.put_device_service_state.assert_called_once_with(
-        "test-device", "BlindsSceneControlService", {"@type": "testType", "angle": 60.0}
+        "test-device",
+        "BlindsSceneControlService",
+        {"@type": "testType", "angle": 60.0, "level": 0.0},
     )
 
 

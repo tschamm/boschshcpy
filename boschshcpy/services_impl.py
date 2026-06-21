@@ -573,7 +573,8 @@ class BlindsSceneControlService(SHCDeviceService):
 
     @level.setter
     def level(self, value: float):
-        self.put_state_element("level", value)
+        # Spec requires both level + angle in the BlindsSceneControl PUT.
+        self.put_state({"level": value, "angle": self.angle})
 
     @property
     def angle(self) -> float:
@@ -581,7 +582,8 @@ class BlindsSceneControlService(SHCDeviceService):
 
     @angle.setter
     def angle(self, value: float):
-        self.put_state_element("angle", value)
+        # Spec requires both level + angle in the BlindsSceneControl PUT.
+        self.put_state({"angle": value, "level": self.level})
 
     def summary(self):
         super().summary()

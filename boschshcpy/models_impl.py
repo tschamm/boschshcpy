@@ -434,7 +434,9 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
         return self._blindscontrol_service.blinds_type
 
     def stop_blinds(self):
-        self._api.put_shading_shutters_stop(self.id)
+        # Spec-correct STOP: PUT ShutterControl/state operationState=STOPPED
+        # (the old /shading/shutters/{id}/stop endpoint is not in the API).
+        self._service.put_state_element("operationState", "STOPPED")
 
 
 class SHCShutterContact(SHCBatteryDevice):

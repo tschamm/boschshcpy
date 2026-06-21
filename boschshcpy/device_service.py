@@ -62,7 +62,7 @@ class SHCDeviceService:
             datetime.now(timezone.utc) - self._last_update
         ) > timedelta(seconds=1):
             self._raw_device_service = self._api.get_device_service(
-                self.device_id, self.id
+                self.device_id.replace("#", "%23"), self.id
             )
             self._last_update = datetime.now(timezone.utc)
             self._raw_state = (

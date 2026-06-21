@@ -53,7 +53,6 @@ def _mock_api():
     calls = []
     api = SimpleNamespace(
         put_device_service_state=lambda dev, svc, body: calls.append((dev, svc, body)),
-        put_shading_shutters_stop=lambda dev_id: calls.append(("stop", dev_id)),
     )
     return api, calls
 
@@ -702,9 +701,13 @@ class TestMicromoduleBlinds:
         assert obj.blinds_type == BlindsControlService.BlindsType.EXTERIOR_BLINDS
 
     def test_stop_blinds(self):
+        from unittest.mock import MagicMock
         obj, calls = self._make()
-        obj.stop_blinds()                                         # line 408
-        assert ("stop", obj.id) in calls
+        obj._service.put_state_element = MagicMock()
+        obj.stop_blinds()
+        obj._service.put_state_element.assert_called_once_with(
+            "operationState", "STOPPED"
+        )
 
 
 # ---------------------------------------------------------------------------
