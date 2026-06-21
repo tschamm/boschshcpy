@@ -91,12 +91,19 @@ class SHCDeviceService:
                         fn()
 
     def process_long_polling_poll_result(self, raw_result):
-        assert raw_result["@type"] == "DeviceServiceData"
+        # Defensive: skip malformed/mismatched results rather than assert
+        # (asserts vanish under -O and an AssertionError would kill the poll
+        # thread for this service permanently on a firmware schema change).
+        if raw_result.get("@type") != "DeviceServiceData":
+            return
         self._raw_device_service = raw_result  # Update device service data
 
         if "state" in self._raw_device_service:
-            if self.state:
-                assert raw_result["state"]["@type"] == self.state["@type"]
+            if (
+                self.state
+                and raw_result["state"].get("@type") != self.state.get("@type")
+            ):
+                return
             self._raw_state = raw_result["state"]  # Update state
 
             for callback in list(self._callbacks):
@@ -108,8 +115,9 @@ class SHCDeviceService:
 
     def _process_events(self, raw_result):
         if raw_result["id"] == "Keypad":
-            if raw_result["state"]["keyName"] in self._event_callbacks:
-                self._event_callbacks[raw_result["state"]["keyName"]]()
+            key_name = raw_result.get("state", {}).get("keyName")
+            if key_name in self._event_callbacks:
+                self._event_callbacks[key_name]()
         if raw_result["id"] == "LatestMotion":
             if raw_result["deviceId"] in self._event_callbacks:
                 self._event_callbacks[raw_result["deviceId"]]()

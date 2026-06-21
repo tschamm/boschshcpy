@@ -480,7 +480,9 @@ class TestSHCDeviceServiceCallbacks:
 # ---------------------------------------------------------------------------
 
 class TestSHCDeviceServiceLongPoll:
-    def test_wrong_at_type_assertion(self):
+    def test_wrong_inner_at_type_is_skipped(self):
+        # A mismatched inner state @type is now defensively skipped (no crash,
+        # no state corruption) rather than raising AssertionError.
         state = {"@type": "powerSwitchState", "switchState": "ON"}
         svc = _make_service("PowerSwitch", state=state)
         poll = {
@@ -490,8 +492,9 @@ class TestSHCDeviceServiceLongPoll:
             "path": "/devices/dev-1/services/PowerSwitch",
             "state": {"@type": "WRONG_TYPE", "switchState": "OFF"},
         }
-        with pytest.raises(AssertionError):
-            svc.process_long_polling_poll_result(poll)
+        svc.process_long_polling_poll_result(poll)  # must not raise
+        # original state preserved (not overwritten by the wrong-typed payload)
+        assert svc.state["switchState"] == "ON"
 
     def test_no_state_in_poll_skips_callback(self):
         """When poll result has no 'state' key, callbacks must NOT fire."""
@@ -509,10 +512,10 @@ class TestSHCDeviceServiceLongPoll:
         svc.process_long_polling_poll_result(poll)
         assert fired == []
 
-    def test_process_long_polling_wrong_outer_type_raises(self):
+    def test_process_long_polling_wrong_outer_type_is_skipped(self):
+        # Wrong outer @type is now defensively skipped instead of asserting.
         svc = _make_service()
-        with pytest.raises(AssertionError):
-            svc.process_long_polling_poll_result({"@type": "WRONG"})
+        svc.process_long_polling_poll_result({"@type": "WRONG"})  # no raise
 
 
 # ---------------------------------------------------------------------------

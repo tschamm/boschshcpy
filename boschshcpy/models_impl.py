@@ -879,6 +879,14 @@ class SHCMotionDetector2(SHCBatteryDevice):
     def motion_sensitivity(self) -> PirSensorConfigurationService.MotionSensitivity:
         return self._pirsensorconfiguration_service.motionSensitivity
 
+    @motion_sensitivity.setter
+    def motion_sensitivity(
+        self, value: PirSensorConfigurationService.MotionSensitivity
+    ):
+        self._pirsensorconfiguration_service.put_state_element(
+            "motionSensitivity", value.name
+        )
+
     @property
     def occupied(self) -> bool:
         return self._occupancydetection_service.isOccupied
@@ -902,6 +910,14 @@ class SHCMotionDetector2(SHCBatteryDevice):
     @property
     def last_tamper_time(self) -> str:
         return self._latesttamper_service.last_tamper_time
+
+    @property
+    def was_tampered(self) -> bool:
+        return self._latesttamper_service.was_tampered
+
+    @property
+    def tamper_protection_enabled(self) -> bool:
+        return self._latesttamper_service.tamper_protection_enabled
 
 
 class SHCTwinguard(SHCBatteryDevice):

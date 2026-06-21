@@ -4,7 +4,7 @@ import logging
 
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
+from urllib3.poolmanager import PoolManager
 
 from .exceptions import SHCConnectionError, SHCSessionError
 
@@ -61,8 +61,11 @@ class SHCAPI:
         )
 
         import urllib3
+        from urllib3.exceptions import InsecureRequestWarning
 
-        urllib3.disable_warnings()
+        # Scope to InsecureRequestWarning only — a process-wide disable would
+        # also silence legitimate SSL warnings from other HA integrations.
+        urllib3.disable_warnings(InsecureRequestWarning)
 
     @property
     def controller_ip(self):

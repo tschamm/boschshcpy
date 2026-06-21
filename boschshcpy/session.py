@@ -235,8 +235,12 @@ class SHCSession:
                 )
             return
         if raw_result["@type"] == "message":
-            assert "arguments" in raw_result
-            if "deviceServiceDataModel" in raw_result["arguments"]:
+            # The SHC can emit messages without "arguments" (e.g. during boot /
+            # firmware update); guard instead of asserting so the poll thread
+            # survives and -O builds don't KeyError.
+            if "arguments" in raw_result and (
+                "deviceServiceDataModel" in raw_result["arguments"]
+            ):
                 raw_data_model = json.loads(
                     raw_result["arguments"]["deviceServiceDataModel"]
                 )

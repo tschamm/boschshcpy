@@ -66,6 +66,11 @@ class SHCInformation:
         DOWNLOADING = "DOWNLOADING"
         UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
         UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
+        # Spec (ShcInfo) values that were missing — without them updateState
+        # returns None for these and .name access elsewhere would crash.
+        INSTALLING = "INSTALLING"
+        UPDATE_SUCCESS = "UPDATE_SUCCESS"
+        UPDATE_FAILED = "UPDATE_FAILED"
 
     def __init__(self, api, authenticate=True, zeroconf=None):
         self._api = api
@@ -197,7 +202,7 @@ class SHCInformation:
         print(f"  shcIpAddress       : {self.shcIpAddress}")
         print(f"  macAddress         : {self.macAddress}")
         print(f"  SW-Version         : {self.version}")
-        print(f"  updateState        : {self.updateState.name}")
+        print(f"  updateState        : {self.updateState.name if self.updateState else 'N/A'}")
         print(f"  uniqueId           : {self.unique_id}")
         print(f"  name               : {self.name}")
 
