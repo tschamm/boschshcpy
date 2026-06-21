@@ -290,6 +290,18 @@ class SHCAPIAsync:
             api_url, expected_element_type="scenario"
         )
 
+    async def get_userdefinedstates(self) -> Any:
+        api_url = f"{self._api_root}/userdefinedstates"
+        return await self._get_api_result_or_fail(
+            api_url, expected_element_type="userDefinedState"
+        )
+
+    async def get_messages(self) -> Any:
+        api_url = f"{self._api_root}/messages"
+        return await self._get_api_result_or_fail(
+            api_url, expected_element_type="message"
+        )
+
     async def get_devices(self) -> Any:
         api_url = f"{self._api_root}/devices"
         return await self._get_api_result_or_fail(

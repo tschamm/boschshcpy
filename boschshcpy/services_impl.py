@@ -83,11 +83,11 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def ventilation_mode(self) -> bool:
-        return self.state["ventilationMode"]
+        return self.state.get("ventilationMode", False)
 
     @property
     def low(self) -> bool:
-        return self.state["low"]
+        return self.state.get("low", False)
 
     @low.setter
     def low(self, value: bool):
@@ -95,7 +95,7 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def boost_mode(self) -> bool:
-        return self.state["boostMode"]
+        return self.state.get("boostMode", False)
 
     @boost_mode.setter
     def boost_mode(self, value: bool):
@@ -103,7 +103,7 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def summer_mode(self) -> bool:
-        return self.state["summerMode"]
+        return self.state.get("summerMode", False)
 
     @summer_mode.setter
     def summer_mode(self, value: bool) -> bool:
@@ -135,10 +135,7 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def show_setpoint_temperature(self) -> bool:
-        if "showSetpointTemperature" in self.state.keys():
-            return self.state["showSetpointTemperature"]
-        else:
-            return False
+        return self.state.get("showSetpointTemperature", False)
 
     @property
     def has_demand(self) -> bool:
@@ -200,19 +197,19 @@ class HeatingCircuitService(SHCDeviceService):
 
     @property
     def temperature_override_mode_active(self) -> bool:
-        return self.state["temperatureOverrideModeActive"]
+        return self.state.get("temperatureOverrideModeActive", False)
 
     @property
     def temperature_override_feature_enabled(self) -> bool:
-        return self.state["temperatureOverrideFeatureEnabled"]
+        return self.state.get("temperatureOverrideFeatureEnabled", False)
 
     @property
     def energy_saving_feature_enabled(self) -> bool:
-        return self.state["energySavingFeatureEnabled"]
+        return self.state.get("energySavingFeatureEnabled", False)
 
     @property
     def on(self) -> bool:
-        return self.state["on"]
+        return self.state.get("on", False)
 
     def summary(self):
         super().summary()
@@ -337,7 +334,7 @@ class PowerSwitchService(SHCDeviceService):
 
     @property
     def powerofftime(self) -> int:
-        return int(self.state["automaticPowerOffTime"])
+        return int(self.state.get("automaticPowerOffTime", 0))
 
     def summary(self):
         super().summary()
@@ -382,6 +379,10 @@ class PowerSwitchProgramService(SHCDeviceService):
     @property
     def value(self) -> State:
         return self.State(self.state["operationMode"])
+
+    @value.setter
+    def value(self, state: State):
+        self.put_state_element("operationMode", state.value)
 
     def summary(self):
         super().summary()
@@ -879,6 +880,10 @@ class AirQualityLevelService(SHCDeviceService):
     @property
     def purityRating(self) -> RatingState:
         return self.RatingState(self.state["purityRating"])
+
+    @property
+    def comfortZone(self) -> dict:
+        return self.state.get("comfortZone", {})
 
     def summary(self):
         super().summary()

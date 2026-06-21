@@ -684,3 +684,57 @@ class TestGetInformationErrorSwallowing:
 
         result = asyncio.run(api.get_information())
         assert result is None
+
+
+# ---------------------------------------------------------------------------
+# get_userdefinedstates + get_messages (new in 0.2.127)
+# ---------------------------------------------------------------------------
+
+class TestNewAsyncMethods:
+    """Cover get_userdefinedstates and get_messages added in 0.2.127."""
+
+    def test_get_userdefinedstates_url(self, cert_and_key_paths: tuple[str, str]) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(
+            body=[{"@type": "userDefinedState", "id": "uds1", "name": "MyState"}]
+        )
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_userdefinedstates())
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/userdefinedstates"
+        assert result[0]["@type"] == "userDefinedState"
+
+    def test_get_userdefinedstates_wrong_type_raises(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body=[{"@type": "device"}])
+        api._session.get = MagicMock(return_value=resp)
+
+        with pytest.raises(SHCSessionError, match="Unexpected @type"):
+            asyncio.run(api.get_userdefinedstates())
+
+    def test_get_messages_url(self, cert_and_key_paths: tuple[str, str]) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(
+            body=[{"@type": "message", "id": "msg1", "messageCode": {"name": "TILT_DETECTED"}}]
+        )
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_messages())
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/messages"
+        assert result[0]["@type"] == "message"
+
+    def test_get_messages_wrong_type_raises(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body=[{"@type": "device"}])
+        api._session.get = MagicMock(return_value=resp)
+
+        with pytest.raises(SHCSessionError, match="Unexpected @type"):
+            asyncio.run(api.get_messages())

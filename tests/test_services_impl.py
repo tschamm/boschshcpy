@@ -2067,9 +2067,8 @@ class _FakeRCCService:
 def _make_rcc_service(state):
     from boschshcpy.services_impl import RoomClimateControlService
     svc = RoomClimateControlService.__new__(RoomClimateControlService)
-    svc._state = state
-    # Patch .state property access (services_impl uses self.state dict directly)
-    type(svc).state = property(lambda self: self._state)
+    # Use the standard _raw_state attribute that SHCDeviceService.state reads
+    svc._raw_state = state
     return svc
 
 
