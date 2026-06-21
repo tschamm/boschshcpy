@@ -16,6 +16,14 @@ class SHCDeviceService:
 
         self._callbacks = {}
         self._event_callbacks = {}
+        # Baseline event timestamp (Keypad eventTimestamp / LatestMotion
+        # latestMotionDetected), seeded from the construction snapshot so the
+        # first post-subscribe poll of that same last event is suppressed
+        # (prevents replaying the last button press on every HA restart). A
+        # genuine new event (newer timestamp) still fires — see _process_events.
+        self._last_event_timestamp = self._raw_state.get(
+            "eventTimestamp"
+        ) or self._raw_state.get("latestMotionDetected")
 
     @property
     def id(self):
@@ -113,11 +121,36 @@ class SHCDeviceService:
 
             self._process_events(raw_result)
 
+    def _is_replayed_event(self, timestamp):
+        """True if this event must be suppressed (replay on (re)subscribe).
+
+        The SHC's first long-poll snapshot after a subscribe carries the
+        service's *current* state — i.e. the last button press / last motion —
+        which must not be dispatched as a fresh event (it would re-fire
+        automations on every HA restart). The first snapshot only establishes
+        a baseline; an event fires only once its timestamp advances past it.
+        """
+        if timestamp is None:
+            return False  # no timestamp to compare → preserve old behavior
+        if self._last_event_timestamp is None:
+            self._last_event_timestamp = timestamp
+            return True
+        if timestamp <= self._last_event_timestamp:
+            return True
+        self._last_event_timestamp = timestamp
+        return False
+
     def _process_events(self, raw_result):
         if raw_result["id"] == "Keypad":
-            key_name = raw_result.get("state", {}).get("keyName")
+            state = raw_result.get("state", {})
+            if self._is_replayed_event(state.get("eventTimestamp")):
+                return
+            key_name = state.get("keyName")
             if key_name in self._event_callbacks:
                 self._event_callbacks[key_name]()
         if raw_result["id"] == "LatestMotion":
+            state = raw_result.get("state", {})
+            if self._is_replayed_event(state.get("latestMotionDetected")):
+                return
             if raw_result["deviceId"] in self._event_callbacks:
                 self._event_callbacks[raw_result["deviceId"]]()

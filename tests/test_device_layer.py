@@ -1215,3 +1215,43 @@ class TestSHCDeviceHelperSingletonDevices:
         fake = MagicMock()
         helper._devices_by_model["SMOKE_DETECTION_SYSTEM"]["wrongKey"] = fake
         assert helper.smoke_detection_system is None
+
+
+class TestKeypadEventReplaySuppression:
+    """Restart-replay bug: the post-subscribe snapshot must not re-fire the last press."""
+
+    def test_replayed_keypad_event_is_suppressed_then_new_one_fires(self):
+        # Service constructed from the snapshot of the last press (ts=1000).
+        state = {"@type": "keypadState", "keyName": "UPPER_BUTTON",
+                 "eventType": "PRESS_SHORT", "eventTimestamp": 1000}
+        svc = _make_service("Keypad", device_id="kp-1", state=state)
+        fired = []
+        svc.register_event("UPPER_BUTTON", lambda: fired.append("up"))
+
+        # 1) Post-subscribe snapshot replays the SAME last press → must NOT fire.
+        replay = {"@type": "DeviceServiceData", "id": "Keypad", "deviceId": "kp-1",
+                  "path": "/devices/kp-1/services/Keypad",
+                  "state": {"@type": "keypadState", "keyName": "UPPER_BUTTON",
+                            "eventType": "PRESS_SHORT", "eventTimestamp": 1000}}
+        svc.process_long_polling_poll_result(replay)
+        assert fired == []
+
+        # 2) A genuine new press (newer timestamp) → fires.
+        new = {"@type": "DeviceServiceData", "id": "Keypad", "deviceId": "kp-1",
+               "path": "/devices/kp-1/services/Keypad",
+               "state": {"@type": "keypadState", "keyName": "UPPER_BUTTON",
+                         "eventType": "PRESS_SHORT", "eventTimestamp": 2000}}
+        svc.process_long_polling_poll_result(new)
+        assert fired == ["up"]
+
+    def test_motion_replay_suppressed(self):
+        state = {"@type": "latestMotionState", "latestMotionDetected": "2026-06-21T10:00:00Z"}
+        svc = _make_service("LatestMotion", device_id="md-1", state=state)
+        fired = []
+        svc.register_event("md-1", lambda: fired.append("m"))
+        replay = {"@type": "DeviceServiceData", "id": "LatestMotion", "deviceId": "md-1",
+                  "path": "/devices/md-1/services/LatestMotion",
+                  "state": {"@type": "latestMotionState",
+                            "latestMotionDetected": "2026-06-21T10:00:00Z"}}
+        svc.process_long_polling_poll_result(replay)
+        assert fired == []
