@@ -1114,3 +1114,117 @@ class TestPollIdResubscribeCycle:
         assert result2 is True
         assert s._poll_id == "fresh-id"
         s._api.long_polling_subscribe.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Resubscribe-refresh: device.update() called on all devices after re-subscribe
+# (#183 — state snapshot after poll-id invalidation)
+# ---------------------------------------------------------------------------
+
+class TestResubscribeRefresh:
+    """Verify that _long_poll calls device.update() on every known device after
+    a fresh subscribe (poll_id was None at entry) and NOT on a normal poll.
+
+    Limitation: this validates the call path; it cannot test that the SHC
+    actually returns updated state (that requires a live device).
+    """
+
+    def test_no_refresh_on_normal_poll(self):
+        """When poll_id is already set, device.update() must NOT be called."""
+        s = _bare_session()
+        s._poll_id = "existing-id"
+        dev = MagicMock()
+        s._devices_by_id["hdm:D1"] = dev
+        s._api.long_polling_poll.return_value = []
+
+        s._long_poll()
+
+        dev.update.assert_not_called()
+
+    def test_refresh_called_on_all_devices_after_resubscribe(self):
+        """When poll_id is None (first call or after -32001), device.update() must
+        be called once per registered device after the fresh subscribe succeeds."""
+        s = _bare_session()
+        s._poll_id = None
+        dev1 = MagicMock()
+        dev2 = MagicMock()
+        s._devices_by_id["hdm:D1"] = dev1
+        s._devices_by_id["hdm:D2"] = dev2
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+
+        result = s._long_poll()
+
+        assert result is True
+        dev1.update.assert_called_once()
+        dev2.update.assert_called_once()
+
+    def test_refresh_not_called_again_on_next_normal_poll(self):
+        """After one resubscribe-refresh cycle, subsequent polls must NOT re-refresh."""
+        s = _bare_session()
+        s._poll_id = None
+        dev = MagicMock()
+        s._devices_by_id["hdm:D1"] = dev
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+
+        # First call: resubscribe → refresh
+        s._long_poll()
+        assert dev.update.call_count == 1
+
+        # Second call: poll_id already set → no refresh
+        s._api.long_polling_poll.return_value = []
+        s._long_poll()
+        assert dev.update.call_count == 1  # unchanged
+
+    def test_refresh_called_again_after_second_invalidation(self):
+        """A second -32001 → invalidate → resubscribe cycle must also trigger refresh."""
+        s = _bare_session()
+        dev = MagicMock()
+        s._devices_by_id["hdm:D1"] = dev
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+
+        # Cycle 1
+        s._poll_id = None
+        s._long_poll()
+        update_count_after_first = dev.update.call_count
+        assert update_count_after_first == 1
+
+        # Simulate -32001 during a normal poll
+        err = JSONRPCError(-32001, "UNKNOWN_POLLID")
+        s._api.long_polling_poll.side_effect = err
+        s._long_poll()  # invalidates poll_id → False
+        assert s._poll_id is None
+
+        # Cycle 2: resubscribe → second refresh
+        s._api.long_polling_poll.side_effect = None
+        s._api.long_polling_poll.return_value = []
+        s._long_poll()
+        assert dev.update.call_count == 2  # one per resubscribe
+
+    def test_refresh_device_update_exception_does_not_abort_poll(self):
+        """If device.update() raises, _long_poll must still return True (logged, not re-raised)."""
+        s = _bare_session()
+        s._poll_id = None
+        dev = MagicMock()
+        dev.update.side_effect = OSError("connection refused")
+        s._devices_by_id["hdm:D1"] = dev
+        s._api.long_polling_subscribe.return_value = "fresh-id"
+        s._api.long_polling_poll.return_value = []
+
+        result = s._long_poll()
+
+        assert result is True  # exception swallowed; poll did not abort
+        dev.update.assert_called_once()
+
+    def test_refresh_with_no_devices_is_noop(self):
+        """Resubscribe with empty device dict must not raise (no devices to refresh)."""
+        s = _bare_session()
+        s._poll_id = None
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+
+        result = s._long_poll()
+
+        assert result is True
