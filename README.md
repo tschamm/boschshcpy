@@ -1,194 +1,206 @@
 # Bosch Smart Home Controller API Python Library
 
-This library implements the local communication REST API for the Bosch Smart Home Controller system. It supports both long and short polling. The API documentation is available [here](https://github.com/BoschSmartHome/bosch-shc-api-docs).
+[![PyPI version](https://img.shields.io/pypi/v/boschshcpy.svg)](https://pypi.org/project/boschshcpy/)
+[![BuyMeCoffee][buymecoffeebadge-tschamm]][buymecoffee-tschamm]
+[![BuyMeCoffee][buymecoffeebadge-mosandlts]][buymecoffee-mosandlts]
 
-The following device services are implemented:
+Python client library for the Bosch Smart Home Controller (SHC) local REST API.
+Communicates directly with the controller over mutual-TLS on the local network — no cloud, no Bosch account required.
+The official API documentation is available at [github.com/BoschSmartHome/bosch-shc-api-docs](https://github.com/BoschSmartHome/bosch-shc-api-docs).
 
-* ```TemperatureLevel```
-* ```HumidityLevel```
-* ```RoomClimateControl```
-* ```ShutterContact```
-* ```ValveTappet```
-* ```PowerSwitch```
-* ```PowerMeter```
-* ```Routing```
-* ```PowerSwitchProgram```
-* ```PresenceSimulationConfiguration```
-* ```BinarySwitch```
-* ```SmokeDetectorCheck```
-* ```Alarm```
-* ```ShutterControl```
-* ```CameraLight```
-* ```PrivacyMode```
-* ```CameraNotification```
-* ```IntrusionDetectionControl```
-* ```Keypad```
-* ```LatestMotion```
-* ```AirQualityLevel```
-* ```SurveillanceAlarm```
-* ```BatteryLevel```
-* ```Thermostat```
-* ```WaterLeakageSensor```
-* ```WaterLeakageSensorTilt```
-* and more
+## Install
 
-The following device models are implemented, using the above services:
+Requires Python ≥ 3.10.
 
-* ```ShutterContact```, ```ShutterContact2```
-* ```ShutterControl```, ```Micromodule Shutter```
-* ```SmartPlug```
-* ```SmartPlugCompact```
-* ```LightControl```, ```Micromodule Light Control```, ```Micromodule Light Attached```, ```Micromodule Relay```
-* ```SmokeDetector```
-* ```CameraEyes```, ```Camera360```
-* ```IntrusionDetectionSystem```
-* ```RoomClimateControl```
-* ```Thermostat```, ```Thermostat2```
-* ```WallThermostat```
-* ```UniversalSwitch```
-* ```MotionDetector```
-* ```PresenceSimulationSystem```
-* ```Twinguard```
-* ```WaterLeakageSensor```
-
-## Command line access to SHC
-1. Install a `python` (>=3.10) environment on your computer.
-2. Install latest version of `boschshcpy`, you should have at least `version>=0.2.45`.
 ```bash
 pip install boschshcpy
 ```
 
-### Registering a new client
+Current PyPI version: **0.2.122**
 
-To register a new client, use the script `boschshc_registerclient`:
-```bash
-boschshc_registerclient -ip _your_shc_ip_ -pw _your_shc_password_
+## Supported device services
+
+```
+TemperatureLevel, HumidityLevel, RoomClimateControl, ShutterContact,
+ValveTappet, PowerSwitch, PowerMeter, Routing, PowerSwitchProgram,
+PresenceSimulationConfiguration, BinarySwitch, SmokeDetectorCheck, Alarm,
+ShutterControl, CameraLight, PrivacyMode, CameraNotification,
+IntrusionDetectionControl, Keypad, LatestMotion, AirQualityLevel,
+SurveillanceAlarm, BatteryLevel, Thermostat, WaterLeakageSensor,
+WaterLeakageSensorTilt, HeatingCircuit, and more
 ```
 
-This will register your client and will write the associated certificate/key pair into your working directory. See also [Usage Guide](#usage-guide)
+## Supported device models
 
-### Rawscans
+| Model key | Description |
+|---|---|
+| `SWD` / `SWD2` / `SWD2_PLUS` / `SWD2_DUAL` | Shutter Contact Gen 1 + Gen 2 (incl. 2 Plus, Dual) |
+| `BBL` | Shutter Control |
+| `MICROMODULE_SHUTTER` / `MICROMODULE_AWNING` | Micromodule Shutter / Awning |
+| `MICROMODULE_BLINDS` | Micromodule Blinds (with tilt) |
+| `PSM` | Smart Plug |
+| `PLUG_COMPACT` / `PLUG_COMPACT_DUAL` | Smart Plug Compact |
+| `BSM` | Light Switch BSM |
+| `MICROMODULE_LIGHT_CONTROL` / `MICROMODULE_LIGHT_ATTACHED` | Micromodule Light Control / Attached |
+| `MICROMODULE_RELAY` | Micromodule Relay (switch and impulse types) |
+| `MICROMODULE_DIMMER` | Micromodule Dimmer |
+| `SD` / `SMOKE_DETECTOR2` | Smoke Detector Gen 1 + Gen 2 |
+| `SMOKE_DETECTION_SYSTEM` | Smoke Detection System |
+| `CAMERA_EYES` | Camera Eyes |
+| `CAMERA_360` | Camera 360 |
+| `CAMERA_OUTDOOR_GEN2` | Camera Outdoor Gen 2 |
+| `ROOM_CLIMATE_CONTROL` | Room Climate Control (thermostat group) |
+| `HEATING_CIRCUIT` | Heating Circuit |
+| `TRV` / `TRV_GEN2` / `TRV_GEN2_DUAL` | Thermostat (Radiator Valve) Gen 1 + Gen 2 |
+| `THB` / `BWTH` / `BWTH24` | Wall Thermostat |
+| `RTH2_BAT` / `RTH2_230` | Room Thermostat 2 |
+| `WRC2` / `SWITCH2` | Universal Switch |
+| `MD` / `MD2` | Motion Detector Gen 1 + Gen 2 [+M] |
+| `PRESENCE_SIMULATION_SERVICE` | Presence Simulation System |
+| `TWINGUARD` | Twinguard (smoke + air quality) |
+| `WLS` | Water Leakage Sensor |
+| `LEDVANCE_LIGHT` / `HUE_LIGHT` | LEDVANCE / Hue lights (via SHC) |
 
-To make a rawscan of your devices, use the script `boschshc_rawscan`
+## Usage
 
-#### Make a rawscan of the public information
+### Register a new client
+
+Press and hold the button on the SHC controller until the LED starts flashing (registration mode).
+Then run:
+
 ```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ public_information
+boschshc_registerclient -ip YOUR_SHC_IP -pw YOUR_SHC_PASSWORD
 ```
 
-#### Make a rawscan of all devices
-```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ devices
-```
+This writes a certificate/key pair (`cert.pem` / `key.pem`) to the working directory.
 
-#### Make a rawscan of a single device with a known `device_id`
-```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ device _your_device_id_
-```
+More details: [Bosch API docs — register a client](https://github.com/BoschSmartHome/bosch-shc-api-docs/tree/master/postman#register-a-new-client-to-the-bosch-smart-home-controller)
 
-An exemplary output looks as follows:
-```bash
-    {
-        "@type": "device",
-        "rootDeviceId": "xx-xx-xx-xx-xx-xx",
-        "id": "hdm:HomeMaticIP:30xxx",
-        "deviceServiceIds": [
-            "Thermostat",
-            "BatteryLevel",
-            "ValveTappet",
-            "SilentMode",
-            "TemperatureLevel",
-            "Linking",
-            "TemperatureOffset"
-        ],
-        "manufacturer": "BOSCH",
-        "roomId": "hz_8",
-        "deviceModel": "TRV",
-        "serial": "30xxx",
-        "profile": "GENERIC",
-        "name": "Test Thermostat",
-        "status": "AVAILABLE",
-        "parentDeviceId": "roomClimateControl_hz_8",
-        "childDeviceIds": []
-    },
-```
-
-#### Make a rawscan of the associated services of a device
-```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ device_services _your_device_id_
-```
-
-The exemplary output will look as follows:
-```bash
-[
-    {
-        "@type": "DeviceServiceData",
-        "id": "BatteryLevel",
-        "deviceId": "hdm:HomeMaticIP:30xxx",
-        "path": "/devices/hdm:HomeMaticIP:30xxx/services/BatteryLevel"
-    },
-    {
-        "@type": "DeviceServiceData",
-        "id": "Thermostat",
-        "deviceId": "hdm:HomeMaticIP:30xxx",
-        "state": {
-            "@type": "childLockState",
-            "childLock": "OFF"
-        },
-        "path": "/devices/hdm:HomeMaticIP:30xxx/services/Thermostat"
-    },
-...
-]
-```
-
-#### Make a rawscan of the a service of a device, where the `device_id` as well as the `service_id` are known
-```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ device_service _your_device_id_ _your_service_id
-```
-
-#### Make a rawscan of the all scenarios
-```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ scenarios
-```
-
-#### Make a rawscan of the all rooms
-```bash
-boschshc_rawscan -ip _your_shc_ip_ -cert _your_shc_cert_file_ -key _your_shc_key_file_ rooms
-```
-
-## Example code to use the `boschshcpy` library
+### Python API
 
 ```python
 import boschshcpy
 
-# Create session
-session = boschshcpy.SHCSession(controller_ip="192.168.25.51", certificate='cert.pem', key='key.pem')
+# Create session (lazy=False enumerates all devices on connect)
+session = boschshcpy.SHCSession(
+    controller_ip="192.168.25.51",
+    certificate="cert.pem",
+    key="key.pem",
+)
 session.information.summary()
 
-device = session.device('roomClimateControl_hz_5')
-service = device.device_service('TemperatureLevel')
+# Access a device and service
+device = session.device("roomClimateControl_hz_5")
+service = device.device_service("TemperatureLevel")
 print(service.temperature)
 
-# Update this service's state
+# Short-poll a single service
 service.short_poll()
 
-# Start long polling thread in background
+# Start long-poll thread (non-blocking)
 session.start_polling()
 
-# Do work here
-...
+# ... do work, handle callbacks ...
 
 # Stop polling
 session.stop_polling()
 
-# Trigger intrusion detection system
-intrusion_control = session.intrusion_system
-intrusion_control.arm()
+# Arm the intrusion detection system
+session.intrusion_system.arm()
 
-# Get rawscan of devices
+# Raw API dump
 scan_result = session.rawscan(command="devices")
 ```
 
-## Usage guide
+### Device helper accessors (`SHCSession.device_helper`)
 
-Before accessing the Bosch Smart Home Controller, a client must be registered on the controller. For this a valid cert/key pair must be provided to the controller. To start the client registration, press and hold the button on the controller until the led starts flashing. More information [here](https://github.com/BoschSmartHome/bosch-shc-api-docs/tree/master/postman#register-a-new-client-to-the-bosch-smart-home-controller).
+`SHCDeviceHelper` exposes typed properties for each device category:
+
+```
+shutter_contacts, shutter_contacts2, shutter_controls,
+micromodule_shutter_controls, micromodule_blinds, micromodule_relays,
+micromodule_impulse_relays, micromodule_light_controls,
+micromodule_light_attached, micromodule_dimmers, light_switches_bsm,
+smart_plugs, smart_plugs_compact, smoke_detectors, smoke_detection_system,
+climate_controls, heating_circuits, thermostats, wallthermostats,
+roomthermostats, motion_detectors, motion_detectors2, twinguards,
+universal_switches, camera_eyes, camera_360, camera_outdoor_gen2,
+ledvance_lights, hue_lights, water_leakage_detectors,
+presence_simulation_system
+```
+
+Other session attributes: `session.scenarios`, `session.rooms`, `session.intrusion_system`,
+`session.emma` (EMMA grid power).
+
+## Rawscans (command-line)
+
+### Public information
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem public_information
+```
+
+### All devices
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem devices
+```
+
+### Single device
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem device YOUR_DEVICE_ID
+```
+
+### Services of a device
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem device_services YOUR_DEVICE_ID
+```
+
+### Single service of a device
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem device_service YOUR_DEVICE_ID YOUR_SERVICE_ID
+```
+
+### All scenarios
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem scenarios
+```
+
+### All rooms
+```bash
+boschshc_rawscan -ip YOUR_SHC_IP -cert cert.pem -key key.pem rooms
+```
+
+Example device output:
+```json
+{
+    "@type": "device",
+    "rootDeviceId": "xx-xx-xx-xx-xx-xx",
+    "id": "hdm:HomeMaticIP:30xxx",
+    "deviceServiceIds": [
+        "Thermostat", "BatteryLevel", "ValveTappet",
+        "SilentMode", "TemperatureLevel", "Linking", "TemperatureOffset"
+    ],
+    "manufacturer": "BOSCH",
+    "roomId": "hz_8",
+    "deviceModel": "TRV",
+    "serial": "30xxx",
+    "name": "Test Thermostat",
+    "status": "AVAILABLE"
+}
+```
+
+## Maintainers / support
+
+| Role | |
+|---|---|
+| Original authors | Clemens-Alexander Brust ([@cabrust](https://github.com/cabrust)), Thomas Schamm ([@tschamm](https://github.com/tschamm)) |
+| Co-maintainer | Thomas Mosandl ([@mosandlt](https://github.com/mosandlt)) |
+
+[![Buy tschamm a coffee][buymecoffeebadge-tschamm]][buymecoffee-tschamm]
+[![Buy mosandlts a coffee][buymecoffeebadge-mosandlts]][buymecoffee-mosandlts]
+
+Bug reports and feature requests: [github.com/tschamm/boschshcpy/issues](https://github.com/tschamm/boschshcpy/issues)
+
+[buymecoffee-tschamm]: https://www.buymeacoffee.com/tschamm
+[buymecoffeebadge-tschamm]: https://img.shields.io/badge/buy%20tschamm%20a%20double%20espresso-donate-yellow.svg
+[buymecoffee-mosandlts]: https://buymeacoffee.com/mosandlts
+[buymecoffeebadge-mosandlts]: https://img.shields.io/badge/buy%20mosandlts%20a%20coffee-donate-yellow.svg
