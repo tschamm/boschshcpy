@@ -65,6 +65,18 @@ class SHCDeviceService:
     def put_state_element(self, key, value):
         self.put_state({key: value})
 
+    async def async_put_state(self, key_value_pairs):
+        """Async counterpart to put_state — awaits the async API."""
+        await self._api.put_device_service_state(
+            self.device_id.replace("#", "%23"),
+            self.id,
+            {"@type": self.state["@type"], **key_value_pairs},
+        )
+
+    async def async_put_state_element(self, key, value):
+        """Async counterpart to put_state_element — awaits the async API."""
+        await self.async_put_state({key: value})
+
     def short_poll(self, fire_callbacks=False):
         if self._last_update is None or (
             datetime.now(timezone.utc) - self._last_update

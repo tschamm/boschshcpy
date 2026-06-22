@@ -9,7 +9,7 @@ from importlib.resources import files
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
 
-from .exceptions import SHCRegistrationError, SHCSessionError
+from .exceptions import SHCRegistrationError
 from .generate_cert import generate_certificate
 
 logger = logging.getLogger("boschshcpy")
@@ -102,7 +102,7 @@ def write_tls_asset(filename: str, asset: bytes) -> None:
 
 
 def main():
-    import argparse, sys
+    import argparse
 
     logging.basicConfig(level=logging.DEBUG)
 
@@ -140,7 +140,7 @@ def main():
     except SHCRegistrationError as e:
         print(e)
 
-    if result != None:
+    if result is not None:
         print("successful registered new device with token {}".format(result["token"]))
         print(f"Cert: {result['cert']}")
         print(f"Key: {result['key']}")
@@ -159,7 +159,7 @@ def main():
         sys.exit()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     try:
         main()
     except KeyboardInterrupt:

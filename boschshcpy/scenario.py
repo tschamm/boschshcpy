@@ -23,6 +23,12 @@ class SHCScenario:
             f"{self._api._api_root}/scenarios/{self.id}/triggers", ""
         )
 
+    async def async_trigger(self):
+        """Async write: trigger this scenario."""
+        await self._api._post_api_or_fail(
+            f"{self._api._api_root}/scenarios/{self.id}/triggers", ""
+        )
+
     def summary(self):
         print(f"scenario: {self.id}")
         print(f"  Name   : {self.name}")

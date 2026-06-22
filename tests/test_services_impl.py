@@ -1880,7 +1880,9 @@ def test_smart_sensitivity_control_summary(capsys):
     svc = _make_svc(SmartSensitivityControlService, {})
     svc.summary()
     out = capsys.readouterr().out
-    assert "not yet implemented" in out
+    # SmartSensitivityControl is now fully implemented; summary shows enabled + sensitivities
+    assert "enabled" in out
+    assert "sensitivities" in out
 
 
 def test_smoke_detection_control_summary(capsys):

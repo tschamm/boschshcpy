@@ -35,6 +35,12 @@ class SHCUserDefinedState:
             f"{self._api._api_root}/userdefinedstates/{self.id}/state", state
         )
 
+    async def async_set_state(self, state: bool):
+        """Async write: set user-defined state on/off via the async API."""
+        await self._api._put_api_or_fail(
+            f"{self._api._api_root}/userdefinedstates/{self.id}/state", state
+        )
+
     def update_raw_information(self, raw_state):
         if self._raw_state["id"] != raw_state["id"]:
             raise SHCException("Error due to mismatching ids!")

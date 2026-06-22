@@ -1,16 +1,17 @@
 import json
 import logging
-import os, sys
+import os
+import sys
 
-from boschshcpy import SHCSession, SHCDeviceHelper, SHCAuthenticationError
+from boschshcpy import SHCSession, SHCAuthenticationError
 
 logger = logging.getLogger("boschshcpy")
 
-#### Main Program ####
+# Main Program
 
 
 def main():
-    import argparse, sys
+    import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -112,7 +113,7 @@ def main():
     sys.exit()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     try:
         main()
     except KeyboardInterrupt:

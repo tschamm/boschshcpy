@@ -5,9 +5,11 @@ import typing
 
 from .api import SHCAPI
 from .device import SHCDevice
+from .models_impl import SHCBatteryDevice  # noqa: F401  (re-export via __init__)
+from .models_impl import SHCShutterContact2Plus  # noqa: F401  (re-export via __init__)
+from .models_impl import SHCThermostatGen2  # noqa: F401  (re-export via __init__)
 from .models_impl import (
     SUPPORTED_MODELS,
-    SHCBatteryDevice,
     SHCCamera360,
     SHCCameraEyes,
     SHCCameraOutdoorGen2,
@@ -18,7 +20,6 @@ from .models_impl import (
     SHCMotionDetector2,
     SHCShutterContact,
     SHCShutterContact2,
-    SHCShutterContact2Plus,
     SHCShutterControl,
     SHCMicromoduleBlinds,
     SHCMicromoduleRelay,

@@ -78,11 +78,11 @@ class SHCInformation:
         self._name = None
 
         self._pub_info = self._api.get_public_information()
-        if self._pub_info == None:
+        if self._pub_info is None:
             raise SHCConnectionError
 
         if authenticate:
-            if self._api.get_information() == None:
+            if self._api.get_information() is None:
                 raise SHCAuthenticationError
 
         self.get_unique_id(zeroconf)
@@ -129,7 +129,7 @@ class SHCInformation:
 
         try:
             host_ip = socket.gethostbyname(self.shcIpAddress)
-        except Exception as e:
+        except Exception:
             host_ip = None
 
         for info in service_info.values():
@@ -139,7 +139,7 @@ class SHCInformation:
                     or host_ip is None
                 ):
                     mac_address = info.name[
-                        info.name.find("[") + 1 : info.name.find("]")
+                        info.name.find("[") + 1: info.name.find("]")
                     ]
                     server_pos = info.server.find(".local.")
                     if server_pos > -1:
@@ -198,7 +198,7 @@ class SHCInformation:
             raise SHCConnectionError
 
     def summary(self):
-        print(f"Information:")
+        print("Information:")
         print(f"  shcIpAddress       : {self.shcIpAddress}")
         print(f"  macAddress         : {self.macAddress}")
         print(f"  SW-Version         : {self.version}")
@@ -224,7 +224,7 @@ def format_mac(mac: str) -> str:
 
     if len(to_test) == 12:
         # no - included
-        return "-".join(to_test.lower()[i : i + 2] for i in range(0, 12, 2))
+        return "-".join(to_test.lower()[i:i + 2] for i in range(0, 12, 2))
 
     # Not sure how formatted, return original
     return mac

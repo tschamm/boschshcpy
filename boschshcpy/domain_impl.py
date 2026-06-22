@@ -120,25 +120,52 @@ class SHCIntrusionSystem:
         print(f"    Alarm State:           {self.alarm_state}")
 
     def arm(self):
-        result = self._api.post_domain_action("intrusion/actions/arm")
+        self._api.post_domain_action("intrusion/actions/arm")
+
+    async def async_arm(self):
+        """Async write: arm the intrusion system (default profile)."""
+        await self._api.post_domain_action("intrusion/actions/arm")
 
     def arm_full_protection(self):
         data = {"@type": "armRequest", "profileId": "0"}
-        result = self._api.post_domain_action("intrusion/actions/arm", data)
+        self._api.post_domain_action("intrusion/actions/arm", data)
+
+    async def async_arm_full_protection(self):
+        """Async write: arm with full protection (profile 0)."""
+        data = {"@type": "armRequest", "profileId": "0"}
+        await self._api.post_domain_action("intrusion/actions/arm", data)
 
     def arm_partial_protection(self):
         data = {"@type": "armRequest", "profileId": "1"}
-        result = self._api.post_domain_action("intrusion/actions/arm", data)
+        self._api.post_domain_action("intrusion/actions/arm", data)
+
+    async def async_arm_partial_protection(self):
+        """Async write: arm with partial protection (profile 1)."""
+        data = {"@type": "armRequest", "profileId": "1"}
+        await self._api.post_domain_action("intrusion/actions/arm", data)
 
     def arm_individual_protection(self):
         data = {"@type": "armRequest", "profileId": "2"}
         self._api.post_domain_action("intrusion/actions/arm", data)
 
+    async def async_arm_individual_protection(self):
+        """Async write: arm with individual (custom) protection (profile 2)."""
+        data = {"@type": "armRequest", "profileId": "2"}
+        await self._api.post_domain_action("intrusion/actions/arm", data)
+
     def disarm(self):
         self._api.post_domain_action("intrusion/actions/disarm")
 
+    async def async_disarm(self):
+        """Async write: disarm the intrusion system."""
+        await self._api.post_domain_action("intrusion/actions/disarm")
+
     def mute(self):
         self._api.post_domain_action("intrusion/actions/mute")
+
+    async def async_mute(self):
+        """Async write: mute the active alarm."""
+        await self._api.post_domain_action("intrusion/actions/mute")
 
     def short_poll(self):
         raw_domain_state = self._api.get_domain_intrusion_detection()

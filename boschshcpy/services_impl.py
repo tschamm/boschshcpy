@@ -163,6 +163,14 @@ class HeatingCircuitService(SHCDeviceService):
         AUTOMATIC = "AUTOMATIC"
         MANUAL = "MANUAL"
 
+    class HeatingType(Enum):
+        RADIATOR = "RADIATOR"
+        CONVECTOR = "CONVECTOR"
+        FLOOR = "FLOOR"
+        AIRHEATING = "AIRHEATING"
+        FANCOIL = "FANCOIL"
+        UNKNOWN = "UNKNOWN"
+
     @property
     def operation_mode(self) -> OperationMode:
         return self.OperationMode(self.state["operationMode"])
@@ -211,6 +219,16 @@ class HeatingCircuitService(SHCDeviceService):
     def on(self) -> bool:
         return self.state.get("on", False)
 
+    @property
+    def heating_type(self):
+        raw = self.state.get("heatingType")
+        if raw is None:
+            return None
+        try:
+            return self.HeatingType(raw)
+        except ValueError:
+            return self.HeatingType.UNKNOWN
+
     def summary(self):
         super().summary()
         print(f"    Operation Mode             : {self.operation_mode}")
@@ -225,6 +243,7 @@ class HeatingCircuitService(SHCDeviceService):
         )
         print(f"    Energy Saving Feat Enabled : {self.energy_saving_feature_enabled}")
         print(f"    On                         : {self.on}")
+        print(f"    Heating Type               : {self.heating_type}")
 
 
 class SilentModeService(SHCDeviceService):
@@ -302,13 +321,21 @@ class ValveTappetService(SHCDeviceService):
     class State(Enum):
         VALVE_ADAPTION_SUCCESSFUL = "VALVE_ADAPTION_SUCCESSFUL"
         VALVE_ADAPTION_IN_PROGRESS = "VALVE_ADAPTION_IN_PROGRESS"
+        VALVE_ADAPTION_REQUESTED = "VALVE_ADAPTION_REQUESTED"
         RANGE_TOO_BIG = "RANGE_TOO_BIG"
+        RANGE_TOO_SMALL = "RANGE_TOO_SMALL"
         RUN_TO_START_POSITION = "RUN_TO_START_POSITION"
+        START_POSITION_REQUESTED = "START_POSITION_REQUESTED"
         IN_START_POSITION = "IN_START_POSITION"
         NOT_AVAILABLE = "NOT_AVAILABLE"
         NO_VALVE_BODY_ERROR = "NO_VALVE_BODY_ERROR"
         NO_MOTOR_ERROR = "NO_MOTOR_ERROR"
         VALVE_TOO_TIGHT = "VALVE_TOO_TIGHT"
+        FIX_MOTOR_LOGIC_REQUESTED = "FIX_MOTOR_LOGIC_REQUESTED"
+        FIX_MOTOR_LOGIC_IN_PROGRESS = "FIX_MOTOR_LOGIC_IN_PROGRESS"
+        FIX_MOTOR_LOGIC_SUCCESSFUL = "FIX_MOTOR_LOGIC_SUCCESSFUL"
+        ERROR = "ERROR"
+        UNKNOWN = "UNKNOWN"
 
     @property
     def position(self) -> int:
@@ -664,7 +691,7 @@ class ImpulseSwitchService(SHCDeviceService):
 
     @property
     def instant_of_last_impulse(self) -> str:
-        if not "instantOfLastImpulse" in self.state:
+        if "instantOfLastImpulse" not in self.state:
             return None
         return self.state["instantOfLastImpulse"]
 
@@ -692,13 +719,13 @@ class KeypadService(SHCDeviceService):
 
     @property
     def keyName(self) -> KeyState:
-        if not "keyName" in self.state:
+        if "keyName" not in self.state:
             return None
         return self.KeyState(self.state["keyName"])
 
     @property
     def eventType(self) -> KeyEvent:
-        if not "eventType" in self.state:
+        if "eventType" not in self.state:
             return None
         return self.KeyEvent(self.state["eventType"])
 
@@ -708,7 +735,7 @@ class KeypadService(SHCDeviceService):
 
     @property
     def eventTimestamp(self) -> int:
-        if not "eventTimestamp" in self.state:
+        if "eventTimestamp" not in self.state:
             return 0
         return self.state["eventTimestamp"]
 
@@ -778,7 +805,7 @@ class PollControlService(SHCDeviceService):
         LONG = "LONG"
         SHORT = "SHORT"
         UNKNOWN = "UNKNOWN"
-    
+
     @property
     def longPollInterval(self) -> PollControlState:
         return self.PollControlState(self.state["longPollInterval"])
@@ -794,7 +821,7 @@ class PirSensorConfigurationService(SHCDeviceService):
         MIDDLE = "MIDDLE"
         LOW = "LOW"
         UNKNOWN = "UNKNOWN"
-   
+
     @property
     def motionSensitivity(self) -> MotionSensitivity:
         return self.MotionSensitivity(self.state["motionSensitivity"])
@@ -817,6 +844,10 @@ class OccupancyDetectionService(SHCDeviceService):
             else "n/a"
         )
 
+    @property
+    def last_occupancy_change_time(self):
+        return self.state.get("lastOccupancyChangeTime")
+
     def summary(self):
         super().summary()
         print(f"    isOccupied                : {self.isOccupied}")
@@ -838,9 +869,365 @@ class PetImmunityService(SHCDeviceService):
 
 
 class SmartSensitivityControlService(SHCDeviceService):
+    class SmartSensitivityContext(Enum):
+        SECURITY = "SECURITY"
+        COMFORT = "COMFORT"
+        UNKNOWN = "UNKNOWN"
+
+    # APK: SmartSensitivitySetting.manualLevel / automaticLevel type is MotionSensitivity
+    class MotionSensitivity(Enum):
+        HIGH = "HIGH"
+        MIDDLE = "MIDDLE"
+        LOW = "LOW"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.state.get("enabled", False))
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        self.put_state_element("enabled", value)
+
+    @property
+    def sensitivities(self) -> list:
+        return self.state.get("sensitivities", [])
+
+    def get_sensitivity(self, context: "SmartSensitivityControlService.SmartSensitivityContext"):
+        """Return the sensitivity dict for the given context, or None if not found."""
+        ctx_value = context.value if hasattr(context, "value") else context
+        for entry in self.sensitivities:
+            if entry.get("context") == ctx_value:
+                return entry
+        return None
+
+    def set_enabled(self, value: bool):
+        self.put_state_element("enabled", value)
+
+    async def async_set_enabled(self, value: bool):
+        await self.async_put_state_element("enabled", value)
+
+    def set_manual_level(
+        self,
+        context: "SmartSensitivityControlService.SmartSensitivityContext",
+        level: "SmartSensitivityControlService.MotionSensitivity",
+    ):
+        """Set manualLevel (MotionSensitivity enum) for the given context.
+
+        APK: manualLevel and automaticLevel are MotionSensitivity enum strings
+        (HIGH/MIDDLE/LOW/UNKNOWN). automaticLevel is read-only from the SHC;
+        it is round-tripped in the PUT payload unchanged from the state dict.
+        """
+        ctx_value = context.value if hasattr(context, "value") else context
+        level_value = level.value if hasattr(level, "value") else level
+        updated = []
+        for entry in self.sensitivities:
+            if entry.get("context") == ctx_value:
+                entry = {**entry, "manualLevel": level_value}
+            updated.append(entry)
+        self.put_state({"enabled": self.enabled, "sensitivities": updated})
+
+    async def async_set_manual_level(
+        self,
+        context: "SmartSensitivityControlService.SmartSensitivityContext",
+        level: "SmartSensitivityControlService.MotionSensitivity",
+    ):
+        """Async version of set_manual_level."""
+        ctx_value = context.value if hasattr(context, "value") else context
+        level_value = level.value if hasattr(level, "value") else level
+        updated = []
+        for entry in self.sensitivities:
+            if entry.get("context") == ctx_value:
+                entry = {**entry, "manualLevel": level_value}
+            updated.append(entry)
+        await self.async_put_state({"enabled": self.enabled, "sensitivities": updated})
+
     def summary(self):
         super().summary()
-        print(f"    not yet implemented!")
+        print(f"    enabled                  : {self.enabled}")
+        print(f"    sensitivities            : {self.sensitivities}")
+
+
+class WalkTestService(SHCDeviceService):
+    class WalkState(Enum):
+        WALK_TEST_STARTED = "WALK_TEST_STARTED"
+        WALK_TEST_STOPPED = "WALK_TEST_STOPPED"  # APK: WalkTestState.WalkState
+        UNKNOWN = "UNKNOWN"
+
+    class WalkStateRequest(Enum):
+        WALK_STATE_START = "WALK_STATE_START"
+        WALK_STATE_STOP = "WALK_STATE_STOP"  # APK: WalkTestState.WalkStateRequest
+        UNKNOWN = "UNKNOWN"
+
+    class PetImmunityState(Enum):
+        PET_IMMUNITY_ENABLED = "PET_IMMUNITY_ENABLED"
+        PET_IMMUNITY_DISABLED = "PET_IMMUNITY_DISABLED"  # APK: WalkTestState.PetImmunityState
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def walk_state(self) -> "WalkTestService.WalkState":
+        raw = self.state.get("walkState")
+        if raw is None:
+            return self.WalkState.UNKNOWN
+        try:
+            return self.WalkState(raw)
+        except ValueError:
+            return self.WalkState.UNKNOWN
+
+    @property
+    def walk_state_request(self) -> "WalkTestService.WalkStateRequest":
+        raw = self.state.get("walkStateRequest")
+        if raw is None:
+            return self.WalkStateRequest.UNKNOWN
+        try:
+            return self.WalkStateRequest(raw)
+        except ValueError:
+            return self.WalkStateRequest.UNKNOWN
+
+    @walk_state_request.setter
+    def walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
+        self.put_state_element("walkStateRequest", value.value)
+
+    @property
+    def pet_immunity_state(self) -> "WalkTestService.PetImmunityState":
+        raw = self.state.get("petImmunityState")
+        if raw is None:
+            return self.PetImmunityState.UNKNOWN
+        try:
+            return self.PetImmunityState(raw)
+        except ValueError:
+            return self.PetImmunityState.UNKNOWN
+
+    def set_walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
+        self.put_state_element("walkStateRequest", value.value)
+
+    async def async_set_walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
+        await self.async_put_state_element("walkStateRequest", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    walkState                : {self.walk_state}")
+        print(f"    walkStateRequest         : {self.walk_state_request}")
+        print(f"    petImmunityState         : {self.pet_immunity_state}")
+
+
+class SmokeSensitivityService(SHCDeviceService):
+    class SmokeSensitivityLevel(Enum):
+        HIGH = "HIGH"
+        MIDDLE = "MIDDLE"
+        LOW = "LOW"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def smoke_sensitivity(self) -> "SmokeSensitivityService.SmokeSensitivityLevel":
+        raw = self.state.get("smokeSensitivity")
+        if raw is None:
+            return None
+        try:
+            return self.SmokeSensitivityLevel(raw)
+        except ValueError:
+            return self.SmokeSensitivityLevel.UNKNOWN
+
+    @smoke_sensitivity.setter
+    def smoke_sensitivity(self, value: "SmokeSensitivityService.SmokeSensitivityLevel"):
+        self.put_state_element("smokeSensitivity", value.value)
+
+    @property
+    def pre_alarm_enabled(self) -> bool:
+        return bool(self.state.get("preAlarmEnabled", False))
+
+    @pre_alarm_enabled.setter
+    def pre_alarm_enabled(self, value: bool):
+        self.put_state_element("preAlarmEnabled", value)
+
+    def set_smoke_sensitivity(self, value: "SmokeSensitivityService.SmokeSensitivityLevel"):
+        self.put_state_element("smokeSensitivity", value.value)
+
+    async def async_set_smoke_sensitivity(
+        self, value: "SmokeSensitivityService.SmokeSensitivityLevel"
+    ):
+        await self.async_put_state_element("smokeSensitivity", value.value)
+
+    def set_pre_alarm_enabled(self, value: bool):
+        self.put_state_element("preAlarmEnabled", value)
+
+    async def async_set_pre_alarm_enabled(self, value: bool):
+        await self.async_put_state_element("preAlarmEnabled", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    smokeSensitivity         : {self.smoke_sensitivity}")
+        print(f"    preAlarmEnabled          : {self.pre_alarm_enabled}")
+
+
+class TwinguardNightlyPromiseService(SHCDeviceService):
+    @property
+    def nightly_promise_enabled(self) -> bool:
+        return bool(self.state.get("nightlyPromiseEnabled", False))
+
+    @nightly_promise_enabled.setter
+    def nightly_promise_enabled(self, value: bool):
+        self.put_state_element("nightlyPromiseEnabled", value)
+
+    def set_nightly_promise_enabled(self, value: bool):
+        self.put_state_element("nightlyPromiseEnabled", value)
+
+    async def async_set_nightly_promise_enabled(self, value: bool):
+        await self.async_put_state_element("nightlyPromiseEnabled", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    nightlyPromiseEnabled    : {self.nightly_promise_enabled}")
+
+
+class EnergySavingModeService(SHCDeviceService):
+    @property
+    def energy_saving_mode_enabled(self) -> bool:
+        return bool(self.state.get("energySavingModeEnabled", False))
+
+    @energy_saving_mode_enabled.setter
+    def energy_saving_mode_enabled(self, value: bool):
+        self.put_state_element("energySavingModeEnabled", value)
+
+    @property
+    def power_threshold(self):
+        return self.state.get("powerThreshold")
+
+    @power_threshold.setter
+    def power_threshold(self, value):
+        self.put_state_element("powerThreshold", value)
+
+    @property
+    def enter_duration_seconds(self) -> int:
+        return int(self.state.get("enterDurationSeconds", 0))
+
+    @enter_duration_seconds.setter
+    def enter_duration_seconds(self, value: int):
+        self.put_state_element("enterDurationSeconds", value)
+
+    def set_energy_saving_mode_enabled(self, value: bool):
+        self.put_state_element("energySavingModeEnabled", value)
+
+    async def async_set_energy_saving_mode_enabled(self, value: bool):
+        await self.async_put_state_element("energySavingModeEnabled", value)
+
+    def set_power_threshold(self, value):
+        self.put_state_element("powerThreshold", value)
+
+    async def async_set_power_threshold(self, value):
+        await self.async_put_state_element("powerThreshold", value)
+
+    def set_enter_duration_seconds(self, value: int):
+        self.put_state_element("enterDurationSeconds", value)
+
+    async def async_set_enter_duration_seconds(self, value: int):
+        await self.async_put_state_element("enterDurationSeconds", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    energySavingModeEnabled  : {self.energy_saving_mode_enabled}")
+        print(f"    powerThreshold           : {self.power_threshold}")
+        print(f"    enterDurationSeconds     : {self.enter_duration_seconds}")
+
+
+class LedBrightnessConfigurationService(SHCDeviceService):
+    @property
+    def brightness(self):
+        return self.state.get("brightness")
+
+    @brightness.setter
+    def brightness(self, value):
+        self.put_state_element("brightness", value)
+
+    @property
+    def max_brightness(self):
+        return self.state.get("maxBrightness")
+
+    @property
+    def min_brightness(self):
+        return self.state.get("minBrightness")
+
+    @property
+    def step_size(self):
+        return self.state.get("stepSize")
+
+    def set_brightness(self, value):
+        self.put_state_element("brightness", value)
+
+    async def async_set_brightness(self, value):
+        await self.async_put_state_element("brightness", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    brightness               : {self.brightness}")
+        print(f"    maxBrightness            : {self.max_brightness}")
+        print(f"    minBrightness            : {self.min_brightness}")
+        print(f"    stepSize                 : {self.step_size}")
+
+
+class PowerSwitchConfigurationService(SHCDeviceService):
+    class StateAfterPowerOutage(Enum):
+        OFF = "OFF"
+        ON = "ON"
+        LAST_STATE = "LAST_STATE"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def state_after_power_outage(self) -> "PowerSwitchConfigurationService.StateAfterPowerOutage":
+        raw = self.state.get("stateAfterPowerOutage")
+        if raw is None:
+            return None
+        try:
+            return self.StateAfterPowerOutage(raw)
+        except ValueError:
+            return self.StateAfterPowerOutage.UNKNOWN
+
+    @state_after_power_outage.setter
+    def state_after_power_outage(
+        self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
+    ):
+        self.put_state_element("stateAfterPowerOutage", value.value)
+
+    @property
+    def supported_states_after_power_outage(self) -> list:
+        return self.state.get("supportedStatesAfterPowerOutage", [])
+
+    def set_state_after_power_outage(
+        self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
+    ):
+        self.put_state_element("stateAfterPowerOutage", value.value)
+
+    async def async_set_state_after_power_outage(
+        self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
+    ):
+        await self.async_put_state_element("stateAfterPowerOutage", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    stateAfterPowerOutage            : {self.state_after_power_outage}")
+        print(
+            f"    supportedStatesAfterPowerOutage  : {self.supported_states_after_power_outage}"
+        )
+
+
+class PowerSwitchWarningService(SHCDeviceService):
+    @property
+    def warning_suppressed(self) -> bool:
+        return bool(self.state.get("warningSuppressed", False))
+
+    @warning_suppressed.setter
+    def warning_suppressed(self, value: bool):
+        self.put_state_element("warningSuppressed", value)
+
+    def set_warning_suppressed(self, value: bool):
+        self.put_state_element("warningSuppressed", value)
+
+    async def async_set_warning_suppressed(self, value: bool):
+        await self.async_put_state_element("warningSuppressed", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    warningSuppressed        : {self.warning_suppressed}")
 
 
 class AirQualityLevelService(SHCDeviceService):
@@ -915,7 +1302,7 @@ class SurveillanceAlarmService(SHCDeviceService):
 class SmokeDetectionControlService(SHCDeviceService):
     def summary(self):
         super().summary()
-        print(f"    not yet implemented!")
+        print("    not yet implemented!")
 
 
 class BatteryLevelService(SHCDeviceService):
@@ -1031,6 +1418,389 @@ class PresenceSimulationConfigurationService(SHCDeviceService):
         print(f"    presenceSimulationConfigurationState  : {self.enabled}")
 
 
+class DisplayConfiguration(SHCDeviceService):
+    @property
+    def display_brightness(self):
+        return self.state.get("displayBrightness")
+
+    @display_brightness.setter
+    def display_brightness(self, value):
+        self.put_state_element("displayBrightness", value)
+
+    @property
+    def display_brightness_max(self):
+        return self.state.get("displayBrightnessMax")
+
+    @property
+    def display_brightness_min(self):
+        return self.state.get("displayBrightnessMin")
+
+    @property
+    def display_brightness_step_size(self):
+        return self.state.get("displayBrightnessStepSize")
+
+    @property
+    def display_on_time(self):
+        return self.state.get("displayOnTime")
+
+    @display_on_time.setter
+    def display_on_time(self, value):
+        self.put_state_element("displayOnTime", value)
+
+    @property
+    def display_on_time_max(self):
+        return self.state.get("displayOnTimeMax")
+
+    @property
+    def display_on_time_min(self):
+        return self.state.get("displayOnTimeMin")
+
+    @property
+    def display_on_time_step_size(self):
+        return self.state.get("displayOnTimeStepSize")
+
+    @property
+    def humidity_warning_enabled(self):
+        v = self.state.get("humidityWarningEnabled")
+        return None if v is None else bool(v)
+
+    @humidity_warning_enabled.setter
+    def humidity_warning_enabled(self, value: bool):
+        self.put_state_element("humidityWarningEnabled", value)
+
+    def set_displayBrightness(self, value):
+        self.put_state_element("displayBrightness", value)
+
+    async def async_set_displayBrightness(self, value):
+        await self.async_put_state_element("displayBrightness", value)
+
+    def set_displayOnTime(self, value):
+        self.put_state_element("displayOnTime", value)
+
+    async def async_set_displayOnTime(self, value):
+        await self.async_put_state_element("displayOnTime", value)
+
+    def set_humidityWarningEnabled(self, value: bool):
+        self.put_state_element("humidityWarningEnabled", value)
+
+    async def async_set_humidityWarningEnabled(self, value: bool):
+        await self.async_put_state_element("humidityWarningEnabled", value)
+
+    def summary(self):
+        super().summary()
+        print(f"    displayBrightness        : {self.display_brightness}")
+        print(f"    displayOnTime            : {self.display_on_time}")
+        print(f"    humidityWarningEnabled   : {self.humidity_warning_enabled}")
+
+
+class DisplayDirection(SHCDeviceService):
+    class Direction(Enum):
+        NORMAL = "NORMAL"
+        REVERSED = "REVERSED"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def direction(self) -> "DisplayDirection.Direction":
+        raw = self.state.get("direction")
+        if raw is None:
+            return None
+        try:
+            return self.Direction(raw)
+        except ValueError:
+            return self.Direction.UNKNOWN
+
+    @direction.setter
+    def direction(self, value: "DisplayDirection.Direction"):
+        self.put_state_element("direction", value.value)
+
+    def set_direction(self, value: "DisplayDirection.Direction"):
+        self.put_state_element("direction", value.value)
+
+    async def async_set_direction(self, value: "DisplayDirection.Direction"):
+        await self.async_put_state_element("direction", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    direction                : {self.direction}")
+
+
+class DisplayedTemperatureConfiguration(SHCDeviceService):
+    class DisplayedTemperature(Enum):
+        SETPOINT = "SETPOINT"
+        MEASURED = "MEASURED"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def displayed_temperature(self) -> "DisplayedTemperatureConfiguration.DisplayedTemperature":
+        raw = self.state.get("displayedTemperature")
+        if raw is None:
+            return None
+        try:
+            return self.DisplayedTemperature(raw)
+        except ValueError:
+            return self.DisplayedTemperature.UNKNOWN
+
+    @displayed_temperature.setter
+    def displayed_temperature(
+        self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
+    ):
+        self.put_state_element("displayedTemperature", value.value)
+
+    def set_displayedTemperature(
+        self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
+    ):
+        self.put_state_element("displayedTemperature", value.value)
+
+    async def async_set_displayedTemperature(
+        self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
+    ):
+        await self.async_put_state_element("displayedTemperature", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    displayedTemperature     : {self.displayed_temperature}")
+
+
+class TerminalConfiguration(SHCDeviceService):
+    class Type(Enum):
+        NOT_CONNECTED = "NOT_CONNECTED"
+        FLOOR_SENSOR_CONNECTED = "FLOOR_SENSOR_CONNECTED"
+        FLOOR_SENSOR_USED_FOR_REGULATION = "FLOOR_SENSOR_USED_FOR_REGULATION"
+        FLOOR_SENSOR_DISPLAYED = "FLOOR_SENSOR_DISPLAYED"
+        FLOOR_SENSOR_DISPLAYED_AND_USED_FOR_REGULATION = (
+            "FLOOR_SENSOR_DISPLAYED_AND_USED_FOR_REGULATION"
+        )
+        VOLT_FREE_SENSOR_CONNECTED = "VOLT_FREE_SENSOR_CONNECTED"
+        VOLT_FREE_SENSOR_CONNECTED_AND_USED_FOR_OPERATION = (
+            "VOLT_FREE_SENSOR_CONNECTED_AND_USED_FOR_OPERATION"
+        )
+        OUTDOOR_SENSOR_CONNECTED = "OUTDOOR_SENSOR_CONNECTED"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def type(self) -> "TerminalConfiguration.Type":
+        raw = self.state.get("type")
+        if raw is None:
+            return None
+        try:
+            return self.Type(raw)
+        except ValueError:
+            return self.Type.UNKNOWN
+
+    @type.setter
+    def type(self, value: "TerminalConfiguration.Type"):
+        self.put_state_element("type", value.value)
+
+    @property
+    def supported_types(self) -> list:
+        return self.state.get("supportedTypes", [])
+
+    @property
+    def temperature(self):
+        return self.state.get("temperature")
+
+    def set_type(self, value: "TerminalConfiguration.Type"):
+        self.put_state_element("type", value.value)
+
+    async def async_set_type(self, value: "TerminalConfiguration.Type"):
+        await self.async_put_state_element("type", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    type                     : {self.type}")
+        print(f"    supportedTypes           : {self.supported_types}")
+        print(f"    temperature              : {self.temperature}")
+
+
+class WallThermostatConfiguration(SHCDeviceService):
+    class ValveType(Enum):
+        NORMALLY_CLOSE = "NORMALLY_CLOSE"
+        NORMALLY_OPEN = "NORMALLY_OPEN"
+        UNKNOWN = "UNKNOWN"
+
+    class HeaterType(Enum):
+        FLOOR_HEATING = "FLOOR_HEATING"
+        FLOOR_HEATING_LOW_ENERGY = "FLOOR_HEATING_LOW_ENERGY"
+        RADIATOR = "RADIATOR"
+        CONVECTOR_PASSIVE = "CONVECTOR_PASSIVE"
+        CONVECTOR_ACTIVE = "CONVECTOR_ACTIVE"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def valve_type(self) -> "WallThermostatConfiguration.ValveType":
+        raw = self.state.get("valveType")
+        if raw is None:
+            return None
+        try:
+            return self.ValveType(raw)
+        except ValueError:
+            return self.ValveType.UNKNOWN
+
+    @valve_type.setter
+    def valve_type(self, value: "WallThermostatConfiguration.ValveType"):
+        self.put_state_element("valveType", value.value)
+
+    @property
+    def heater_type(self) -> "WallThermostatConfiguration.HeaterType":
+        raw = self.state.get("heaterType")
+        if raw is None:
+            return None
+        try:
+            return self.HeaterType(raw)
+        except ValueError:
+            return self.HeaterType.UNKNOWN
+
+    @heater_type.setter
+    def heater_type(self, value: "WallThermostatConfiguration.HeaterType"):
+        self.put_state_element("heaterType", value.value)
+
+    def set_valveType(self, value: "WallThermostatConfiguration.ValveType"):
+        self.put_state_element("valveType", value.value)
+
+    async def async_set_valveType(self, value: "WallThermostatConfiguration.ValveType"):
+        await self.async_put_state_element("valveType", value.value)
+
+    def set_heaterType(self, value: "WallThermostatConfiguration.HeaterType"):
+        self.put_state_element("heaterType", value.value)
+
+    async def async_set_heaterType(self, value: "WallThermostatConfiguration.HeaterType"):
+        await self.async_put_state_element("heaterType", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    valveType                : {self.valve_type}")
+        print(f"    heaterType               : {self.heater_type}")
+
+
+class SwitchConfiguration(SHCDeviceService):
+    class SwitchType(Enum):
+        NONE = "NONE"
+        PUSHBUTTON = "PUSHBUTTON"
+        SWITCH = "SWITCH"
+        NO_SWITCH = "NO_SWITCH"
+        UNKNOWN = "UNKNOWN"
+
+    class ActuatorType(Enum):
+        NORMALLY_CLOSED = "NORMALLY_CLOSED"
+        NORMALLY_OPEN = "NORMALLY_OPEN"
+        UNSUPPORTED = "UNSUPPORTED"
+        UNKNOWN = "UNKNOWN"
+
+    class OutputMode(Enum):
+        ATTACHED = "ATTACHED"
+        DETACHED = "DETACHED"
+        DETACHED_SHORT_PRESS = "DETACHED_SHORT_PRESS"
+        DETACHED_LONG_PRESS = "DETACHED_LONG_PRESS"
+        UNSUPPORTED = "UNSUPPORTED"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def switch_type(self) -> "SwitchConfiguration.SwitchType":
+        raw = self.state.get("switchType")
+        if raw is None:
+            return None
+        try:
+            return self.SwitchType(raw)
+        except ValueError:
+            return self.SwitchType.UNKNOWN
+
+    @switch_type.setter
+    def switch_type(self, value: "SwitchConfiguration.SwitchType"):
+        self.put_state_element("switchType", value.value)
+
+    @property
+    def swap_inputs(self) -> bool:
+        return bool(self.state.get("swapInputs", False))
+
+    @swap_inputs.setter
+    def swap_inputs(self, value: bool):
+        self.put_state_element("swapInputs", value)
+
+    @property
+    def swap_outputs(self) -> bool:
+        return bool(self.state.get("swapOutputs", False))
+
+    @swap_outputs.setter
+    def swap_outputs(self, value: bool):
+        self.put_state_element("swapOutputs", value)
+
+    @property
+    def actuator_type(self) -> "SwitchConfiguration.ActuatorType":
+        raw = self.state.get("actuatorType")
+        if raw is None:
+            return None
+        try:
+            return self.ActuatorType(raw)
+        except ValueError:
+            return self.ActuatorType.UNKNOWN
+
+    @actuator_type.setter
+    def actuator_type(self, value: "SwitchConfiguration.ActuatorType"):
+        self.put_state_element("actuatorType", value.value)
+
+    @property
+    def output_mode(self) -> "SwitchConfiguration.OutputMode":
+        raw = self.state.get("outputMode")
+        if raw is None:
+            return None
+        try:
+            return self.OutputMode(raw)
+        except ValueError:
+            return self.OutputMode.UNKNOWN
+
+    @output_mode.setter
+    def output_mode(self, value: "SwitchConfiguration.OutputMode"):
+        self.put_state_element("outputMode", value.value)
+
+    @property
+    def supports_swap_outputs(self):
+        return self.state.get("supportsSwapOutputs")
+
+    @property
+    def supported_output_modes(self) -> list:
+        return self.state.get("supportedOutputModes", [])
+
+    def set_switchType(self, value: "SwitchConfiguration.SwitchType"):
+        self.put_state_element("switchType", value.value)
+
+    async def async_set_switchType(self, value: "SwitchConfiguration.SwitchType"):
+        await self.async_put_state_element("switchType", value.value)
+
+    def set_swapInputs(self, value: bool):
+        self.put_state_element("swapInputs", value)
+
+    async def async_set_swapInputs(self, value: bool):
+        await self.async_put_state_element("swapInputs", value)
+
+    def set_swapOutputs(self, value: bool):
+        self.put_state_element("swapOutputs", value)
+
+    async def async_set_swapOutputs(self, value: bool):
+        await self.async_put_state_element("swapOutputs", value)
+
+    def set_actuatorType(self, value: "SwitchConfiguration.ActuatorType"):
+        self.put_state_element("actuatorType", value.value)
+
+    async def async_set_actuatorType(self, value: "SwitchConfiguration.ActuatorType"):
+        await self.async_put_state_element("actuatorType", value.value)
+
+    def set_outputMode(self, value: "SwitchConfiguration.OutputMode"):
+        self.put_state_element("outputMode", value.value)
+
+    async def async_set_outputMode(self, value: "SwitchConfiguration.OutputMode"):
+        await self.async_put_state_element("outputMode", value.value)
+
+    def summary(self):
+        super().summary()
+        print(f"    switchType               : {self.switch_type}")
+        print(f"    swapInputs               : {self.swap_inputs}")
+        print(f"    swapOutputs              : {self.swap_outputs}")
+        print(f"    actuatorType             : {self.actuator_type}")
+        print(f"    outputMode               : {self.output_mode}")
+        print(f"    supportsSwapOutputs      : {self.supports_swap_outputs}")
+        print(f"    supportedOutputModes     : {self.supported_output_modes}")
+
+
 SERVICE_MAPPING = {
     "AirQualityLevel": AirQualityLevelService,
     "Alarm": AlarmService,
@@ -1046,6 +1816,10 @@ SERVICE_MAPPING = {
     "ChildProtection": ChildProtectionService,
     "CommunicationQuality": CommunicationQualityService,
     "DetectionTest": DetectionTestService,
+    "DisplayConfiguration": DisplayConfiguration,
+    "DisplayDirection": DisplayDirection,
+    "DisplayedTemperatureConfiguration": DisplayedTemperatureConfiguration,
+    "EnergySavingMode": EnergySavingModeService,
     "HeatingCircuit": HeatingCircuitService,
     "HSBColorActuator": HSBColorActuatorService,
     "HueColorTemperature": HueColorTemperatureService,
@@ -1054,6 +1828,7 @@ SERVICE_MAPPING = {
     "Keypad": KeypadService,
     "LatestMotion": LatestMotionService,
     "LatestTamper": LatestTamperService,
+    "LedBrightnessConfiguration": LedBrightnessConfigurationService,
     "MultiLevelSensor": MultiLevelSensorService,
     "MultiLevelSwitch": MultiLevelSwitchService,
     "OccupancyDetection": OccupancyDetectionService,
@@ -1062,7 +1837,9 @@ SERVICE_MAPPING = {
     "PollControl": PollControlService,
     "PowerMeter": PowerMeterService,
     "PowerSwitch": PowerSwitchService,
+    "PowerSwitchConfiguration": PowerSwitchConfigurationService,
     "PowerSwitchProgram": PowerSwitchProgramService,
+    "PowerSwitchWarning": PowerSwitchWarningService,
     "PresenceSimulationConfiguration": PresenceSimulationConfigurationService,
     "PrivacyMode": PrivacyModeService,
     "RoomClimateControl": RoomClimateControlService,
@@ -1070,13 +1847,20 @@ SERVICE_MAPPING = {
     "ShutterContact": ShutterContactService,
     "ShutterControl": ShutterControlService,
     "SilentMode": SilentModeService,
+    "SmartSensitivityControl": SmartSensitivityControlService,
+    "SmokeSensitivity": SmokeSensitivityService,
     "SmokeDetectorCheck": SmokeDetectorCheckService,
     "SurveillanceAlarm": SurveillanceAlarmService,
+    "SwitchConfiguration": SwitchConfiguration,
     "TemperatureLevel": TemperatureLevelService,
     "TemperatureOffset": TemperatureOffsetService,
+    "TerminalConfiguration": TerminalConfiguration,
     "Thermostat": ThermostatService,
+    "TwinguardNightlyPromise": TwinguardNightlyPromiseService,
     "ValveTappet": ValveTappetService,
     "VibrationSensor": VibrationSensorService,
+    "WalkTest": WalkTestService,
+    "WallThermostatConfiguration": WallThermostatConfiguration,
     "WaterLeakageSensor": WaterLeakageSensorService,
     "WaterLeakageSensorCheck": WaterLeakageSensorCheckService,
     "WaterLeakageSensorTilt": WaterLeakageSensorTiltService,
@@ -1084,9 +1868,7 @@ SERVICE_MAPPING = {
 
 #    "SmokeDetectionControl": SmokeDetectionControlService,
 #    "ElectricalFaults": ElectricalFaultsService,
-#    "SwitchConfiguration": SwitchConfigurationService,
 #    "Linking": LinkingService,
-#    "SmartSensitivityControl": SmartSensitivityControlService,
 
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 

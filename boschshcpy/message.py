@@ -1,4 +1,3 @@
-import typing
 import logging
 
 logger = logging.getLogger("boschshcpy")

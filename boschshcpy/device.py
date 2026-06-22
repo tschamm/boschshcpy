@@ -77,7 +77,7 @@ class SHCDevice:
     def deleted(self):
         return (
             True
-            if "deleted" in self._raw_device and self._raw_device["deleted"] == True
+            if "deleted" in self._raw_device and self._raw_device["deleted"] is True
             else False
         )
 
