@@ -74,12 +74,14 @@ class RoomClimateControlService(SHCDeviceService):
         self.put_state_element("setpointTemperature", value)
 
     @property
-    def setpoint_temperature_eco(self) -> float:
-        return float(self.state["setpointTemperatureForLevelEco"])
+    def setpoint_temperature_eco(self) -> float | None:
+        value = self.state.get("setpointTemperatureForLevelEco")
+        return float(value) if value is not None else None
 
     @property
-    def setpoint_temperature_comfort(self) -> float:
-        return float(self.state["setpointTemperatureForLevelComfort"])
+    def setpoint_temperature_comfort(self) -> float | None:
+        value = self.state.get("setpointTemperatureForLevelComfort")
+        return float(value) if value is not None else None
 
     @property
     def ventilation_mode(self) -> bool:
@@ -97,6 +99,14 @@ class RoomClimateControlService(SHCDeviceService):
     def supports_low(self) -> bool:
         # The eco/reduced "low" field is only present on rooms that expose it.
         return "low" in self.state
+
+    @property
+    def supports_eco(self) -> bool:
+        # True only when the controller sends a dedicated eco setpoint, meaning
+        # the room implements the ECO/COMFORT level model with a temperature
+        # schedule.  Devices that have "low" but no eco setpoint (e.g. floor
+        # heating via SHC-II) do not support an eco temperature preset.
+        return "setpointTemperatureForLevelEco" in self.state
 
     @property
     def boost_mode(self) -> bool:
@@ -204,16 +214,18 @@ class HeatingCircuitService(SHCDeviceService):
         self.put_state_element("setpointTemperature", value)
 
     @property
-    def setpoint_temperature_eco(self) -> float:
-        return float(self.state["setpointTemperatureForLevelEco"])
+    def setpoint_temperature_eco(self) -> float | None:
+        value = self.state.get("setpointTemperatureForLevelEco")
+        return float(value) if value is not None else None
 
     @setpoint_temperature_eco.setter
     def setpoint_temperature_eco(self, value: float):
         self.put_state_element("setpointTemperatureForLevelEco", value)
 
     @property
-    def setpoint_temperature_comfort(self) -> float:
-        return float(self.state["setpointTemperatureForLevelComfort"])
+    def setpoint_temperature_comfort(self) -> float | None:
+        value = self.state.get("setpointTemperatureForLevelComfort")
+        return float(value) if value is not None else None
 
     @setpoint_temperature_comfort.setter
     def setpoint_temperature_comfort(self, value: float):
