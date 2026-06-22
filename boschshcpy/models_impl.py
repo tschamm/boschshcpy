@@ -2122,6 +2122,12 @@ class SHCTwinguard(SHCBatteryDevice):
             "value", "SMOKE_TEST_REQUESTED"
         )
 
+    async def async_smoketest_requested(self):
+        """Async write: request a smoke test (Twinguard)."""
+        await self._smokedetectorcheck_service.async_put_state_element(
+            "value", "SMOKE_TEST_REQUESTED"
+        )
+
     @property
     def smoke_sensitivity(self):
         if self._smoke_sensitivity_service is None:
