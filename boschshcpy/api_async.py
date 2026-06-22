@@ -344,6 +344,15 @@ class SHCAPIAsync:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         await self._put_api_or_fail(api_url, state_update)
 
+    async def post_device_service_operation(
+        self, device_id: str, service_id: str, operation: str, data: Any = None
+    ) -> Any:
+        api_url = (
+            f"{self._api_root}/devices/{device_id}/services/{service_id}"
+            f"/operation/{operation}"
+        )
+        return await self._post_api_or_fail(api_url, body=data)
+
     async def get_domain_intrusion_detection(self) -> Any:
         api_url = f"{self._api_root}/intrusion/states/system"
         return await self._get_api_result_or_fail(api_url, expected_type="systemState")

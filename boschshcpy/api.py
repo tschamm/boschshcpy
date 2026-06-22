@@ -227,6 +227,15 @@ class SHCAPI:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         self._put_api_or_fail(api_url, state_update)
 
+    def post_device_service_operation(
+        self, device_id, service_id, operation, data=None
+    ):
+        api_url = (
+            f"{self._api_root}/devices/{device_id}/services/{service_id}"
+            f"/operation/{operation}"
+        )
+        return self._post_api_or_fail(api_url, body=data)
+
     def get_domain_intrusion_detection(self):
         api_url = f"{self._api_root}/intrusion/states/system"
         return self._get_api_result_or_fail(api_url, expected_type="systemState")

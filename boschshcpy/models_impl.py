@@ -1865,8 +1865,24 @@ class SHCMotionDetector2(SHCBatteryDevice):
         await self._binaryswitch_service.async_put_state_element("on", bool(value))
 
     @property
-    def detection_state(self) -> DetectionTestService.DetectionState:
+    def detection_state(self):
+        if self._detectiontest_service is None:
+            return None
         return self._detectiontest_service.detection_state
+
+    def set_detection_state_request(
+        self, value: "DetectionTestService.DetectionStateRequest"
+    ):
+        """Sync write: start or stop the detection (walk) test."""
+        if self._detectiontest_service is not None:
+            self._detectiontest_service.set_detection_state_request(value)
+
+    async def async_set_detection_state_request(
+        self, value: "DetectionTestService.DetectionStateRequest"
+    ):
+        """Async write: start or stop the detection (walk) test."""
+        if self._detectiontest_service is not None:
+            await self._detectiontest_service.async_set_detection_state_request(value)
 
     @property
     def temperature(self) -> float:
@@ -1875,6 +1891,16 @@ class SHCMotionDetector2(SHCBatteryDevice):
     @property
     def long_poll_interval(self) -> PollControlService.PollControlState:
         return self._pollcontrol_service.longPollInterval
+
+    @long_poll_interval.setter
+    def long_poll_interval(self, value: "PollControlService.PollControlState"):
+        self._pollcontrol_service.longPollInterval = value
+
+    async def async_set_long_poll_interval(
+        self, value: "PollControlService.PollControlState"
+    ):
+        """Async write: set the orientation-light polling profile (LONG/SHORT)."""
+        await self._pollcontrol_service.async_set_long_poll_interval(value)
 
     @property
     def motion_sensitivity(self) -> PirSensorConfigurationService.MotionSensitivity:
@@ -1931,6 +1957,22 @@ class SHCMotionDetector2(SHCBatteryDevice):
     @property
     def tamper_protection_enabled(self) -> bool:
         return self._latesttamper_service.tamper_protection_enabled
+
+    @tamper_protection_enabled.setter
+    def tamper_protection_enabled(self, value: bool):
+        self._latesttamper_service.tamper_protection_enabled = value
+
+    async def async_set_tamper_protection_enabled(self, value: bool):
+        """Async write: enable/disable tamper protection."""
+        await self._latesttamper_service.async_set_tamper_protection_enabled(value)
+
+    def reset_tampered_state(self):
+        """Sync: reset an active tamper condition (confirm device in place)."""
+        self._latesttamper_service.reset_tampered_state()
+
+    async def async_reset_tampered_state(self):
+        """Async: reset an active tamper condition."""
+        await self._latesttamper_service.async_reset_tampered_state()
 
     @property
     def walk_state(self):
@@ -2012,6 +2054,10 @@ class SHCMotionDetector2(SHCBatteryDevice):
     @property
     def supports_walk_test(self) -> bool:
         return self._walktest_service is not None
+
+    @property
+    def supports_detection_test(self) -> bool:
+        return self._detectiontest_service is not None
 
     @property
     def supports_smart_sensitivity(self) -> bool:

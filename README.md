@@ -16,7 +16,7 @@ Requires Python ≥ 3.10.
 pip install boschshcpy
 ```
 
-Current PyPI version: **0.2.122**
+Current PyPI version: **0.3.4**
 
 ## Supported device services
 
@@ -27,7 +27,9 @@ PresenceSimulationConfiguration, BinarySwitch, SmokeDetectorCheck, Alarm,
 ShutterControl, CameraLight, PrivacyMode, CameraNotification,
 IntrusionDetectionControl, Keypad, LatestMotion, AirQualityLevel,
 SurveillanceAlarm, BatteryLevel, Thermostat, WaterLeakageSensor,
-WaterLeakageSensorTilt, HeatingCircuit, and more
+WaterLeakageSensorTilt, HeatingCircuit, PirSensorConfiguration,
+SmartSensitivityControl, DetectionTest, WalkTest, LatestTamper, PollControl,
+PetImmunity, OccupancyDetection, MultiLevelSwitch, and more
 ```
 
 ## Supported device models
@@ -96,6 +98,21 @@ print(service.temperature)
 
 # Short-poll a single service
 service.short_poll()
+
+# Writing to a service — every writable service field has a setter.
+# Sync property setter, or an async_set_* coroutine for the event loop:
+device.multi_level_switch = 50              # sync write (PUT to the service)
+await device.async_set_multi_level_switch(50)
+
+# Motion Detector II examples (services the SHC exposes for the MD2 [+M]):
+from boschshcpy.services_impl import DetectionTestService, PollControlService
+md2 = session.device_helper.motion_detectors2[0]
+md2.set_detection_state_request(                 # start a walk/detection test
+    DetectionTestService.DetectionStateRequest.DETECTION_STATE_START)
+md2.tamper_protection_enabled = True             # toggle tamper protection
+md2.reset_tampered_state()                       # POST resetTamperedState
+md2.long_poll_interval = PollControlService.PollControlState.SHORT  # orientation-light response
+print(md2.profile, md2.supported_profiles)       # installation profile (read-only)
 
 # Start long-poll thread (non-blocking)
 session.start_polling()

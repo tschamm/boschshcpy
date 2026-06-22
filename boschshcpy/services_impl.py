@@ -783,14 +783,38 @@ class LatestMotionService(SHCDeviceService):
 
 
 class DetectionTestService(SHCDeviceService):
+    # GET state values (detectionState reported by the controller).
     class DetectionState(Enum):
         DETECTION_TEST_STARTED = "DETECTION_TEST_STARTED"
         DETECTION_TEST_STOPPED = "DETECTION_TEST_STOPPED"
         DETECTION_TEST_UNKNOWN = "DETECTION_TEST_UNKNOWN"
 
+    # PUT request values (detectionState accepted by the controller). Same key,
+    # different enum vocabulary — see the MotionDetector OpenAPI spec
+    # (/services/DetectionTest/state PUT: "Start or stop a walk test").
+    class DetectionStateRequest(Enum):
+        DETECTION_STATE_START = "DETECTION_STATE_START"
+        DETECTION_STATE_STOP = "DETECTION_STATE_STOP"
+
     @property
-    def detection_state(self) -> DetectionState:
-        return self.DetectionState(self.state["detectionState"])
+    def detection_state(self) -> "DetectionTestService.DetectionState":
+        raw = self.state.get("detectionState")
+        if raw is None:
+            return self.DetectionState.DETECTION_TEST_UNKNOWN
+        try:
+            return self.DetectionState(raw)
+        except ValueError:
+            return self.DetectionState.DETECTION_TEST_UNKNOWN
+
+    def set_detection_state_request(
+        self, value: "DetectionTestService.DetectionStateRequest"
+    ):
+        self.put_state_element("detectionState", value.value)
+
+    async def async_set_detection_state_request(
+        self, value: "DetectionTestService.DetectionStateRequest"
+    ):
+        await self.async_put_state_element("detectionState", value.value)
 
     def summary(self):
         super().summary()
@@ -801,6 +825,25 @@ class LatestTamperService(SHCDeviceService):
     @property
     def tamper_protection_enabled(self) -> bool:
         return self.state["tamperProtectionEnabled"]
+
+    @tamper_protection_enabled.setter
+    def tamper_protection_enabled(self, value: bool):
+        self.put_state_element("tamperProtectionEnabled", bool(value))
+
+    async def async_set_tamper_protection_enabled(self, value: bool):
+        await self.async_put_state_element("tamperProtectionEnabled", bool(value))
+
+    def reset_tampered_state(self):
+        """POST operation/resetTamperedState — confirm the device is back in place."""
+        self._api.post_device_service_operation(
+            self.device_id.replace("#", "%23"), self.id, "resetTamperedState"
+        )
+
+    async def async_reset_tampered_state(self):
+        """Async counterpart to reset_tampered_state."""
+        await self._api.post_device_service_operation(
+            self.device_id.replace("#", "%23"), self.id, "resetTamperedState"
+        )
 
     @property
     def was_tampered(self) -> bool:
@@ -829,7 +872,23 @@ class PollControlService(SHCDeviceService):
 
     @property
     def longPollInterval(self) -> PollControlState:
-        return self.PollControlState(self.state["longPollInterval"])
+        raw = self.state.get("longPollInterval")
+        if raw is None:
+            return self.PollControlState.UNKNOWN
+        try:
+            return self.PollControlState(raw)
+        except ValueError:
+            return self.PollControlState.UNKNOWN
+
+    @longPollInterval.setter
+    def longPollInterval(self, value: "PollControlService.PollControlState"):
+        # Spec only accepts SHORT / LONG for writes.
+        self.put_state_element("longPollInterval", value.value)
+
+    async def async_set_long_poll_interval(
+        self, value: "PollControlService.PollControlState"
+    ):
+        await self.async_put_state_element("longPollInterval", value.value)
 
     def summary(self):
         super().summary()

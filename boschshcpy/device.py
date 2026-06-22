@@ -66,6 +66,10 @@ class SHCDevice:
         return self._raw_device["profile"] if "profile" in self._raw_device else None
 
     @property
+    def supported_profiles(self):
+        return self._raw_device.get("supportedProfiles", [])
+
+    @property
     def name(self):
         return self._raw_device["name"]
 
