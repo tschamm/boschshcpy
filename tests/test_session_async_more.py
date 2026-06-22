@@ -144,6 +144,7 @@ class TestRealInit:
             certificate="/cert.pem",
             key="/key.pem",
             external_session=None,
+            ssl_context=None,
         )
 
     def test_real_init_passes_external_session(self):
@@ -158,6 +159,7 @@ class TestRealInit:
             certificate="/cert.pem",
             key="/key.pem",
             external_session=fake_session,
+            ssl_context=None,
         )
 
     def test_real_init_device_helper_is_none(self):

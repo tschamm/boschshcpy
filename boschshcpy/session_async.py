@@ -83,6 +83,7 @@ class SHCSessionAsync:
         *,
         external_session: Any | None = None,
         long_poll_timeout: int = 30,
+        ssl_context: Any | None = None,
     ) -> None:
         """Initialise without doing any I/O.
 
@@ -96,6 +97,9 @@ class SHCSessionAsync:
             long_poll_timeout: Seconds passed as wait_seconds to RE/longPoll
                 (default 30).  The HTTP timeout is set to this + 5 s inside
                 SHCAPIAsync.long_polling_poll().
+            ssl_context: Optional pre-built mTLS SSLContext (see SHCAPIAsync).
+                Pass one built off the event loop to avoid blocking file I/O
+                when constructing on the loop.
         """
         self._long_poll_timeout = long_poll_timeout
 
@@ -105,6 +109,7 @@ class SHCSessionAsync:
             certificate=certificate,
             key=key,
             external_session=external_session,
+            ssl_context=ssl_context,
         )
 
         # SHCDeviceHelper mirrors the sync path — it takes a sync SHCAPI but

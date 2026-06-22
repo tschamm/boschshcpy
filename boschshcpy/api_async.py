@@ -90,6 +90,7 @@ class SHCAPIAsync:
         key: str,
         *,
         external_session: Any | None = None,
+        ssl_context: Any | None = None,
     ) -> None:
         """Initialise the async API layer.
 
@@ -101,6 +102,12 @@ class SHCAPIAsync:
                 provided, SHCAPIAsync does NOT create its own session and will
                 NOT close it in ``close()``.  Intended for HA's
                 ``async_create_clientsession(hass)`` pattern (Phase 3).
+            ssl_context: Optional pre-built mTLS SSLContext. Building it reads
+                the cert/key/CA PEM files from disk (blocking I/O); pass one
+                built off the event loop (e.g. HA
+                ``await hass.async_add_executor_job(build_ssl_context, cert,
+                key)``) to avoid a blocking-call-in-event-loop warning. When
+                None, it is built here from ``certificate``/``key``.
         """
         # Lazy import: boschshcpy stays importable without aiohttp
         try:
@@ -116,7 +123,10 @@ class SHCAPIAsync:
         self._public_root = f"https://{controller_ip}:8446/smarthome/public"
         self._rpc_root = f"https://{controller_ip}:8444/remote/json-rpc"
 
-        self._ssl_ctx = build_ssl_context(certificate, key)
+        self._ssl_ctx = (
+            ssl_context if ssl_context is not None
+            else build_ssl_context(certificate, key)
+        )
         self._owns_session = external_session is None
 
         if self._owns_session:

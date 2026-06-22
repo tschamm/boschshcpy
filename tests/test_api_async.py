@@ -122,6 +122,50 @@ class TestBuildSslContext:
         assert certfile == cert
 
 
+class TestSSLContextParam:
+    """ssl_context param lets the caller build the (blocking) SSLContext off-loop."""
+
+    def _patch_aiohttp(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import sys
+        import types
+        fake = types.SimpleNamespace(
+            TCPConnector=lambda **kw: MagicMock(),
+            ClientSession=lambda **kw: MagicMock(),
+        )
+        monkeypatch.setitem(sys.modules, "aiohttp", fake)
+
+    def test_passed_ssl_context_is_used_and_build_skipped(
+        self, cert_and_key_paths: tuple[str, str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import boschshcpy.api_async as mod
+        cert, key = cert_and_key_paths
+        self._patch_aiohttp(monkeypatch)
+        calls: list[Any] = []
+        monkeypatch.setattr(
+            mod, "build_ssl_context", lambda c, k: calls.append((c, k))
+        )
+        sentinel = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        api = SHCAPIAsync("192.0.2.1", cert, key, ssl_context=sentinel)
+        assert api._ssl_ctx is sentinel
+        assert calls == []  # blocking build_ssl_context NOT invoked
+
+    def test_builds_ssl_context_when_not_passed(
+        self, cert_and_key_paths: tuple[str, str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import boschshcpy.api_async as mod
+        cert, key = cert_and_key_paths
+        self._patch_aiohttp(monkeypatch)
+        calls: list[Any] = []
+        marker = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        monkeypatch.setattr(
+            mod, "build_ssl_context",
+            lambda c, k: (calls.append((c, k)), marker)[1],
+        )
+        api = SHCAPIAsync("192.0.2.1", cert, key)
+        assert api._ssl_ctx is marker
+        assert calls == [(cert, key)]
+
+
 # ---------------------------------------------------------------------------
 # Helpers for mocking aiohttp responses
 # ---------------------------------------------------------------------------
