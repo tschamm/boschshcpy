@@ -110,6 +110,32 @@ class SHCDeviceService:
                     if fn is not None:
                         fn()
 
+    async def async_short_poll(self, fire_callbacks=False):
+        """Async counterpart to short_poll for the aiohttp (SHCAPIAsync) path.
+
+        The sync short_poll calls a blocking GET; under the async session the
+        device's api is SHCAPIAsync whose get_device_service is a coroutine —
+        so an on-demand refresh (HA should_poll entities) must await here.
+        Mirrors short_poll line-for-line otherwise.
+        """
+        if self._last_update is None or (
+            datetime.now(timezone.utc) - self._last_update
+        ) > timedelta(seconds=1):
+            self._raw_device_service = await self._api.get_device_service(
+                self.device_id.replace("#", "%23"), self.id
+            )
+            self._last_update = datetime.now(timezone.utc)
+            self._raw_state = (
+                self._raw_device_service["state"]
+                if "state" in self._raw_device_service
+                else {}
+            )
+            if fire_callbacks:
+                for cb in list(self._callbacks):
+                    fn = self._callbacks.get(cb)
+                    if fn is not None:
+                        fn()
+
     def process_long_polling_poll_result(self, raw_result):
         # Defensive: skip malformed/mismatched results rather than assert
         # (asserts vanish under -O and an AssertionError would kill the poll

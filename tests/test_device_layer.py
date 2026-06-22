@@ -363,6 +363,19 @@ class TestSHCDeviceUpdate:
         # short_poll throttles within 1s, but _last_update starts None → first call fires
         api.get_device_service.assert_called()
 
+    def test_async_update_awaits_async_short_poll(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+        svc_data = _raw_service("PowerSwitch", state={"@type": "powerSwitchState"})
+        api = _fake_api()
+        # async api: get_device_service is a coroutine returning the raw service
+        api.get_device_service = AsyncMock(return_value=svc_data)
+        dev = _make_device(services=[svc_data], api=api)
+        asyncio.run(dev.async_update())
+        api.get_device_service.assert_awaited()
+        # the refreshed state must be a dict (not a left-over coroutine — #335)
+        assert isinstance(dev.device_services[0].state, dict)
+
 
 # ---------------------------------------------------------------------------
 # SHCDeviceService — basic properties

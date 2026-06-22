@@ -130,6 +130,16 @@ class SHCDevice:
         for service in self.device_services:
             service.short_poll(fire_callbacks=fire_callbacks)
 
+    async def async_update(self, fire_callbacks=False):
+        """Async counterpart to update() for the SHCAPIAsync path.
+
+        HA should_poll entities (e.g. camera switches) call this for an
+        on-demand refresh; the sync update()/short_poll() path cannot run
+        against the async api (it would leave a coroutine in _raw_device_service).
+        """
+        for service in self.device_services:
+            await service.async_short_poll(fire_callbacks=fire_callbacks)
+
     def summary(self):
         print(f"Device: {self.id}")
         print(f"  Name          : {self.name}")
