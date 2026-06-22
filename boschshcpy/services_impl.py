@@ -132,14 +132,18 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def supports_cooling(self) -> bool:
-        # `roomControlMode` is present on every room (value HEATING/COOLING/OFF),
-        # so field-presence is NOT a cooling-capability signal — it wrongly
-        # offered COOL on heating-only radiator rooms. The SHC exposes no static
-        # cooling-capability flag, so we treat a room as cooling-capable only
-        # when it is actually in COOLING mode (the one reliable positive signal).
-        # Limitation: a cooling-capable room currently heating must be switched
-        # to cooling in the Bosch app before HA shows the COOL mode.
-        return self.room_control_mode == "COOLING"
+        # Field-presence check: `roomControlMode` is absent on heating-only rooms
+        # (classic TRV / basic wall thermostat) and present on rooms that genuinely
+        # support mode switching (floor-heating controllers, BWTH24, etc.).
+        # The Bosch APK (10.33) defines a dedicated `ThermostatSupportedControlMode`
+        # service advertising the supported mode set, but that service is per-device
+        # whereas this service is per-room.  For the per-room state the field-presence
+        # of `roomControlMode` is the reliable discriminator — confirmed by reporter
+        # @jumlu (#67): radiator rooms have no `roomControlMode` key; cooling-capable
+        # rooms have it with values HEATING/COOLING/OFF/UNKNOWN depending on current
+        # state.  The 0.3.1 assumption that the field is always-present was incorrect
+        # and caused cooling to become inaccessible once a user turned it off.
+        return "roomControlMode" in self.state
 
     @property
     def supports_boost_mode(self) -> bool:

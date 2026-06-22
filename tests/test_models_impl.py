@@ -995,9 +995,11 @@ class TestSHCClimateControl:
         d = self._make(room_control="COOLING")
         assert d.supports_cooling is True
 
-    def test_supports_cooling_false_when_heating(self):
+    def test_supports_cooling_true_when_heating(self):
+        # Regression for #67: roomControlMode=HEATING still means the field is
+        # present → room is cooling-capable; COOL must stay in hvac_modes.
         d = self._make(room_control="HEATING")
-        assert d.supports_cooling is False
+        assert d.supports_cooling is True
 
     def test_room_control_mode(self):
         d = self._make(room_control="HEATING")

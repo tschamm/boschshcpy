@@ -271,24 +271,28 @@ def test_rcc_cooling_mode_setter_false():
     )
 
 
-def test_rcc_supports_cooling_true():
-    # Cooling-capable only when actually in COOLING mode (no static flag exists).
+def test_rcc_supports_cooling_true_when_cooling():
+    # roomControlMode present with value COOLING → cooling capable.
     svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "COOLING"})
     assert svc.supports_cooling is True
 
 
-def test_rcc_supports_cooling_false_when_heating():
-    # roomControlMode present but HEATING → NOT a cooling-capability signal.
+def test_rcc_supports_cooling_true_when_heating():
+    # Regression for #67: roomControlMode present with value HEATING must still
+    # report supports_cooling=True so HA keeps HVACMode.COOL available and the
+    # user can re-enable cooling from HA after turning it off.
     svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "HEATING"})
-    assert svc.supports_cooling is False
+    assert svc.supports_cooling is True
 
 
-def test_rcc_supports_cooling_false_when_off():
+def test_rcc_supports_cooling_true_when_off():
+    # roomControlMode present with value OFF → field is present → cooling capable.
     svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "OFF"})
-    assert svc.supports_cooling is False
+    assert svc.supports_cooling is True
 
 
-def test_rcc_supports_cooling_false():
+def test_rcc_supports_cooling_false_when_absent():
+    # roomControlMode absent → heating-only room (classic TRV/radiator thermostat).
     svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL"})
     assert svc.supports_cooling is False
 
