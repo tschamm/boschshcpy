@@ -52,6 +52,17 @@ class _PowerMeter(SHCDevice):
     def powerconsumption(self) -> float:
         return self._powermeter_service.powerconsumption
 
+    @property
+    def energy_yield(self) -> float:
+        # #331: PV production (Wh) on Smart Plug [+M]; None when unsupported.
+        return self._powermeter_service.energyyield
+
+    @property
+    def supports_energy_yield(self) -> bool:
+        # True only when the controller actually reports an energyYield field
+        # (Smart Plug [+M] in Mini-PV mode) — gates the HA yield entities.
+        return self._powermeter_service.energyyield is not None
+
 
 class _ChildProtection(SHCDevice):
     from .services_impl import (
@@ -624,11 +635,39 @@ class SHCLightSwitchBSM(SHCLightSwitch, _PowerMeter):
 
 
 class SHCLightControl(_CommunicationQuality, _PowerMeter):
-    from .services_impl import SwitchConfiguration
+    from .services_impl import SwitchConfiguration, KeypadService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._switch_config_service = self.device_service("SwitchConfiguration")
+        # #282: Light Control II exposes a Keypad service when its physical
+        # input is configured as a push-button that does NOT toggle the output.
+        # The wall press then arrives as a Keypad event the user can react to.
+        self._keypad_service = self.device_service("Keypad")
+
+    @property
+    def has_keypad(self) -> bool:
+        return self._keypad_service is not None
+
+    @property
+    def keyname(self) -> "KeypadService.KeyState":
+        return self._keypad_service.keyName if self._keypad_service is not None else None
+
+    @property
+    def eventtype(self) -> "KeypadService.KeyEvent":
+        return (
+            self._keypad_service.eventType
+            if self._keypad_service is not None
+            else None
+        )
+
+    @property
+    def eventtimestamp(self) -> int:
+        return (
+            self._keypad_service.eventTimestamp
+            if self._keypad_service is not None
+            else 0
+        )
 
     @property
     def switch_type(self):
@@ -1273,6 +1312,10 @@ class SHCClimateControl(_TemperatureLevel):
     async def async_set_low(self, value: bool):
         """Async write: set ECO (low) mode."""
         await self._roomclimatecontrol_service.async_put_state_element("low", value)
+
+    @property
+    def supports_low(self) -> bool:
+        return self._roomclimatecontrol_service.supports_low
 
     @property
     def summer_mode(self) -> bool:

@@ -32,6 +32,7 @@ class SHCSession:
         zeroconf=None,
         long_poll_timeout: int = 10,
         verify_hostname: bool = False,
+        ssl_verify: bool = True,
     ):
         # API
         self._long_poll_timeout = long_poll_timeout
@@ -40,6 +41,7 @@ class SHCSession:
             certificate=certificate,
             key=key,
             verify_hostname=verify_hostname,
+            ssl_verify=ssl_verify,
         )
         self._device_helper = SHCDeviceHelper(self._api)
 

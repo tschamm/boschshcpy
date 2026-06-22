@@ -94,6 +94,11 @@ class RoomClimateControlService(SHCDeviceService):
         self.put_state_element("low", value)
 
     @property
+    def supports_low(self) -> bool:
+        # The eco/reduced "low" field is only present on rooms that expose it.
+        return "low" in self.state
+
+    @property
     def boost_mode(self) -> bool:
         return self.state.get("boostMode", False)
 
@@ -127,7 +132,14 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def supports_cooling(self) -> bool:
-        return "roomControlMode" in self.state
+        # `roomControlMode` is present on every room (value HEATING/COOLING/OFF),
+        # so field-presence is NOT a cooling-capability signal — it wrongly
+        # offered COOL on heating-only radiator rooms. The SHC exposes no static
+        # cooling-capability flag, so we treat a room as cooling-capable only
+        # when it is actually in COOLING mode (the one reliable positive signal).
+        # Limitation: a cooling-capable room currently heating must be switched
+        # to cooling in the Bosch app before HA shows the COOL mode.
+        return self.room_control_mode == "COOLING"
 
     @property
     def supports_boost_mode(self) -> bool:
@@ -378,10 +390,19 @@ class PowerMeterService(SHCDeviceService):
     def energyconsumption(self) -> float:
         return float(self.state["energyConsumption"])
 
+    @property
+    def energyyield(self) -> float:
+        # #331: Smart Plug [+M] in Mini-PV mode reports PV production as a
+        # separate energyYield (Wh). Older Zigbee plugs / firmware omit the
+        # field → return None so the HA layer can skip the yield entities.
+        value = self.state.get("energyYield")
+        return None if value is None else float(value)
+
     def summary(self):
         super().summary()
         print(f"    powerConsumption         : {self.powerconsumption}")
         print(f"    energyConsumption        : {self.energyconsumption}")
+        print(f"    energyYield              : {self.energyyield}")
 
 
 class RoutingService(SHCDeviceService):

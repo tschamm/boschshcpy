@@ -272,13 +272,35 @@ def test_rcc_cooling_mode_setter_false():
 
 
 def test_rcc_supports_cooling_true():
-    svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "HEATING"})
+    # Cooling-capable only when actually in COOLING mode (no static flag exists).
+    svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "COOLING"})
     assert svc.supports_cooling is True
+
+
+def test_rcc_supports_cooling_false_when_heating():
+    # roomControlMode present but HEATING → NOT a cooling-capability signal.
+    svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "HEATING"})
+    assert svc.supports_cooling is False
+
+
+def test_rcc_supports_cooling_false_when_off():
+    svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "roomControlMode": "OFF"})
+    assert svc.supports_cooling is False
 
 
 def test_rcc_supports_cooling_false():
     svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL"})
     assert svc.supports_cooling is False
+
+
+def test_rcc_supports_low_present():
+    svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL", "low": False})
+    assert svc.supports_low is True
+
+
+def test_rcc_supports_low_absent():
+    svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL"})
+    assert svc.supports_low is False
 
 
 def test_rcc_supports_boost_mode():
@@ -731,6 +753,23 @@ def test_power_consumption():
 def test_energy_consumption():
     svc = _make_svc(PowerMeterService, {"powerConsumption": 0.0, "energyConsumption": 456.78})
     assert svc.energyconsumption == pytest.approx(456.78)
+
+
+def test_energy_yield_present():
+    # #331: Smart Plug [+M] Mini-PV mode reports energyYield (Wh).
+    svc = _make_svc(
+        PowerMeterService,
+        {"powerConsumption": -800.0, "energyConsumption": 123.0, "energyYield": 234.0},
+    )
+    assert svc.energyyield == pytest.approx(234.0)
+
+
+def test_energy_yield_absent_returns_none():
+    # Older Zigbee plugs / firmware omit the field → None (not KeyError).
+    svc = _make_svc(
+        PowerMeterService, {"powerConsumption": 1.0, "energyConsumption": 123.0}
+    )
+    assert svc.energyyield is None
 
 
 # ===========================================================================

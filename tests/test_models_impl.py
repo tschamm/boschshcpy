@@ -991,9 +991,13 @@ class TestSHCClimateControl:
         d = self._make(room_control="COOLING")
         assert d.cooling_mode is True
 
-    def test_supports_cooling_present(self):
-        d = self._make()
+    def test_supports_cooling_true_when_cooling(self):
+        d = self._make(room_control="COOLING")
         assert d.supports_cooling is True
+
+    def test_supports_cooling_false_when_heating(self):
+        d = self._make(room_control="HEATING")
+        assert d.supports_cooling is False
 
     def test_room_control_mode(self):
         d = self._make(room_control="HEATING")

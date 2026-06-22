@@ -65,6 +65,7 @@ class TestInitApiConstruction:
             certificate="/fake/cert.pem",
             key="/fake/key.pem",
             verify_hostname=False,
+            ssl_verify=True,
         )
 
     def test_api_attribute_is_shcapi_instance(self):

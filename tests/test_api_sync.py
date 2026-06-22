@@ -12,7 +12,7 @@ Run:
 
 import json
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -752,6 +752,87 @@ class TestJSONRPCError:
 # ──────────────────────────────────────────────────────────────────────────────
 # HostNameIgnoringAdapter
 # ──────────────────────────────────────────────────────────────────────────────
+
+
+class TestSessionRequestRetry:
+    """#281: one transparent retry on a bare ConnectionError (RemoteDisconnected)."""
+
+    def _conn_err(self):
+        import requests as req_mod
+        return req_mod.exceptions.ConnectionError(
+            "('Connection aborted.', RemoteDisconnected('Remote end closed "
+            "connection without response'))"
+        )
+
+    def test_get_retries_once_then_succeeds(self):
+        api = _make_api()
+        ok = _fake_response([{"@type": "device", "id": "d1"}])
+        api._requests_session.get.side_effect = [self._conn_err(), ok]
+        result = api._get_api_result_or_fail(f"{_API_ROOT}/devices")
+        assert result == [{"@type": "device", "id": "d1"}]
+        assert api._requests_session.get.call_count == 2
+
+    def test_put_retries_once_then_succeeds(self):
+        api = _make_api()
+        api._requests_session.put.side_effect = [self._conn_err(), _fake_response(None)]
+        api._put_api_or_fail(f"{_API_ROOT}/x", {"on": True})
+        assert api._requests_session.put.call_count == 2
+
+    def test_post_retries_once_then_succeeds(self):
+        api = _make_api()
+        api._requests_session.post.side_effect = [
+            self._conn_err(),
+            _fake_response(_rpc_response("poll-id-1")),
+        ]
+        result = api.long_polling_subscribe()
+        assert result == "poll-id-1"
+        assert api._requests_session.post.call_count == 2
+
+    def test_reraises_when_retry_also_fails(self):
+        import requests as req_mod
+        api = _make_api()
+        api._requests_session.get.side_effect = [self._conn_err(), self._conn_err()]
+        with pytest.raises(req_mod.exceptions.ConnectionError):
+            api._get_api_result_or_fail(f"{_API_ROOT}/devices")
+        assert api._requests_session.get.call_count == 2
+
+    def test_no_retry_on_first_success(self):
+        api = _make_api()
+        api._requests_session.get.return_value = _fake_response([])
+        api._get_api_result_or_fail(f"{_API_ROOT}/devices")
+        assert api._requests_session.get.call_count == 1
+
+
+class TestSSLVerifyOption:
+    """#264: opt-in skip of SHC server-certificate verification."""
+
+    def _build(self, ssl_verify=True):
+        with patch("boschshcpy.api.requests.Session") as mock_sess_cls, \
+             patch("urllib3.disable_warnings"), \
+             patch("boschshcpy.api.importlib.resources.files") as mock_files:
+            mock_files.return_value.__truediv__ = (
+                lambda self, name: "/fake/tls_ca_chain.pem"
+            )
+            mock_sess = MagicMock()
+            mock_sess_cls.return_value = mock_sess
+            api = SHCAPI(_IP, "/cert.pem", "/key.pem", ssl_verify=ssl_verify)
+            return api, mock_sess
+
+    def test_verify_true_uses_ca_chain(self):
+        _, sess = self._build(ssl_verify=True)
+        assert sess.verify == "/fake/tls_ca_chain.pem"
+
+    def test_verify_false_disables_verification(self):
+        _, sess = self._build(ssl_verify=False)
+        assert sess.verify is False
+
+    def test_default_is_verify_on(self):
+        _, sess = self._build()
+        assert sess.verify == "/fake/tls_ca_chain.pem"
+
+    def test_client_cert_unaffected_when_verify_off(self):
+        _, sess = self._build(ssl_verify=False)
+        assert sess.cert == ("/cert.pem", "/key.pem")
 
 
 class TestHostNameIgnoringAdapter:

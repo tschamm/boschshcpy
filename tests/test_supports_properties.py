@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import pytest
 
+from unittest.mock import MagicMock
+
 from boschshcpy.models_impl import (
     SHCSmokeDetector,
     SHCSmartPlug,
@@ -19,7 +21,69 @@ from boschshcpy.models_impl import (
     SHCRoomThermostat2,
     SHCMotionDetector2,
     SHCTwinguard,
+    SHCLightControl,
 )
+
+
+# ---------------------------------------------------------------------------
+# _PowerMeter.energy_yield / supports_energy_yield (#331)
+# ---------------------------------------------------------------------------
+
+class TestPowerMeterEnergyYield:
+    def _obj(self, energyyield):
+        obj = SHCSmartPlug.__new__(SHCSmartPlug)
+        svc = MagicMock()
+        svc.energyyield = energyyield
+        obj._powermeter_service = svc
+        return obj
+
+    def test_energy_yield_value(self):
+        assert self._obj(234.0).energy_yield == pytest.approx(234.0)
+
+    def test_supports_energy_yield_true(self):
+        assert self._obj(234.0).supports_energy_yield is True
+
+    def test_supports_energy_yield_false_when_none(self):
+        assert self._obj(None).supports_energy_yield is False
+
+    def test_energy_yield_none_passthrough(self):
+        assert self._obj(None).energy_yield is None
+
+
+# ---------------------------------------------------------------------------
+# SHCLightControl Keypad (#282)
+# ---------------------------------------------------------------------------
+
+class TestSHCLightControlKeypad:
+    def _obj(self, keypad=None):
+        obj = SHCLightControl.__new__(SHCLightControl)
+        obj._keypad_service = keypad
+        return obj
+
+    def test_has_keypad_false_without_service(self):
+        assert self._obj(None).has_keypad is False
+
+    def test_has_keypad_true_with_service(self):
+        assert self._obj(MagicMock()).has_keypad is True
+
+    def test_eventtype_none_without_service(self):
+        assert self._obj(None).eventtype is None
+
+    def test_keyname_none_without_service(self):
+        assert self._obj(None).keyname is None
+
+    def test_eventtimestamp_zero_without_service(self):
+        assert self._obj(None).eventtimestamp == 0
+
+    def test_eventtype_reads_service(self):
+        kp = MagicMock()
+        kp.eventType = "PRESS_SHORT"
+        assert self._obj(kp).eventtype == "PRESS_SHORT"
+
+    def test_eventtimestamp_reads_service(self):
+        kp = MagicMock()
+        kp.eventTimestamp = 1729081244374
+        assert self._obj(kp).eventtimestamp == 1729081244374
 
 
 # ---------------------------------------------------------------------------

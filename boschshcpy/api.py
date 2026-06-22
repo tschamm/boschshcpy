@@ -19,7 +19,14 @@ class HostNameIgnoringAdapter(HTTPAdapter):
 
 
 class SHCAPI:
-    def __init__(self, controller_ip: str, certificate, key, verify_hostname: bool = False):
+    def __init__(
+        self,
+        controller_ip: str,
+        certificate,
+        key,
+        verify_hostname: bool = False,
+        ssl_verify: bool = True,
+    ):
         self._certificate = certificate
         self._key = key
         self._controller_ip = controller_ip
@@ -38,20 +45,56 @@ class SHCAPI:
         self._requests_session.headers.update(
             {"api-version": "3.2", "Content-Type": "application/json"}
         )
-        self._requests_session.verify = str(
-            importlib.resources.files("boschshcpy") / "tls_ca_chain.pem"
-        )
+        if ssl_verify:
+            # Verify the SHC server certificate against the bundled Bosch CA.
+            self._requests_session.verify = str(
+                importlib.resources.files("boschshcpy") / "tls_ca_chain.pem"
+            )
+        else:
+            # #264: opt-in for local-only LAN setups whose SHC server
+            # certificate has expired (controller offline → no FW/cert
+            # updates). Skips server-cert verification only; mTLS client-cert
+            # authentication is unaffected.
+            self._requests_session.verify = False
+            logger.warning(
+                "SSL certificate verification is DISABLED for the SHC at %s "
+                "(ssl_verify=False). Only use this on a trusted local network.",
+                controller_ip,
+            )
+            import urllib3
+            from urllib3.exceptions import InsecureRequestWarning
 
-        import urllib3
-        from urllib3.exceptions import InsecureRequestWarning
-
-        # Scope to InsecureRequestWarning only — a process-wide disable would
-        # also silence legitimate SSL warnings from other HA integrations.
-        urllib3.disable_warnings(InsecureRequestWarning)
+            # Suppress InsecureRequestWarning only when the user opts out of
+            # verification — and scope it to that one warning so legitimate SSL
+            # warnings from other HA integrations are not silenced.
+            urllib3.disable_warnings(InsecureRequestWarning)
 
     @property
     def controller_ip(self):
         return self._controller_ip
+
+    def _session_request(self, method, api_url, **kwargs):
+        """Issue a request, retrying once on a bare connection drop.
+
+        #281: the SHC silently closes idle keep-alive connections. The next
+        request reusing that dead pooled connection then raises
+        ConnectionError(RemoteDisconnected('Remote end closed connection
+        without response')) before the request reaches the controller. Because
+        no response was received, the command was not processed, so a single
+        retry on a fresh connection is safe (no risk of double-execution) and
+        turns the intermittent automation failure into a transparent recovery.
+        """
+        # Dispatch on the named verb (session.get/put/post) so callers and tests
+        # observe the same call surface as before this retry wrapper existed.
+        verb = getattr(self._requests_session, method.lower())
+        try:
+            return verb(api_url, **kwargs)
+        except requests.exceptions.ConnectionError as err:
+            logger.debug(
+                "%s %s dropped (%s); retrying once on a fresh connection",
+                method, api_url, err,
+            )
+            return verb(api_url, **kwargs)
 
     def _get_api_result_or_fail(
         self,
@@ -62,8 +105,8 @@ class SHCAPI:
         timeout=30,
     ):
         try:
-            result = self._requests_session.get(
-                api_url, headers=headers, timeout=timeout
+            result = self._session_request(
+                "GET", api_url, headers=headers, timeout=timeout
             )
             if not result.ok:
                 self._process_nok_result(result)
@@ -92,8 +135,8 @@ class SHCAPI:
             raise SHCConnectionError(f"API call returned SSLError: {e}.") from e
 
     def _put_api_or_fail(self, api_url, body, timeout=30):
-        result = self._requests_session.put(
-            api_url, data=json.dumps(body), timeout=timeout
+        result = self._session_request(
+            "PUT", api_url, data=json.dumps(body), timeout=timeout
         )
         if not result.ok:
             self._process_nok_result(result)
@@ -103,8 +146,8 @@ class SHCAPI:
             return {}
 
     def _post_api_or_fail(self, api_url, body, timeout=30):
-        result = self._requests_session.post(
-            api_url, data=json.dumps(body), timeout=timeout
+        result = self._session_request(
+            "POST", api_url, data=json.dumps(body), timeout=timeout
         )
         if not result.ok:
             self._process_nok_result(result)
