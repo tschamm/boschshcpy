@@ -631,6 +631,10 @@ class SHCClimateControl(_TemperatureLevel):
         return self._roomclimatecontrol_service.supports_boost_mode
 
     @property
+    def supports_eco(self) -> bool:
+        return self._roomclimatecontrol_service.supports_eco
+
+    @property
     def low(self) -> bool:
         return self._roomclimatecontrol_service.low
 
