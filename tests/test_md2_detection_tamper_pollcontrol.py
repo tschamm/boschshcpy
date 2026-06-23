@@ -65,8 +65,9 @@ class TestDetectionTestService:
         svc.set_detection_state_request(
             DetectionTestService.DetectionStateRequest.DETECTION_STATE_START
         )
+        # hass#325: must write the REQUEST field, not the read-only state.
         svc.put_state_element.assert_called_once_with(
-            "detectionState", "DETECTION_STATE_START"
+            "detectionStateRequest", "DETECTION_STATE_START"
         )
 
     def test_async_set_request_stop(self):
@@ -79,7 +80,7 @@ class TestDetectionTestService:
             )
         )
         svc.async_put_state_element.assert_awaited_once_with(
-            "detectionState", "DETECTION_STATE_STOP"
+            "detectionStateRequest", "DETECTION_STATE_STOP"
         )
 
 

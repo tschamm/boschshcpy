@@ -845,12 +845,18 @@ class DetectionTestService(SHCDeviceService):
     def set_detection_state_request(
         self, value: "DetectionTestService.DetectionStateRequest"
     ):
-        self.put_state_element("detectionState", value.value)
+        # Write to detectionStateRequest, NOT detectionState. detectionState is
+        # the read-only reported state (DETECTION_TEST_STARTED/STOPPED); the
+        # controller rejects a write to it with 503 SERVICE_INVOCATION_FAILED
+        # (hass#325). The APK capability dump confirms a separate request field
+        # detectionStateRequest (START/STOP) — same split as WalkTest's
+        # walkState / walkStateRequest. (Bosch's own OpenAPI spec is wrong here.)
+        self.put_state_element("detectionStateRequest", value.value)
 
     async def async_set_detection_state_request(
         self, value: "DetectionTestService.DetectionStateRequest"
     ):
-        await self.async_put_state_element("detectionState", value.value)
+        await self.async_put_state_element("detectionStateRequest", value.value)
 
     def summary(self):
         super().summary()
