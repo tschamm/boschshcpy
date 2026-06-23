@@ -1256,6 +1256,9 @@ class SHCClimateControl(_TemperatureLevel):
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._roomclimatecontrol_service = self.device_service("RoomClimateControl")
+        self._supportedcontrolmode_service = self.device_service(
+            "ThermostatSupportedControlMode"
+        )
 
     @property
     def setpoint_temperature(self) -> float:
@@ -1363,7 +1366,19 @@ class SHCClimateControl(_TemperatureLevel):
 
     @property
     def supports_cooling(self) -> bool:
+        # Prefer the dedicated capability service (#70/#304/#330/#334): it
+        # advertises COOLING only on genuinely cool-capable rooms. Fall back to
+        # the RoomClimateControl field-presence heuristic on older firmware /
+        # devices that do not expose ThermostatSupportedControlMode.
+        if self._supportedcontrolmode_service is not None:
+            return self._supportedcontrolmode_service.supports_cooling
         return self._roomclimatecontrol_service.supports_cooling
+
+    @property
+    def supported_control_modes(self) -> list:
+        if self._supportedcontrolmode_service is not None:
+            return self._supportedcontrolmode_service.supported_control_modes
+        return []
 
     @property
     def has_demand(self) -> bool:

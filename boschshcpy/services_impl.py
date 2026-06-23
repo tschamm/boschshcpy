@@ -142,17 +142,16 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def supports_cooling(self) -> bool:
-        # Field-presence check: `roomControlMode` is absent on heating-only rooms
-        # (classic TRV / basic wall thermostat) and present on rooms that genuinely
-        # support mode switching (floor-heating controllers, BWTH24, etc.).
-        # The Bosch APK (10.33) defines a dedicated `ThermostatSupportedControlMode`
-        # service advertising the supported mode set, but that service is per-device
-        # whereas this service is per-room.  For the per-room state the field-presence
-        # of `roomControlMode` is the reliable discriminator — confirmed by reporter
-        # @jumlu (#67): radiator rooms have no `roomControlMode` key; cooling-capable
-        # rooms have it with values HEATING/COOLING/OFF/UNKNOWN depending on current
-        # state.  The 0.3.1 assumption that the field is always-present was incorrect
-        # and caused cooling to become inaccessible once a user turned it off.
+        # FALLBACK heuristic only. The reliable discriminator is the dedicated
+        # `ThermostatSupportedControlMode` service (see
+        # ThermostatSupportedControlModeService + SHCClimateControl.supports_cooling);
+        # this field-presence check is used only when a device does not expose it.
+        # Field-presence is imperfect: reporter @jumlu (#67) had radiator rooms with
+        # no `roomControlMode` key, but newer firmware (#334) adds the key with value
+        # HEATING even to heating-only rooms, so this heuristic can false-positive
+        # there. That firmware exposes ThermostatSupportedControlMode, which the model
+        # prefers — so the false-positive only affects hypothetical devices that have
+        # the key but lack the capability service.
         return "roomControlMode" in self.state
 
     @property
@@ -182,6 +181,27 @@ class RoomClimateControlService(SHCDeviceService):
         print(f"    Supports Cooling         : {self.supports_cooling}")
         print(f"    Supports Boost Mode      : {self.supports_boost_mode}")
         print(f"    Show Setpoint Temperature: {self.show_setpoint_temperature}")
+
+
+class ThermostatSupportedControlModeService(SHCDeviceService):
+    # Per-room capability service on the virtual `roomClimateControl_hz_*`
+    # device. Advertises which control modes the room genuinely supports,
+    # e.g. ["HEATING", "OFF"] for a radiator room vs
+    # ["COOLING", "HEATING", "OFF"] for a chiller/floor-heating room.
+    # This is the reliable cooling discriminator (#70/#304/#330/#334) —
+    # the `roomControlMode` field of RoomClimateControl is present even on
+    # heating-only rooms on newer firmware, so field-presence is unreliable.
+    @property
+    def supported_control_modes(self) -> list:
+        return self.state.get("supportedControlModes", [])
+
+    @property
+    def supports_cooling(self) -> bool:
+        return "COOLING" in self.supported_control_modes
+
+    def summary(self):
+        super().summary()
+        print(f"    Supported Control Modes  : {self.supported_control_modes}")
 
 
 class HeatingCircuitService(SHCDeviceService):
@@ -1939,6 +1959,7 @@ SERVICE_MAPPING = {
     "PresenceSimulationConfiguration": PresenceSimulationConfigurationService,
     "PrivacyMode": PrivacyModeService,
     "RoomClimateControl": RoomClimateControlService,
+    "ThermostatSupportedControlMode": ThermostatSupportedControlModeService,
     "Routing": RoutingService,
     "ShutterContact": ShutterContactService,
     "ShutterControl": ShutterControlService,

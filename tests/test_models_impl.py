@@ -902,9 +902,14 @@ class TestSHCThermostat:
 
 class TestSHCClimateControl:
     def _make(self, op_mode="AUTOMATIC", setpoint=21.5, boost=False, low=False,
-              summer=False, supports_boost=True, room_control="HEATING"):
+              summer=False, supports_boost=True, room_control="HEATING",
+              supported_modes=None):
         from boschshcpy.models_impl import SHCClimateControl
-        from boschshcpy.services_impl import RoomClimateControlService, TemperatureLevelService
+        from boschshcpy.services_impl import (
+            RoomClimateControlService,
+            TemperatureLevelService,
+            ThermostatSupportedControlModeService,
+        )
 
         state = {
             "@type": "x",
@@ -932,13 +937,29 @@ class TestSHCClimateControl:
         tl._raw_state = tl._raw_device_service["state"]
         tl._last_update = None; tl._callbacks = {}; tl._event_callbacks = {}
 
+        scm = None
+        if supported_modes is not None:
+            scm = ThermostatSupportedControlModeService.__new__(
+                ThermostatSupportedControlModeService
+            )
+            scm._api = None
+            scm_state = {"@type": "thermostatSupportedControlModeState",
+                         "supportedControlModes": supported_modes}
+            scm._raw_device_service = {"id": "ThermostatSupportedControlMode",
+                                       "deviceId": "d1", "path": "/x", "state": scm_state}
+            scm._raw_state = scm_state
+            scm._last_update = None; scm._callbacks = {}; scm._event_callbacks = {}
+
         obj = SHCClimateControl.__new__(SHCClimateControl)
         obj._raw_device = _fake_raw_device(model="ROOM_CLIMATE_CONTROL")
         obj._device_services_by_id = {"RoomClimateControl": rcc, "TemperatureLevel": tl}
+        if scm is not None:
+            obj._device_services_by_id["ThermostatSupportedControlMode"] = scm
         obj._callbacks = {}
         obj._api = None
         obj._roomclimatecontrol_service = rcc
         obj._temperaturelevel_service = tl
+        obj._supportedcontrolmode_service = scm
         return obj
 
     def test_operation_mode_automatic(self):
@@ -991,15 +1012,38 @@ class TestSHCClimateControl:
         d = self._make(room_control="COOLING")
         assert d.cooling_mode is True
 
-    def test_supports_cooling_true_when_cooling(self):
+    def test_supports_cooling_fallback_when_cooling(self):
+        # No ThermostatSupportedControlMode service → fall back to the
+        # RoomClimateControl field-presence heuristic (#67).
         d = self._make(room_control="COOLING")
         assert d.supports_cooling is True
 
-    def test_supports_cooling_true_when_heating(self):
-        # Regression for #67: roomControlMode=HEATING still means the field is
-        # present → room is cooling-capable; COOL must stay in hvac_modes.
+    def test_supports_cooling_fallback_when_heating(self):
+        # Fallback path (#67): roomControlMode field present → cooling-capable.
         d = self._make(room_control="HEATING")
         assert d.supports_cooling is True
+
+    def test_supports_cooling_fallback_field_absent(self):
+        # Fallback path, genuine heating-only radiator (#67): roomControlMode key
+        # truly absent → not cooling-capable.
+        d = self._make(room_control="HEATING")
+        d._roomclimatecontrol_service._raw_state.pop("roomControlMode", None)
+        assert d.supports_cooling is False
+
+    def test_supports_cooling_capability_service_cooling_capable(self):
+        # #334: cool-capable room (hz_4) advertises COOLING → COOL exposed,
+        # even though roomControlMode reads HEATING right now.
+        d = self._make(room_control="HEATING",
+                       supported_modes=["COOLING", "HEATING", "OFF"])
+        assert d.supports_cooling is True
+        assert d.supported_control_modes == ["COOLING", "HEATING", "OFF"]
+
+    def test_supports_cooling_capability_service_heating_only(self):
+        # #334: heating-only room (hz_12) advertises only HEATING/OFF → COOL must
+        # NOT be exposed, despite roomControlMode field being present.
+        d = self._make(room_control="HEATING",
+                       supported_modes=["HEATING", "OFF"])
+        assert d.supports_cooling is False
 
     def test_room_control_mode(self):
         d = self._make(room_control="HEATING")
