@@ -16,7 +16,7 @@ Requires Python ≥ 3.10.
 pip install boschshcpy
 ```
 
-Current PyPI version: **0.3.6**
+Current PyPI version: **0.3.7**
 
 ## Supported device services
 
