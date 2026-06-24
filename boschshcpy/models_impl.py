@@ -1796,11 +1796,22 @@ class SHCRoomThermostat2(
 
 
 class SHCUniversalSwitch(SHCBatteryDevice):
-    from .services_impl import KeypadService
+    from .services_impl import KeypadService, KeypadTriggerService
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
         self._keypad_service = self.device_service("Keypad")
+        # KeypadTrigger is optional/unconfirmed in rawscans — guard on None.
+        self._keypadtrigger_service = self.device_service("KeypadTrigger")
+
+    @property
+    def supports_keypadtrigger(self) -> bool:
+        return self._keypadtrigger_service is not None
+
+    @property
+    def keypadtrigger(self) -> "KeypadTriggerService":
+        """The KeypadTrigger service (scenario mapping), or None."""
+        return self._keypadtrigger_service
 
     @property
     def keystates(self) -> dict[str]:

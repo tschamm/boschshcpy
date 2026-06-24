@@ -102,6 +102,20 @@ class SHCDevice:
         )
 
     @property
+    def software_update(self):
+        """The per-device SoftwareUpdate service, or None if not exposed.
+
+        Spec-grounded (APK 10.33). Most devices do not carry this service, so
+        callers must guard on the None return. Read-only firmware status — the
+        local API has no per-device install action (hass#186 lesson).
+        """
+        return self.device_service("SoftwareUpdate")
+
+    @property
+    def supports_software_update(self) -> bool:
+        return self.device_service("SoftwareUpdate") is not None
+
+    @property
     def device_services(self) -> typing.Sequence[SHCDeviceService]:
         return list(self._device_services_by_id.values())
 

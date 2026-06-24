@@ -256,3 +256,69 @@ class TestSHCInformationSoftwareUpdate:
         info = self._info()
         assert info.available_version is None
         assert info.automatic_updates_enabled is None
+
+
+# ---------------------------------------------------------------------------
+# KeypadTriggerService (Universal Switch II button->scenario mapping)
+# ---------------------------------------------------------------------------
+
+class TestKeypadTriggerService:
+    def _svc(self, **state):
+        from boschshcpy.services_impl import KeypadTriggerService
+        return _make_svc(KeypadTriggerService, state)
+
+    def test_read_props(self):
+        svc = self._svc(
+            switchType="UNIVERSAL_SWITCH",
+            scenarioIdAssociations=[{"keyName": "LOWER_BUTTON", "scenarioId": "abc"}],
+            idsToTrigger=["abc"],
+        )
+        assert svc.switch_type == "UNIVERSAL_SWITCH"
+        assert svc.scenario_id_associations == [
+            {"keyName": "LOWER_BUTTON", "scenarioId": "abc"}
+        ]
+        assert svc.ids_to_trigger == ["abc"]
+
+    def test_missing_fields_safe_defaults(self):
+        svc = self._svc()
+        assert svc.switch_type is None
+        assert svc.scenario_id_associations == []
+        assert svc.ids_to_trigger == []
+
+    def test_registered_in_service_mapping(self):
+        from boschshcpy.services_impl import SERVICE_MAPPING, KeypadTriggerService
+        assert SERVICE_MAPPING["KeypadTrigger"] is KeypadTriggerService
+
+
+# ---------------------------------------------------------------------------
+# SoftwareUpdateService (per-device firmware status)
+# ---------------------------------------------------------------------------
+
+class TestSoftwareUpdateService:
+    def _svc(self, **state):
+        from boschshcpy.services_impl import SoftwareUpdateService
+        return _make_svc(SoftwareUpdateService, state)
+
+    def test_read_props(self):
+        svc = self._svc(
+            swUpdateState="UPDATE_AVAILABLE",
+            swInstalledVersion="1.0.0",
+            swUpdateAvailableVersion="1.1.0",
+            automaticUpdatesEnabled=True,
+        )
+        from boschshcpy.services_impl import SoftwareUpdateService
+        assert svc.sw_update_state == SoftwareUpdateService.SwUpdateState.UPDATE_AVAILABLE
+        assert svc.sw_installed_version == "1.0.0"
+        assert svc.sw_update_available_version == "1.1.0"
+        assert svc.automatic_updates_enabled is True
+
+    def test_unknown_state_falls_back(self):
+        from boschshcpy.services_impl import SoftwareUpdateService
+        # Missing → UNKNOWN; bogus value → UNKNOWN (no ValueError on poll).
+        assert self._svc().sw_update_state == SoftwareUpdateService.SwUpdateState.UNKNOWN
+        bogus = self._svc(swUpdateState="SOMETHING_NEW")
+        assert bogus.sw_update_state == SoftwareUpdateService.SwUpdateState.UNKNOWN
+
+    def test_registered_in_service_mapping(self):
+        from boschshcpy.services_impl import SERVICE_MAPPING, SoftwareUpdateService
+        assert SERVICE_MAPPING["SoftwareUpdate"] is SoftwareUpdateService

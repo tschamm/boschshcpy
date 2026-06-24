@@ -2136,6 +2136,92 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
         print(f"    solarChargingScore       : {self.solar_charging_score}")
 
 
+class KeypadTriggerService(SHCDeviceService):
+    """Universal Switch II button->scenario mapping (read-only).
+
+    Spec-grounded from the Bosch app (APK 10.33) DeviceServiceData catalog —
+    keypadTriggerState{scenarioIdAssociations, switchType, idsToTrigger}. This
+    service is NOT in the official local OpenAPI and has not yet been observed
+    in a rawscan, so every field is defensively .get-guarded. It reports which
+    scenarios a Universal Switch II key is wired to trigger; it is informational
+    only (the actual press events arrive via the separate Keypad service).
+    """
+
+    @property
+    def switch_type(self) -> str:
+        return self.state.get("switchType")
+
+    @property
+    def scenario_id_associations(self) -> list:
+        # Each entry maps a key (keyName/keyState) to a scenarioId. Shape is not
+        # yet confirmed by a rawscan, so it is surfaced verbatim.
+        return self.state.get("scenarioIdAssociations", []) or []
+
+    @property
+    def ids_to_trigger(self) -> list:
+        return self.state.get("idsToTrigger", []) or []
+
+    def summary(self):
+        super().summary()
+        print(f"    switchType               : {self.switch_type}")
+        print(f"    scenarioIdAssociations   : {self.scenario_id_associations}")
+        print(f"    idsToTrigger             : {self.ids_to_trigger}")
+
+
+class SoftwareUpdateService(SHCDeviceService):
+    """Per-device firmware update state (read-only).
+
+    Mirrors the controller-level ShcInfo softwareUpdateState block (see
+    SHCInformation, hass#186) but at the individual-device level. Like the
+    controller case, the local API exposes no install action — updates are
+    started from the Bosch app — so this is a read-only status surface only.
+    Spec-grounded from APK 10.33; not yet confirmed in a per-device rawscan, so
+    all access is .get/try-guarded and any device may or may not carry it.
+    """
+
+    class SwUpdateState(Enum):
+        NO_UPDATE_AVAILABLE = "NO_UPDATE_AVAILABLE"
+        UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
+        DOWNLOADING = "DOWNLOADING"
+        INSTALLING = "INSTALLING"
+        UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
+        UPDATE_SUCCESS = "UPDATE_SUCCESS"
+        UPDATE_FAILED = "UPDATE_FAILED"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def sw_update_state(self) -> "SoftwareUpdateService.SwUpdateState":
+        raw = self.state.get("swUpdateState")
+        if raw is None:
+            return self.SwUpdateState.UNKNOWN
+        try:
+            return self.SwUpdateState(raw)
+        except ValueError:
+            return self.SwUpdateState.UNKNOWN
+
+    @property
+    def sw_update_last_result(self) -> str:
+        return self.state.get("swUpdateLastResult")
+
+    @property
+    def sw_update_available_version(self) -> str:
+        return self.state.get("swUpdateAvailableVersion")
+
+    @property
+    def sw_installed_version(self) -> str:
+        return self.state.get("swInstalledVersion")
+
+    @property
+    def automatic_updates_enabled(self) -> bool:
+        return bool(self.state.get("automaticUpdatesEnabled", False))
+
+    def summary(self):
+        super().summary()
+        print(f"    swUpdateState            : {self.sw_update_state}")
+        print(f"    swInstalledVersion       : {self.sw_installed_version}")
+        print(f"    swUpdateAvailableVersion : {self.sw_update_available_version}")
+
+
 SERVICE_MAPPING = {
     "AirQualityLevel": AirQualityLevelService,
     "Alarm": AlarmService,
@@ -2161,6 +2247,7 @@ SERVICE_MAPPING = {
     "HumidityLevel": HumidityLevelService,
     "ImpulseSwitch": ImpulseSwitchService,
     "Keypad": KeypadService,
+    "KeypadTrigger": KeypadTriggerService,
     "LatestMotion": LatestMotionService,
     "LatestTamper": LatestTamperService,
     "LedBrightnessConfiguration": LedBrightnessConfigurationService,
@@ -2188,6 +2275,7 @@ SERVICE_MAPPING = {
     "SmartSensitivityControl": SmartSensitivityControlService,
     "SmokeSensitivity": SmokeSensitivityService,
     "SmokeDetectorCheck": SmokeDetectorCheckService,
+    "SoftwareUpdate": SoftwareUpdateService,
     "SurveillanceAlarm": SurveillanceAlarmService,
     "SwitchConfiguration": SwitchConfiguration,
     "TemperatureLevel": TemperatureLevelService,
