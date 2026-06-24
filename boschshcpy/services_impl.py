@@ -2222,6 +2222,88 @@ class SoftwareUpdateService(SHCDeviceService):
         print(f"    swUpdateAvailableVersion : {self.sw_update_available_version}")
 
 
+class DimmerConfigurationService(SHCDeviceService):
+    """Micromodule dimmer calibration config (#123).
+
+    Spec grounded on a live MICROMODULE_DIMMER rawscan (hass#123):
+    - edgePhaseControlMode: TRAILING (standard) or LEADING
+    - brightnessRange.{minBrightness,maxBrightness}: the calibrated range for the
+      connected load (load-specific, not necessarily 0-100)
+    - dimmingSpeed: 1-10 (lower = faster)
+    Operations previewMaxBrightness/previewMinBrightness flash the load at the
+    configured extremes for calibration. All access is .get-guarded.
+    """
+
+    class EdgePhaseControlMode(Enum):
+        TRAILING = "TRAILING"
+        LEADING = "LEADING"
+
+    @property
+    def edge_phase_control_mode(self) -> "DimmerConfigurationService.EdgePhaseControlMode":
+        try:
+            return self.EdgePhaseControlMode(self.state.get("edgePhaseControlMode"))
+        except ValueError:
+            return self.EdgePhaseControlMode.TRAILING
+
+    @property
+    def _brightness_range(self) -> dict:
+        return self.state.get("brightnessRange", {}) or {}
+
+    @property
+    def min_brightness(self) -> int:
+        return int(self._brightness_range.get("minBrightness", 0))
+
+    @property
+    def max_brightness(self) -> int:
+        return int(self._brightness_range.get("maxBrightness", 100))
+
+    @property
+    def dimming_speed(self) -> int:
+        return int(self.state.get("dimmingSpeed", 5))
+
+    async def async_set_edge_phase_control_mode(
+        self, mode: "DimmerConfigurationService.EdgePhaseControlMode"
+    ):
+        """Async write: set the phase-control mode (TRAILING/LEADING)."""
+        await self.async_put_state_element("edgePhaseControlMode", mode.value)
+
+    async def async_set_dimming_speed(self, speed: int):
+        """Async write: set the dimming speed (1-10)."""
+        await self.async_put_state_element("dimmingSpeed", int(speed))
+
+    async def async_set_brightness_range(
+        self, *, min_brightness: int = None, max_brightness: int = None
+    ):
+        """Async write: update the calibrated brightness range.
+
+        Sent as a whole sub-object (both bounds), filling the unchanged bound
+        from the current state so a partial write never drops one side.
+        """
+        rng = {
+            "minBrightness": self.min_brightness
+            if min_brightness is None
+            else int(min_brightness),
+            "maxBrightness": self.max_brightness
+            if max_brightness is None
+            else int(max_brightness),
+        }
+        await self.async_put_state_element("brightnessRange", rng)
+
+    async def async_preview_max_brightness(self):
+        """Async: flash the load at the configured maximum (calibration)."""
+        await self.async_post_operation("previewMaxBrightness")
+
+    async def async_preview_min_brightness(self):
+        """Async: flash the load at the configured minimum (calibration)."""
+        await self.async_post_operation("previewMinBrightness")
+
+    def summary(self):
+        super().summary()
+        print(f"    edgePhaseControlMode     : {self.edge_phase_control_mode}")
+        print(f"    brightnessRange          : {self.min_brightness}-{self.max_brightness}")
+        print(f"    dimmingSpeed             : {self.dimming_speed}")
+
+
 SERVICE_MAPPING = {
     "AirQualityLevel": AirQualityLevelService,
     "Alarm": AlarmService,
@@ -2237,6 +2319,7 @@ SERVICE_MAPPING = {
     "ChildProtection": ChildProtectionService,
     "CommunicationQuality": CommunicationQualityService,
     "DetectionTest": DetectionTestService,
+    "DimmerConfiguration": DimmerConfigurationService,
     "DisplayConfiguration": DisplayConfiguration,
     "DisplayDirection": DisplayDirection,
     "DisplayedTemperatureConfiguration": DisplayedTemperatureConfiguration,

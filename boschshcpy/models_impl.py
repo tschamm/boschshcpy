@@ -2454,12 +2454,21 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 class SHCMicromoduleDimmer(
     SHCLight, _CommunicationQuality, _ChildProtection, _PowerSwitch
 ):
-    # from .services_impl import (
-    #     # Services TBD:
-    #     # ElectricalFaultsService,
-    #     # DimmerConfiguration,
-    #     # SwitchConfiguration,
-    # )
+    from .services_impl import DimmerConfigurationService
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        # #123: optional dimmer calibration config; guard on None.
+        self._dimmerconfig_service = self.device_service("DimmerConfiguration")
+
+    @property
+    def supports_dimmer_configuration(self) -> bool:
+        return self._dimmerconfig_service is not None
+
+    @property
+    def dimmer_configuration(self) -> "DimmerConfigurationService":
+        """The DimmerConfiguration service (calibration), or None."""
+        return self._dimmerconfig_service
 
     @property
     def binarystate(self) -> bool:
