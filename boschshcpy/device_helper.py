@@ -32,6 +32,7 @@ from .models_impl import (
     SHCSmartPlugCompact,
     SHCSmokeDetector,
     SHCSmokeDetectionSystem,
+    SHCOutdoorSiren,
     SHCThermostat,
     SHCRoomThermostat2,
     SHCTwinguard,
@@ -323,3 +324,9 @@ class SHCDeviceHelper:
         if "MICROMODULE_DIMMER" not in SUPPORTED_MODELS:
             return []
         return list(self._devices_by_model["MICROMODULE_DIMMER"].values())
+
+    @property
+    def outdoor_sirens(self) -> typing.Sequence[SHCOutdoorSiren]:
+        if "OUTDOOR_SIREN" not in SUPPORTED_MODELS:
+            return []
+        return list(self._devices_by_model["OUTDOOR_SIREN"].values())

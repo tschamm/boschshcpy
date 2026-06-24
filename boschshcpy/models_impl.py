@@ -272,6 +272,50 @@ class SHCSmokeDetector(SHCBatteryDevice):
         await self._alarm_service.async_put_state_element("value", state)
 
     @property
+    def supports_intrusion_alarm(self) -> bool:
+        """True for Smoke Detector II, which can sound/clear its intrusion alarm.
+
+        The SD II Alarm service accepts a writable request value
+        (INTRUSION_ALARM_ON_REQUESTED / INTRUSION_ALARM_OFF_REQUESTED), letting
+        the detector act as a siren. Gen-1 SD exposes the Alarm service too but
+        only as a read-only smoke state, so this is gated on the model id.
+        """
+        return (
+            self.device_model == "SMOKE_DETECTOR2"
+            and self._alarm_service is not None
+        )
+
+    @property
+    def intrusion_alarm(self) -> bool:
+        """True while the (SD II) intrusion alarm is sounding.
+
+        SD II read-back states are IDLE_OFF / INTRUSION_ALARM_ON_REQUESTED /
+        INTRUSION_ALARM_OFF_REQUESTED (SmokeDetector-II spec). Treat anything that
+        is neither idle nor an explicit OFF request as active (also covers the
+        gen-1 INTRUSION_ALARM/PRIMARY/SECONDARY members defensively).
+        """
+        if self._alarm_service is None:
+            return False
+        return self._alarm_service.value not in (
+            self.AlarmService.State.IDLE_OFF,
+            self.AlarmService.State.INTRUSION_ALARM_OFF_REQUESTED,
+        )
+
+    async def async_set_intrusion_alarm(self, active: bool = True):
+        """Async write: sound (True) or clear (False) the SD II intrusion alarm.
+
+        Bosch uses dedicated *_REQUESTED write values; the read-back state is
+        INTRUSION_ALARM / IDLE_OFF (same request-vs-state split as DetectionTest,
+        see #325). Writing the bare INTRUSION_ALARM_ON failed for reporters (#174).
+        """
+        value = (
+            "INTRUSION_ALARM_ON_REQUESTED"
+            if active
+            else "INTRUSION_ALARM_OFF_REQUESTED"
+        )
+        await self._alarm_service.async_put_state_element("value", value)
+
+    @property
     def smokedetectorcheck_state(self) -> SmokeDetectorCheckService.State:
         return self._smokedetectorcheck_service.value
 
@@ -2426,6 +2470,42 @@ class SHCMicromoduleDimmer(
             )
 
 
+class SHCOutdoorSiren(SHCBatteryDevice):
+    """Bosch Outdoor Siren (model OUTDOOR_SIREN, #120).
+
+    Exposes the read-only siren/tamper state, the writable configuration block
+    (duration/sound-level/delays) and a test-alarm operation, plus power-supply
+    diagnostics. The siren cannot be switched on directly — it fires from the
+    intrusion system; the only on-demand acoustic check is the test alarm.
+    """
+
+    from .services_impl import (
+        OutdoorSirenService,
+        OutdoorSirenPowerSupplyService,
+    )
+
+    def __init__(self, api, raw_device, raw_device_services):
+        super().__init__(api, raw_device, raw_device_services)
+        self._siren_service = self.device_service("OutdoorSiren")
+        self._powersupply_service = self.device_service("OutdoorSirenPowerSupply")
+
+    @property
+    def siren(self) -> "SHCOutdoorSiren.OutdoorSirenService":
+        return self._siren_service
+
+    @property
+    def power_supply(self) -> "SHCOutdoorSiren.OutdoorSirenPowerSupplyService":
+        return self._powersupply_service
+
+    @property
+    def supports_power_supply(self) -> bool:
+        return self._powersupply_service is not None
+
+    async def async_trigger_test_alarm(self, sound_level=None):
+        """Async: fire a short test alarm at the given (or configured) level."""
+        await self._siren_service.async_trigger_test_alarm(sound_level)
+
+
 MODEL_MAPPING = {
     "SWD": SHCShutterContact,
     "SWD2": SHCShutterContact2,
@@ -2468,6 +2548,7 @@ MODEL_MAPPING = {
     "WLS": SHCWaterLeakageSensor,
     "HEATING_CIRCUIT": SHCHeatingCircuit,
     "MICROMODULE_DIMMER": SHCMicromoduleDimmer,
+    "OUTDOOR_SIREN": SHCOutdoorSiren,
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()

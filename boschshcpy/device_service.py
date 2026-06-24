@@ -77,6 +77,18 @@ class SHCDeviceService:
         """Async counterpart to put_state_element — awaits the async API."""
         await self.async_put_state({key: value})
 
+    def post_operation(self, operation, data=None):
+        """POST a service operation (e.g. triggerTestAlarm) — sync."""
+        return self._api.post_device_service_operation(
+            self.device_id.replace("#", "%23"), self.id, operation, data
+        )
+
+    async def async_post_operation(self, operation, data=None):
+        """Async counterpart to post_operation — awaits the async API."""
+        return await self._api.post_device_service_operation(
+            self.device_id.replace("#", "%23"), self.id, operation, data
+        )
+
     def short_poll(self, fire_callbacks=False):
         if self._last_update is None or (
             datetime.now(timezone.utc) - self._last_update

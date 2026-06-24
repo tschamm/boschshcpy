@@ -93,6 +93,23 @@ class SHCInformation:
         return sw.get("swInstalledVersion", None)
 
     @property
+    def available_version(self):
+        """Available SW version offered by the controller (if any).
+
+        Read-only field from the public /information endpoint
+        (softwareUpdateState.swUpdateAvailableVersion). May be None or equal
+        to the installed version when no update is pending.
+        """
+        sw = self._pub_info.get("softwareUpdateState", {})
+        return sw.get("swUpdateAvailableVersion", None)
+
+    @property
+    def automatic_updates_enabled(self):
+        """Whether the controller installs updates automatically (read-only)."""
+        sw = self._pub_info.get("softwareUpdateState", {})
+        return sw.get("automaticUpdatesEnabled", None)
+
+    @property
     def updateState(self) -> UpdateState:
         sw = self._pub_info.get("softwareUpdateState", {})
         raw = sw.get("swUpdateState", None)

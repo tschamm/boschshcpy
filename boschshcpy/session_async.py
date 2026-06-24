@@ -179,7 +179,7 @@ class SHCSessionAsync:
         if info_raw is None:
             raise SHCAuthenticationError("Authentication failed: could not get SHC information")
 
-        self._shc_information = _AsyncSHCInformation(pub_info, info_raw)
+        self._shc_information = _AsyncSHCInformation(pub_info, info_raw, self._api)
 
     async def _async_enumerate_services(self) -> None:
         """Mirrors SHCSession._enumerate_services()."""
@@ -646,9 +646,22 @@ class _AsyncSHCInformation:
     exposed to integrations are implemented here.
     """
 
-    def __init__(self, pub_info: dict, info: dict) -> None:
+    def __init__(self, pub_info: dict, info: dict, api=None) -> None:
         self._pub_info = pub_info
         self._info = info
+        self._api = api
+
+    async def async_refresh(self) -> None:
+        """Re-fetch the public /information block (software-update state etc.).
+
+        Lets a polling entity see a firmware update that appears after startup
+        (#186). No-op if no api was wired (e.g. unit-test construction).
+        """
+        if self._api is None:
+            return
+        pub_info = await self._api.get_public_information()
+        if pub_info is not None:
+            self._pub_info = pub_info
 
     @property
     def macAddress(self) -> str | None:
@@ -662,6 +675,23 @@ class _AsyncSHCInformation:
     def version(self) -> str | None:
         sw = self._pub_info.get("softwareUpdateState", {})
         return sw.get("swInstalledVersion")
+
+    @property
+    def available_version(self) -> str | None:
+        """Available controller SW version (softwareUpdateState, read-only)."""
+        sw = self._pub_info.get("softwareUpdateState", {})
+        return sw.get("swUpdateAvailableVersion")
+
+    @property
+    def update_state(self) -> str | None:
+        """Raw swUpdateState string (e.g. UPDATE_AVAILABLE, NO_UPDATE_AVAILABLE)."""
+        sw = self._pub_info.get("softwareUpdateState", {})
+        return sw.get("swUpdateState")
+
+    @property
+    def automatic_updates_enabled(self) -> bool | None:
+        sw = self._pub_info.get("softwareUpdateState", {})
+        return sw.get("automaticUpdatesEnabled")
 
     @property
     def unique_id(self) -> str | None:
