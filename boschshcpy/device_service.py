@@ -90,13 +90,12 @@ class SHCDeviceService:
         )
 
     def short_poll(self, fire_callbacks=False):
-        if self._last_update is None or (
-            datetime.now(timezone.utc) - self._last_update
-        ) > timedelta(seconds=1):
+        now = datetime.now(timezone.utc)  # [S2] single clock read
+        if self._last_update is None or (now - self._last_update) > timedelta(seconds=1):
             self._raw_device_service = self._api.get_device_service(
                 self.device_id.replace("#", "%23"), self.id
             )
-            self._last_update = datetime.now(timezone.utc)
+            self._last_update = now
             self._raw_state = (
                 self._raw_device_service["state"]
                 if "state" in self._raw_device_service
@@ -117,10 +116,8 @@ class SHCDeviceService:
             # schedule_update_ha_state() calls to every co-registered entity.
             # At initial setup _callbacks is empty, so firing is a no-op anyway.
             if fire_callbacks:
-                for cb in list(self._callbacks):
-                    fn = self._callbacks.get(cb)
-                    if fn is not None:
-                        fn()
+                for fn in list(self._callbacks.values()):  # [S4]
+                    fn()
 
     async def async_short_poll(self, fire_callbacks=False):
         """Async counterpart to short_poll for the aiohttp (SHCAPIAsync) path.
@@ -130,23 +127,20 @@ class SHCDeviceService:
         so an on-demand refresh (HA should_poll entities) must await here.
         Mirrors short_poll line-for-line otherwise.
         """
-        if self._last_update is None or (
-            datetime.now(timezone.utc) - self._last_update
-        ) > timedelta(seconds=1):
+        now = datetime.now(timezone.utc)  # [S2] single clock read
+        if self._last_update is None or (now - self._last_update) > timedelta(seconds=1):
             self._raw_device_service = await self._api.get_device_service(
                 self.device_id.replace("#", "%23"), self.id
             )
-            self._last_update = datetime.now(timezone.utc)
+            self._last_update = now
             self._raw_state = (
                 self._raw_device_service["state"]
                 if "state" in self._raw_device_service
                 else {}
             )
             if fire_callbacks:
-                for cb in list(self._callbacks):
-                    fn = self._callbacks.get(cb)
-                    if fn is not None:
-                        fn()
+                for fn in list(self._callbacks.values()):  # [S4]
+                    fn()
 
     def process_long_polling_poll_result(self, raw_result):
         # Defensive: skip malformed/mismatched results rather than assert
@@ -164,10 +158,8 @@ class SHCDeviceService:
                 return
             self._raw_state = raw_result["state"]  # Update state
 
-            for callback in list(self._callbacks):
-                fn = self._callbacks.get(callback)
-                if fn is not None:
-                    fn()
+            for fn in list(self._callbacks.values()):  # [S4]
+                fn()
 
             self._process_events(raw_result)
 

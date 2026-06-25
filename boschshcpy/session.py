@@ -228,7 +228,7 @@ class SHCSession:
         logger.debug(f"Long poll: {raw_result}")
         if raw_result["@type"] == "DeviceServiceData":
             device_id = raw_result["deviceId"]
-            if device_id in self._devices_by_id.keys():
+            if device_id in self._devices_by_id:  # [S1]
                 device = self._devices_by_id[device_id]
                 device.process_long_polling_poll_result(raw_result)
             else:
@@ -263,7 +263,7 @@ class SHCSession:
             return
         if raw_result["@type"] == "device":
             device_id = raw_result["id"]
-            if device_id in self._devices_by_id.keys():
+            if device_id in self._devices_by_id:  # [S1]
                 self._update_device(raw_result)
                 if (
                     "deleted" in raw_result and raw_result["deleted"] is True
