@@ -201,7 +201,8 @@ SUPPORTED_DOMAINS = MODEL_MAPPING.keys()
 
 
 def build(api, domain_model, raw_domain_state, root_device_id):
-    assert domain_model in SUPPORTED_DOMAINS, "Domain model is supported"
+    if domain_model not in SUPPORTED_DOMAINS:
+        raise ValueError(f"Unsupported domain model: {domain_model!r}")
     return MODEL_MAPPING[domain_model](
         api=api, raw_domain_state=raw_domain_state, root_device_id=root_device_id
     )

@@ -328,10 +328,10 @@ class TestSHCDeviceLongPolling:
             dev.process_long_polling_poll_result(poll_result)
         assert "NoSuchService" in caplog.text
 
-    def test_dispatch_wrong_type_raises(self):
+    def test_dispatch_wrong_type_ignored(self):
         dev = self._device_with_power_service()
-        with pytest.raises(AssertionError):
-            dev.process_long_polling_poll_result({"@type": "WrongType", "id": "X"})
+        # wrong @type is silently skipped instead of raising
+        dev.process_long_polling_poll_result({"@type": "WrongType", "id": "X"})
 
 
 # ---------------------------------------------------------------------------

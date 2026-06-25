@@ -507,7 +507,7 @@ def test_generate_certificate_pem_parseable():
     from cryptography.hazmat.backends import default_backend
     cert_pem, _ = generate_certificate("parseable-client", "ParseOrg")
     cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
-    assert cert.serial_number == 1000
+    assert isinstance(cert.serial_number, int) and cert.serial_number > 0
 
 
 def test_generate_certificate_common_name():
@@ -543,7 +543,8 @@ def test_generate_certificate_serial_number():
     from cryptography.hazmat.backends import default_backend
     cert_pem, _ = generate_certificate("client", "MyOrg")
     cert = x509.load_pem_x509_certificate(cert_pem, default_backend())
-    assert cert.serial_number == 1000
+    # serial is now a random 8-byte integer (RFC 5280 uniqueness)
+    assert isinstance(cert.serial_number, int) and cert.serial_number > 0
 
 
 def test_generate_certificate_validity_roughly_10_years():

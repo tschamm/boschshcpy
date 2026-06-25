@@ -7,7 +7,8 @@ import sys
 import requests
 from importlib.resources import files
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.poolmanager import PoolManager
+from urllib3.poolmanager import PoolManager
+from urllib3.exceptions import InsecureRequestWarning
 
 from .exceptions import SHCRegistrationError
 from .generate_cert import generate_certificate
@@ -44,7 +45,7 @@ class SHCRegisterClient:
 
         import urllib3
 
-        urllib3.disable_warnings()
+        urllib3.disable_warnings(InsecureRequestWarning)
 
     def _post_api_or_fail(self, body, timeout=30):
         try:

@@ -174,9 +174,10 @@ class SHCDevice:
             device_service.summary()
 
     def process_long_polling_poll_result(self, raw_result):
-        assert raw_result["@type"] == "DeviceServiceData"
+        if raw_result.get("@type") != "DeviceServiceData":
+            return
         device_service_id = raw_result["id"]
-        if device_service_id in self._device_services_by_id.keys():
+        if device_service_id in self._device_services_by_id:
             device_service: SHCDeviceService = self._device_services_by_id[
                 device_service_id
             ]

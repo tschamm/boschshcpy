@@ -1558,7 +1558,7 @@ def test_build_unknown_raises():
         "path": "/p",
         "state": {"@type": "t"},
     }
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         build(api=api, raw_device_service=raw)
 
 

@@ -157,8 +157,12 @@ class SHCAPI:
             return {}
 
     def _process_nok_result(self, result):
+        safe_headers = {
+            k: v for k, v in result.request.headers.items()
+            if k.lower() not in ("systempassword", "authorization", "cookie")
+        }
         logging.error(f"Body: {result.request.body}")
-        logging.error(f"Headers: {result.request.headers}")
+        logging.error(f"Headers: {safe_headers}")
         logging.error(f"URL: {result.request.url}")
         raise SHCSessionError(
             f"API call returned non-OK result (code {result.status_code})!: {result.content}"

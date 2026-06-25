@@ -736,7 +736,7 @@ class TestBuildFunction:
     def test_build_unsupported_raises(self):
         from boschshcpy.models_impl import build
         rd = _fake_raw_device(model="UNKNOWN_MODEL_XYZ")
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             build(api=None, raw_device=rd, raw_device_services=[])
 
 

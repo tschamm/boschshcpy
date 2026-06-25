@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 
 from cryptography import x509
@@ -22,7 +23,7 @@ def generate_certificate(client_id, orgname) -> x509.Certificate:
     utc_now = datetime.now(timezone.utc)
     cert = (
         x509.CertificateBuilder()
-        .serial_number(1000)
+        .serial_number(int.from_bytes(os.urandom(8), "big"))
         .issuer_name(name)
         .subject_name(name)
         .public_key(key.public_key())

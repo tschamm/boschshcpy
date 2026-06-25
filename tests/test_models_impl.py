@@ -2198,7 +2198,7 @@ class TestModelMapping:
 
     def test_build_raises_assertion_for_unknown_model(self):
         from boschshcpy.models_impl import build
-        with pytest.raises(AssertionError):
+        with pytest.raises(ValueError):
             build(api=None, raw_device={"deviceModel": "TOTALLY_UNKNOWN_XYZ"},
                   raw_device_services=[])
 

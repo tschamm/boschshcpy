@@ -2384,9 +2384,8 @@ SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
 def build(api, raw_device_service):
     device_service_id = raw_device_service["id"]
-    assert (
-        device_service_id in SUPPORTED_DEVICE_SERVICE_IDS
-    ), "Device service is supported"
+    if device_service_id not in SUPPORTED_DEVICE_SERVICE_IDS:
+        raise ValueError(f"Unsupported device service: {device_service_id!r}")
     return SERVICE_MAPPING[device_service_id](
         api=api, raw_device_service=raw_device_service
     )

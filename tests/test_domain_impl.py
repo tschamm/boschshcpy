@@ -396,7 +396,7 @@ def test_domain_build_ids():
 
 def test_domain_build_unknown_raises():
     api = MagicMock()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         build(
             api=api, domain_model="UNKNOWN", raw_domain_state={}, root_device_id="hdm:root"
         )

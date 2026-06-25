@@ -2576,7 +2576,8 @@ SUPPORTED_MODELS = MODEL_MAPPING.keys()
 
 def build(api, raw_device, raw_device_services) -> SHCDevice:
     device_model = raw_device["deviceModel"]
-    assert device_model in SUPPORTED_MODELS, "Device model is supported"
+    if device_model not in SUPPORTED_MODELS:
+        raise ValueError(f"Unsupported device model: {device_model!r}")
     return MODEL_MAPPING[device_model](
         api=api, raw_device=raw_device, raw_device_services=raw_device_services
     )
