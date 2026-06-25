@@ -161,9 +161,9 @@ class SHCAPI:
             k: v for k, v in result.request.headers.items()
             if k.lower() not in ("systempassword", "authorization", "cookie")
         }
-        logging.error(f"Body: {result.request.body}")
-        logging.error(f"Headers: {safe_headers}")
-        logging.error(f"URL: {result.request.url}")
+        logger.debug("Body: %s", result.request.body)
+        logger.error("Headers: %s", safe_headers)
+        logger.error("URL: %s", result.request.url)
         raise SHCSessionError(
             f"API call returned non-OK result (code {result.status_code})!: {result.content}"
         )
@@ -174,7 +174,7 @@ class SHCAPI:
         try:
             result = self._get_api_result_or_fail(api_url)
         except Exception as e:
-            logging.error(f"Failed to get information from SHC controller: {e}")
+            logger.error("Failed to get information from SHC controller: %s", e)
             return None
         return result
 
@@ -183,7 +183,7 @@ class SHCAPI:
         try:
             result = self._get_api_result_or_fail(api_url, headers={})
         except Exception as e:
-            logging.error(f"Failed to get public information from SHC controller: {e}")
+            logger.error("Failed to get public information from SHC controller: %s", e)
             return None
         return result
 

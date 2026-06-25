@@ -1032,9 +1032,6 @@ class SmartSensitivityControlService(SHCDeviceService):
                 return entry
         return None
 
-    def set_enabled(self, value: bool):
-        self.put_state_element("enabled", value)
-
     async def async_set_enabled(self, value: bool):
         await self.async_put_state_element("enabled", value)
 
@@ -1129,9 +1126,6 @@ class WalkTestService(SHCDeviceService):
         except ValueError:
             return self.PetImmunityState.UNKNOWN
 
-    def set_walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
-        self.put_state_element("walkStateRequest", value.value)
-
     async def async_set_walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
         await self.async_put_state_element("walkStateRequest", value.value)
 
@@ -1171,16 +1165,10 @@ class SmokeSensitivityService(SHCDeviceService):
     def pre_alarm_enabled(self, value: bool):
         self.put_state_element("preAlarmEnabled", value)
 
-    def set_smoke_sensitivity(self, value: "SmokeSensitivityService.SmokeSensitivityLevel"):
-        self.put_state_element("smokeSensitivity", value.value)
-
     async def async_set_smoke_sensitivity(
         self, value: "SmokeSensitivityService.SmokeSensitivityLevel"
     ):
         await self.async_put_state_element("smokeSensitivity", value.value)
-
-    def set_pre_alarm_enabled(self, value: bool):
-        self.put_state_element("preAlarmEnabled", value)
 
     async def async_set_pre_alarm_enabled(self, value: bool):
         await self.async_put_state_element("preAlarmEnabled", value)
@@ -1198,9 +1186,6 @@ class TwinguardNightlyPromiseService(SHCDeviceService):
 
     @nightly_promise_enabled.setter
     def nightly_promise_enabled(self, value: bool):
-        self.put_state_element("nightlyPromiseEnabled", value)
-
-    def set_nightly_promise_enabled(self, value: bool):
         self.put_state_element("nightlyPromiseEnabled", value)
 
     async def async_set_nightly_promise_enabled(self, value: bool):
@@ -1236,20 +1221,11 @@ class EnergySavingModeService(SHCDeviceService):
     def enter_duration_seconds(self, value: int):
         self.put_state_element("enterDurationSeconds", value)
 
-    def set_energy_saving_mode_enabled(self, value: bool):
-        self.put_state_element("energySavingModeEnabled", value)
-
     async def async_set_energy_saving_mode_enabled(self, value: bool):
         await self.async_put_state_element("energySavingModeEnabled", value)
 
-    def set_power_threshold(self, value):
-        self.put_state_element("powerThreshold", value)
-
     async def async_set_power_threshold(self, value):
         await self.async_put_state_element("powerThreshold", value)
-
-    def set_enter_duration_seconds(self, value: int):
-        self.put_state_element("enterDurationSeconds", value)
 
     async def async_set_enter_duration_seconds(self, value: int):
         await self.async_put_state_element("enterDurationSeconds", value)
@@ -1281,9 +1257,6 @@ class LedBrightnessConfigurationService(SHCDeviceService):
     @property
     def step_size(self):
         return self.state.get("stepSize")
-
-    def set_brightness(self, value):
-        self.put_state_element("brightness", value)
 
     async def async_set_brightness(self, value):
         await self.async_put_state_element("brightness", value)
@@ -1323,11 +1296,6 @@ class PowerSwitchConfigurationService(SHCDeviceService):
     def supported_states_after_power_outage(self) -> list:
         return self.state.get("supportedStatesAfterPowerOutage", [])
 
-    def set_state_after_power_outage(
-        self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
-    ):
-        self.put_state_element("stateAfterPowerOutage", value.value)
-
     async def async_set_state_after_power_outage(
         self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
     ):
@@ -1348,9 +1316,6 @@ class PowerSwitchWarningService(SHCDeviceService):
 
     @warning_suppressed.setter
     def warning_suppressed(self, value: bool):
-        self.put_state_element("warningSuppressed", value)
-
-    def set_warning_suppressed(self, value: bool):
         self.put_state_element("warningSuppressed", value)
 
     async def async_set_warning_suppressed(self, value: bool):
@@ -1644,9 +1609,6 @@ class DisplayDirection(SHCDeviceService):
     def direction(self, value: "DisplayDirection.Direction"):
         self.put_state_element("direction", value.value)
 
-    def set_direction(self, value: "DisplayDirection.Direction"):
-        self.put_state_element("direction", value.value)
-
     async def async_set_direction(self, value: "DisplayDirection.Direction"):
         await self.async_put_state_element("direction", value.value)
 
@@ -1729,9 +1691,6 @@ class TerminalConfiguration(SHCDeviceService):
     @property
     def temperature(self):
         return self.state.get("temperature")
-
-    def set_type(self, value: "TerminalConfiguration.Type"):
-        self.put_state_element("type", value.value)
 
     async def async_set_type(self, value: "TerminalConfiguration.Type"):
         await self.async_put_state_element("type", value.value)

@@ -2074,7 +2074,7 @@ class SHCMotionDetector2(SHCBatteryDevice):
     def set_walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
         """Sync write: start or stop the walk test."""
         if self._walktest_service is not None:
-            self._walktest_service.set_walk_state_request(value)
+            self._walktest_service.walk_state_request = value
 
     async def async_set_walk_state_request(
         self, value: "WalkTestService.WalkStateRequest"

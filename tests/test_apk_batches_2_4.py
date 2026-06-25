@@ -154,28 +154,6 @@ class TestEnergySavingModeService:
         svc = self._svc()
         assert svc.enter_duration_seconds == 0
 
-    def test_sync_setter_enabled(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import EnergySavingModeService
-        svc = self._svc(energySavingModeEnabled=False)
-        svc.put_state_element = MagicMock()
-        svc.set_energy_saving_mode_enabled(True)
-        svc.put_state_element.assert_called_once_with("energySavingModeEnabled", True)
-
-    def test_sync_setter_power_threshold(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(powerThreshold=1.0)
-        svc.put_state_element = MagicMock()
-        svc.set_power_threshold(10.0)
-        svc.put_state_element.assert_called_once_with("powerThreshold", 10.0)
-
-    def test_sync_setter_enter_duration(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(enterDurationSeconds=60)
-        svc.put_state_element = MagicMock()
-        svc.set_enter_duration_seconds(120)
-        svc.put_state_element.assert_called_once_with("enterDurationSeconds", 120)
-
     def test_async_setter_enabled(self):
         from unittest.mock import AsyncMock
         svc = self._svc(energySavingModeEnabled=False)
@@ -257,13 +235,6 @@ class TestLedBrightnessConfigurationService:
         svc = self._svc()
         assert svc.max_brightness is None
 
-    def test_sync_setter_brightness(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(brightness=50)
-        svc.put_state_element = MagicMock()
-        svc.set_brightness(80)
-        svc.put_state_element.assert_called_once_with("brightness", 80)
-
     def test_async_setter_brightness(self):
         from unittest.mock import AsyncMock
         svc = self._svc(brightness=50)
@@ -331,16 +302,6 @@ class TestPowerSwitchConfigurationService:
         svc = self._svc()
         assert svc.supported_states_after_power_outage == []
 
-    def test_sync_setter_state_after_power_outage(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import PowerSwitchConfigurationService
-        svc = self._svc(stateAfterPowerOutage="OFF")
-        svc.put_state_element = MagicMock()
-        svc.set_state_after_power_outage(
-            PowerSwitchConfigurationService.StateAfterPowerOutage.LAST_STATE
-        )
-        svc.put_state_element.assert_called_once_with("stateAfterPowerOutage", "LAST_STATE")
-
     def test_async_setter_state_after_power_outage(self):
         from unittest.mock import AsyncMock
         from boschshcpy.services_impl import PowerSwitchConfigurationService
@@ -392,13 +353,6 @@ class TestPowerSwitchWarningService:
     def test_warning_suppressed_missing_defaults_false(self):
         svc = self._svc()
         assert svc.warning_suppressed is False
-
-    def test_sync_setter(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(warningSuppressed=False)
-        svc.put_state_element = MagicMock()
-        svc.set_warning_suppressed(True)
-        svc.put_state_element.assert_called_once_with("warningSuppressed", True)
 
     def test_async_setter(self):
         from unittest.mock import AsyncMock
@@ -493,14 +447,6 @@ class TestWalkTestService:
         from boschshcpy.services_impl import WalkTestService
         svc = self._svc(petImmunityState="FUTURE_STATE")
         assert svc.pet_immunity_state == WalkTestService.PetImmunityState.UNKNOWN
-
-    def test_sync_setter_walk_state_request(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import WalkTestService
-        svc = self._svc(walkStateRequest="STOP")
-        svc.put_state_element = MagicMock()
-        svc.set_walk_state_request(WalkTestService.WalkStateRequest.WALK_STATE_START)
-        svc.put_state_element.assert_called_once_with("walkStateRequest", "WALK_STATE_START")
 
     def test_async_setter_walk_state_request(self):
         from unittest.mock import AsyncMock
@@ -600,13 +546,6 @@ class TestSmartSensitivityControlService:
             SmartSensitivityControlService.SmartSensitivityContext.SECURITY
         )
         assert result is None
-
-    def test_sync_set_enabled(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(enabled=False, sensitivities=[])
-        svc.put_state_element = MagicMock()
-        svc.set_enabled(True)
-        svc.put_state_element.assert_called_once_with("enabled", True)
 
     def test_async_set_enabled(self):
         from unittest.mock import AsyncMock
@@ -725,21 +664,6 @@ class TestSmokeSensitivityService:
         svc = self._svc(smokeSensitivity="HIGH")
         assert svc.pre_alarm_enabled is False
 
-    def test_sync_setter_smoke_sensitivity(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import SmokeSensitivityService
-        svc = self._svc(smokeSensitivity="HIGH")
-        svc.put_state_element = MagicMock()
-        svc.set_smoke_sensitivity(SmokeSensitivityService.SmokeSensitivityLevel.LOW)
-        svc.put_state_element.assert_called_once_with("smokeSensitivity", "LOW")
-
-    def test_sync_setter_pre_alarm(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(smokeSensitivity="HIGH", preAlarmEnabled=False)
-        svc.put_state_element = MagicMock()
-        svc.set_pre_alarm_enabled(True)
-        svc.put_state_element.assert_called_once_with("preAlarmEnabled", True)
-
     def test_async_setter_smoke_sensitivity(self):
         from unittest.mock import AsyncMock
         from boschshcpy.services_impl import SmokeSensitivityService
@@ -801,13 +725,6 @@ class TestTwinguardNightlyPromiseService:
     def test_nightly_promise_enabled_missing_defaults_false(self):
         svc = self._svc()
         assert svc.nightly_promise_enabled is False
-
-    def test_sync_setter(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(nightlyPromiseEnabled=False)
-        svc.put_state_element = MagicMock()
-        svc.set_nightly_promise_enabled(True)
-        svc.put_state_element.assert_called_once_with("nightlyPromiseEnabled", True)
 
     def test_async_setter(self):
         from unittest.mock import AsyncMock

@@ -308,7 +308,7 @@ class SHCSessionAsync:
         self._poll_id = await self._api.long_polling_subscribe()
         logger.debug("Async session subscribed for long poll. Poll id: %s", self._poll_id)
 
-        self._poll_task = asyncio.get_event_loop().create_task(
+        self._poll_task = asyncio.get_running_loop().create_task(
             self._poll_loop(), name="SHCAsyncPollingTask"
         )
 
@@ -395,7 +395,7 @@ class SHCSessionAsync:
                         "short-poll (#183, async)",
                         len(self._devices_by_id),
                     )
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
                     for device in list(self._devices_by_id.values()):
                         try:
                             await loop.run_in_executor(

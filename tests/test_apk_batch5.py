@@ -236,14 +236,6 @@ class TestDisplayDirection:
         assert DisplayDirection.Direction.REVERSED.value == "REVERSED"
         assert DisplayDirection.Direction.UNKNOWN.value == "UNKNOWN"
 
-    def test_sync_setter_direction(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import DisplayDirection
-        svc = self._svc(direction="NORMAL")
-        svc.put_state_element = MagicMock()
-        svc.set_direction(DisplayDirection.Direction.REVERSED)
-        svc.put_state_element.assert_called_once_with("direction", "REVERSED")
-
     def test_async_setter_direction(self):
         from unittest.mock import AsyncMock
         from boschshcpy.services_impl import DisplayDirection
@@ -437,14 +429,6 @@ class TestTerminalConfiguration:
     def test_temperature_missing_returns_none(self):
         svc = self._svc()
         assert svc.temperature is None
-
-    def test_sync_setter_type(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import TerminalConfiguration
-        svc = self._svc(type="NOT_CONNECTED")
-        svc.put_state_element = MagicMock()
-        svc.set_type(TerminalConfiguration.Type.FLOOR_SENSOR_CONNECTED)
-        svc.put_state_element.assert_called_once_with("type", "FLOOR_SENSOR_CONNECTED")
 
     def test_async_setter_type(self):
         from unittest.mock import AsyncMock
