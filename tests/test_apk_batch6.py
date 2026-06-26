@@ -207,45 +207,6 @@ class TestSwitchConfigurationService:
         svc = self._svc()
         assert svc.supported_output_modes == []
 
-    # Sync setters
-    def test_sync_setter_switch_type(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import SwitchConfiguration
-        svc = self._svc(switchType="NONE")
-        svc.put_state_element = MagicMock()
-        svc.set_switchType(SwitchConfiguration.SwitchType.PUSHBUTTON)
-        svc.put_state_element.assert_called_once_with("switchType", "PUSHBUTTON")
-
-    def test_sync_setter_swap_inputs(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(swapInputs=False)
-        svc.put_state_element = MagicMock()
-        svc.set_swapInputs(True)
-        svc.put_state_element.assert_called_once_with("swapInputs", True)
-
-    def test_sync_setter_swap_outputs(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(swapOutputs=False)
-        svc.put_state_element = MagicMock()
-        svc.set_swapOutputs(True)
-        svc.put_state_element.assert_called_once_with("swapOutputs", True)
-
-    def test_sync_setter_actuator_type(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import SwitchConfiguration
-        svc = self._svc(actuatorType="NORMALLY_CLOSED")
-        svc.put_state_element = MagicMock()
-        svc.set_actuatorType(SwitchConfiguration.ActuatorType.NORMALLY_OPEN)
-        svc.put_state_element.assert_called_once_with("actuatorType", "NORMALLY_OPEN")
-
-    def test_sync_setter_output_mode(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import SwitchConfiguration
-        svc = self._svc(outputMode="ATTACHED")
-        svc.put_state_element = MagicMock()
-        svc.set_outputMode(SwitchConfiguration.OutputMode.DETACHED)
-        svc.put_state_element.assert_called_once_with("outputMode", "DETACHED")
-
     # Async setters
     def test_async_setter_switch_type(self):
         from unittest.mock import AsyncMock

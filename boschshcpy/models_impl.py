@@ -192,6 +192,10 @@ class _TemperatureOffset(SHCDevice):
         self._temperatureoffset_service = self.device_service("TemperatureOffset")
 
     @property
+    def supports_temperature_offset(self) -> bool:
+        return self._temperatureoffset_service is not None
+
+    @property
     def offset(self) -> float:
         return self._temperatureoffset_service.offset
 
@@ -1497,7 +1501,9 @@ class SHCHeatingCircuit(SHCDevice):
         return self._heating_circuit_service.heating_type
 
 
-class SHCWallThermostat(SHCBatteryDevice, _TemperatureLevel, _HumidityLevel, _Thermostat):
+class SHCWallThermostat(
+    SHCBatteryDevice, _TemperatureLevel, _HumidityLevel, _Thermostat, _TemperatureOffset
+):
     pass
 
 

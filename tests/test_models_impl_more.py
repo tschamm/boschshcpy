@@ -121,6 +121,13 @@ class TestInitBodies:
         obj = SHCThermostat(api=None, raw_device=self._rd("TRV"), raw_device_services=[])
         assert obj._temperatureoffset_service is None              # lines 156-157
 
+    def test_temperatureoffset_mixin_via_walltherm(self):
+        from boschshcpy.models_impl import SHCWallThermostat, _TemperatureOffset
+        obj = SHCWallThermostat(api=None, raw_device=self._rd("THB"), raw_device_services=[])
+        assert obj._temperatureoffset_service is None
+        assert issubclass(SHCWallThermostat, _TemperatureOffset)
+        assert hasattr(type(obj), "offset")
+
     def test_silentmode_mixin_via_thermostat(self):
         from boschshcpy.models_impl import SHCThermostat
         obj = SHCThermostat(api=None, raw_device=self._rd("TRV"), raw_device_services=[])

@@ -127,13 +127,6 @@ class TestDisplayConfiguration:
         svc = self._svc()
         assert svc.humidity_warning_enabled is None
 
-    def test_sync_setter_display_brightness(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(displayBrightness=50)
-        svc.put_state_element = MagicMock()
-        svc.set_displayBrightness(80)
-        svc.put_state_element.assert_called_once_with("displayBrightness", 80)
-
     def test_async_setter_display_brightness(self):
         from unittest.mock import AsyncMock
         svc = self._svc(displayBrightness=50)
@@ -148,13 +141,6 @@ class TestDisplayConfiguration:
         svc.display_brightness = 30
         svc.put_state_element.assert_called_once_with("displayBrightness", 30)
 
-    def test_sync_setter_display_on_time(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(displayOnTime=10)
-        svc.put_state_element = MagicMock()
-        svc.set_displayOnTime(30)
-        svc.put_state_element.assert_called_once_with("displayOnTime", 30)
-
     def test_async_setter_display_on_time(self):
         from unittest.mock import AsyncMock
         svc = self._svc(displayOnTime=10)
@@ -168,13 +154,6 @@ class TestDisplayConfiguration:
         svc.put_state_element = MagicMock()
         svc.display_on_time = 20
         svc.put_state_element.assert_called_once_with("displayOnTime", 20)
-
-    def test_sync_setter_humidity_warning_enabled(self):
-        from unittest.mock import MagicMock
-        svc = self._svc(humidityWarningEnabled=False)
-        svc.put_state_element = MagicMock()
-        svc.set_humidityWarningEnabled(True)
-        svc.put_state_element.assert_called_once_with("humidityWarningEnabled", True)
 
     def test_async_setter_humidity_warning_enabled(self):
         from unittest.mock import AsyncMock
@@ -306,16 +285,6 @@ class TestDisplayedTemperatureConfiguration:
         assert DT.SETPOINT.value == "SETPOINT"
         assert DT.MEASURED.value == "MEASURED"
         assert DT.UNKNOWN.value == "UNKNOWN"
-
-    def test_sync_setter_displayed_temperature(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import DisplayedTemperatureConfiguration
-        svc = self._svc(displayedTemperature="SETPOINT")
-        svc.put_state_element = MagicMock()
-        svc.set_displayedTemperature(
-            DisplayedTemperatureConfiguration.DisplayedTemperature.MEASURED
-        )
-        svc.put_state_element.assert_called_once_with("displayedTemperature", "MEASURED")
 
     def test_async_setter_displayed_temperature(self):
         from unittest.mock import AsyncMock
@@ -528,14 +497,6 @@ class TestWallThermostatConfiguration:
         svc = self._svc(heaterType="FUTURE_HEATER")
         assert svc.heater_type == WallThermostatConfiguration.HeaterType.UNKNOWN
 
-    def test_sync_setter_valve_type(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import WallThermostatConfiguration
-        svc = self._svc(valveType="NORMALLY_CLOSE")
-        svc.put_state_element = MagicMock()
-        svc.set_valveType(WallThermostatConfiguration.ValveType.NORMALLY_OPEN)
-        svc.put_state_element.assert_called_once_with("valveType", "NORMALLY_OPEN")
-
     def test_async_setter_valve_type(self):
         from unittest.mock import AsyncMock
         from boschshcpy.services_impl import WallThermostatConfiguration
@@ -551,14 +512,6 @@ class TestWallThermostatConfiguration:
         svc.put_state_element = MagicMock()
         svc.valve_type = WallThermostatConfiguration.ValveType.NORMALLY_OPEN
         svc.put_state_element.assert_called_once_with("valveType", "NORMALLY_OPEN")
-
-    def test_sync_setter_heater_type(self):
-        from unittest.mock import MagicMock
-        from boschshcpy.services_impl import WallThermostatConfiguration
-        svc = self._svc(heaterType="RADIATOR")
-        svc.put_state_element = MagicMock()
-        svc.set_heaterType(WallThermostatConfiguration.HeaterType.FLOOR_HEATING)
-        svc.put_state_element.assert_called_once_with("heaterType", "FLOOR_HEATING")
 
     def test_async_setter_heater_type(self):
         from unittest.mock import AsyncMock

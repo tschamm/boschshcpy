@@ -1564,20 +1564,11 @@ class DisplayConfiguration(SHCDeviceService):
     def humidity_warning_enabled(self, value: bool):
         self.put_state_element("humidityWarningEnabled", value)
 
-    def set_displayBrightness(self, value):
-        self.put_state_element("displayBrightness", value)
-
     async def async_set_displayBrightness(self, value):
         await self.async_put_state_element("displayBrightness", value)
 
-    def set_displayOnTime(self, value):
-        self.put_state_element("displayOnTime", value)
-
     async def async_set_displayOnTime(self, value):
         await self.async_put_state_element("displayOnTime", value)
-
-    def set_humidityWarningEnabled(self, value: bool):
-        self.put_state_element("humidityWarningEnabled", value)
 
     async def async_set_humidityWarningEnabled(self, value: bool):
         await self.async_put_state_element("humidityWarningEnabled", value)
@@ -1635,11 +1626,6 @@ class DisplayedTemperatureConfiguration(SHCDeviceService):
 
     @displayed_temperature.setter
     def displayed_temperature(
-        self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
-    ):
-        self.put_state_element("displayedTemperature", value.value)
-
-    def set_displayedTemperature(
         self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
     ):
         self.put_state_element("displayedTemperature", value.value)
@@ -1744,14 +1730,8 @@ class WallThermostatConfiguration(SHCDeviceService):
     def heater_type(self, value: "WallThermostatConfiguration.HeaterType"):
         self.put_state_element("heaterType", value.value)
 
-    def set_valveType(self, value: "WallThermostatConfiguration.ValveType"):
-        self.put_state_element("valveType", value.value)
-
     async def async_set_valveType(self, value: "WallThermostatConfiguration.ValveType"):
         await self.async_put_state_element("valveType", value.value)
-
-    def set_heaterType(self, value: "WallThermostatConfiguration.HeaterType"):
-        self.put_state_element("heaterType", value.value)
 
     async def async_set_heaterType(self, value: "WallThermostatConfiguration.HeaterType"):
         await self.async_put_state_element("heaterType", value.value)
@@ -1850,32 +1830,17 @@ class SwitchConfiguration(SHCDeviceService):
     def supported_output_modes(self) -> list:
         return self.state.get("supportedOutputModes", [])
 
-    def set_switchType(self, value: "SwitchConfiguration.SwitchType"):
-        self.put_state_element("switchType", value.value)
-
     async def async_set_switchType(self, value: "SwitchConfiguration.SwitchType"):
         await self.async_put_state_element("switchType", value.value)
-
-    def set_swapInputs(self, value: bool):
-        self.put_state_element("swapInputs", value)
 
     async def async_set_swapInputs(self, value: bool):
         await self.async_put_state_element("swapInputs", value)
 
-    def set_swapOutputs(self, value: bool):
-        self.put_state_element("swapOutputs", value)
-
     async def async_set_swapOutputs(self, value: bool):
         await self.async_put_state_element("swapOutputs", value)
 
-    def set_actuatorType(self, value: "SwitchConfiguration.ActuatorType"):
-        self.put_state_element("actuatorType", value.value)
-
     async def async_set_actuatorType(self, value: "SwitchConfiguration.ActuatorType"):
         await self.async_put_state_element("actuatorType", value.value)
-
-    def set_outputMode(self, value: "SwitchConfiguration.OutputMode"):
-        self.put_state_element("outputMode", value.value)
 
     async def async_set_outputMode(self, value: "SwitchConfiguration.OutputMode"):
         await self.async_put_state_element("outputMode", value.value)
