@@ -10,7 +10,6 @@ from .exceptions import SHCCertificateError
 
 try:
     from cryptography import x509  # type: ignore
-    from cryptography.hazmat.backends import default_backend  # type: ignore
 except Exception as exc:  # pragma: no cover - cryptography should exist in HA
     raise SHCCertificateError("cryptography library not available") from exc
 
@@ -34,7 +33,7 @@ def parse_certificate(cert_path: str) -> CertificateInfo:
 
     data = path.read_bytes()
     try:
-        cert = x509.load_pem_x509_certificate(data, default_backend())
+        cert = x509.load_pem_x509_certificate(data)
     except Exception as exc:  # pragma: no cover - defensive
         raise SHCCertificateError(f"Invalid certificate: {cert_path}") from exc
 

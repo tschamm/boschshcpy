@@ -59,7 +59,7 @@ class SHCDeviceService:
         self._api.put_device_service_state(
             self.device_id.replace("#", "%23"),
             self.id,
-            {"@type": self.state["@type"], **key_value_pairs},
+            {"@type": self.state.get("@type", ""), **key_value_pairs},
         )
 
     def put_state_element(self, key, value):
@@ -70,7 +70,7 @@ class SHCDeviceService:
         await self._api.put_device_service_state(
             self.device_id.replace("#", "%23"),
             self.id,
-            {"@type": self.state["@type"], **key_value_pairs},
+            {"@type": self.state.get("@type", ""), **key_value_pairs},
         )
 
     async def async_put_state_element(self, key, value):

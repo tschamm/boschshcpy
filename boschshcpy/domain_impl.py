@@ -191,8 +191,8 @@ class SHCIntrusionSystem:
         if raw_result["@type"] == "securityGapState":
             self._raw_security_gap_state = raw_result
 
-        for callback in self._callbacks:
-            self._callbacks[callback]()
+        for fn in list(self._callbacks.values()):
+            fn()
 
 
 MODEL_MAPPING = {"IDS": SHCIntrusionSystem}

@@ -80,8 +80,8 @@ class SHCEmma(SHCDevice):
         self._raw_result = raw_result
         self._raw_device["status"] = "AVAILABLE"
 
-        for callback in self._callbacks:
-            self._callbacks[callback]()
+        for fn in list(self._callbacks.values()):
+            fn()
 
     def summary(self):
         super().summary()

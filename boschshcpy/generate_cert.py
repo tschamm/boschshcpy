@@ -2,7 +2,6 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
@@ -10,7 +9,7 @@ from cryptography.x509.oid import NameOID
 
 def generate_certificate(client_id, orgname) -> x509.Certificate:
     key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048, backend=default_backend()
+        public_exponent=65537, key_size=2048
     )
 
     name = x509.Name(
@@ -30,7 +29,7 @@ def generate_certificate(client_id, orgname) -> x509.Certificate:
         .not_valid_before(utc_now)
         .not_valid_after(utc_now + timedelta(days=10 * 365))
         .add_extension(x509.BasicConstraints(ca=True, path_length=None), True)
-        .sign(key, hashes.SHA256(), default_backend())
+        .sign(key, hashes.SHA256())
     )
     cert_pem = cert.public_bytes(encoding=serialization.Encoding.PEM)
 

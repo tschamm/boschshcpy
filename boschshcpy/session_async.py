@@ -545,7 +545,8 @@ class SHCSessionAsync:
         if raw_result["@type"] == "link":
             link_id = raw_result["id"]
             if link_id == "com.bosch.tt.emma.applink":
-                self._emma.update_emma_data(raw_result)
+                if self._emma is not None:
+                    self._emma.update_emma_data(raw_result)
 
     # ------------------------------------------------------------------
     # Subscription API (same as SHCSession)
@@ -566,7 +567,7 @@ class SHCSessionAsync:
         self._userdefinedstate_callbacks[userdefinedstate_id].append(callback)
 
     def unsubscribe_userdefinedstate_callbacks(self, userdefinedstate_id: str) -> None:
-        self._userdefinedstate_callbacks.pop(userdefinedstate_id)
+        self._userdefinedstate_callbacks.pop(userdefinedstate_id, None)
 
     # ------------------------------------------------------------------
     # Public accessors (same surface as SHCSession)

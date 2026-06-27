@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import logging
 import threading
@@ -380,7 +382,7 @@ class SHCSession:
         self._userdefinedstate_callbacks[userdefinedstate_id].append(callback)
 
     def unsubscribe_userdefinedstate_callbacks(self, userdefinedstate_id) -> Callable:
-        self._userdefinedstate_callbacks.pop(userdefinedstate_id)
+        self._userdefinedstate_callbacks.pop(userdefinedstate_id, None)
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
