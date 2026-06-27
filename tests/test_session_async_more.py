@@ -111,6 +111,7 @@ def _bare_session(api: AsyncMock | None = None) -> SHCSessionAsync:
 def _fake_device(device_id: str = "hdm:ZigBee:TestDevice") -> MagicMock:
     dev = MagicMock()
     dev.id = device_id
+    dev.async_update = AsyncMock()
     return dev
 
 
@@ -382,7 +383,7 @@ class TestStopPollingExceptionBranch:
 
 class TestPollLoopResubscribeRefresh:
     def test_poll_loop_resubscribe_refreshes_devices(self):
-        """After resubscribe, _poll_loop must short-poll all devices."""
+        """After resubscribe, _poll_loop must async-short-poll all devices."""
         api = _fake_api()
 
         # First call: poll_id is None → resubscribe, then poll returns empty
@@ -405,25 +406,16 @@ class TestPollLoopResubscribeRefresh:
 
         api.long_polling_poll.side_effect = fake_poll
 
-        update_calls = []
-
         async def run():
             s = _bare_session(api)
             # poll_id is None → triggers resubscribe on the first iteration
             s._poll_id = None
 
-            # Add two fake devices whose update() we can track
+            # Add two fake devices whose async_update() we can track
             dev1 = _fake_device("hdm:D1")
             dev2 = _fake_device("hdm:D2")
             s._devices_by_id["hdm:D1"] = dev1
             s._devices_by_id["hdm:D2"] = dev2
-
-            # Capture update() calls (they run in executor, mock makes them sync)
-            def track_update(fire_callbacks):
-                update_calls.append("called")
-
-            dev1.update.side_effect = track_update
-            dev2.update.side_effect = track_update
 
             with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
                 s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
@@ -433,11 +425,12 @@ class TestPollLoopResubscribeRefresh:
                     pass
                 s._poll_task = None
 
-            return s
+            return dev1, dev2
 
-        asyncio.run(run())
-        # Both devices must have been updated
-        assert len(update_calls) == 2
+        dev1, dev2 = asyncio.run(run())
+        # Both devices must have been async-updated with fire_callbacks=True
+        dev1.async_update.assert_called_once_with(fire_callbacks=True)
+        dev2.async_update.assert_called_once_with(fire_callbacks=True)
 
     def test_poll_loop_resubscribe_refresh_device_update_error_is_logged(self):
         """A failing device.update() during refresh must be caught, not crash the loop."""
@@ -467,8 +460,8 @@ class TestPollLoopResubscribeRefresh:
             dev = _fake_device("hdm:Err")
             s._devices_by_id["hdm:Err"] = dev
 
-            # update() raises an exception
-            dev.update.side_effect = ConnectionError("SHC unreachable")
+            # async_update() raises an exception
+            dev.async_update.side_effect = ConnectionError("SHC unreachable")
 
             with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
                 s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())

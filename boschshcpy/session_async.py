@@ -387,20 +387,19 @@ class SHCSessionAsync:
                     # Mirrors session.py:183-206: after a poll-id resubscribe
                     # the SHC doesn't deliver state changes that happened during
                     # the gap.  Short-poll every device so listeners get current
-                    # state (#183).  device.update() calls sync short_poll() which
-                    # does a blocking HTTP GET — for the async path we schedule
-                    # it in the executor to avoid blocking the event loop.
+                    # state (#183).  Use async_update() (not the sync update() +
+                    # executor) — calling sync short_poll() against SHCAPIAsync
+                    # stores an unawaited coroutine in _raw_device_service, which
+                    # causes 'coroutine object is not subscriptable' on the next
+                    # state write (issue #345).
                     logger.debug(
                         "Poll-id resubscribed — refreshing %d device(s) via "
-                        "short-poll (#183, async)",
+                        "async short-poll (#183, async)",
                         len(self._devices_by_id),
                     )
-                    loop = asyncio.get_running_loop()
                     for device in list(self._devices_by_id.values()):
                         try:
-                            await loop.run_in_executor(
-                                None, lambda d=device: d.update(fire_callbacks=True)
-                            )
+                            await device.async_update(fire_callbacks=True)
                         except Exception as ex:  # noqa: BLE001
                             logger.warning(
                                 "Short-poll refresh failed for device %s "
