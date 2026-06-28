@@ -136,8 +136,8 @@ class SHCDevice:
             raise SHCException("Error due to mismatching device ids!")
         self._raw_device = raw_device
 
-        for callback in self._callbacks:
-            self._callbacks[callback]()
+        for fn in list(self._callbacks.values()):
+            fn()
 
     def device_service(self, device_service_id):
         return (
