@@ -9,6 +9,55 @@ Python client library for the Bosch Smart Home Controller (SHC) local REST API.
 Communicates directly with the controller over mutual-TLS on the local network — no cloud, no Bosch account required.
 The official API documentation is available at [github.com/BoschSmartHome/bosch-shc-api-docs](https://github.com/BoschSmartHome/bosch-shc-api-docs).
 
+---
+
+## Contents
+
+- [Quick start](#quick-start)
+- [Architecture](#architecture)
+- [Install](#install)
+- [Supported device services](#supported-device-services)
+- [Supported device models](#supported-device-models)
+- [Usage](#usage)
+- [Rawscans](#rawscans-command-line)
+- [Maintainers & support](#maintainers--support)
+
+---
+
+## Quick start
+
+**1 — Install**
+
+```bash
+pip install boschshcpy
+```
+
+**2 — Register a client certificate**
+
+Press and hold the SHC front button until the LED flashes (registration mode, ~10 s), then:
+
+```bash
+boschshc_registerclient -ip 192.168.x.x -pw YOUR_SHC_PASSWORD
+```
+
+This writes `cert.pem` and `key.pem` to the working directory.
+
+**3 — Use the session**
+
+```python
+import boschshcpy
+
+session = boschshcpy.SHCSession("192.168.x.x", "cert.pem", "key.pem")
+session.information.summary()
+session.start_polling()          # starts long-poll thread; callbacks fire on state change
+# ... your code ...
+session.stop_polling()
+```
+
+> For asyncio / Home Assistant usage see the [async example](#python-api-async--aiohttp) below.
+
+---
+
 ## Architecture
 
 ```mermaid
