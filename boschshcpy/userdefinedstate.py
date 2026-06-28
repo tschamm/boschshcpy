@@ -23,11 +23,11 @@ class SHCUserDefinedState:
 
     @property
     def deleted(self):
-        return self._raw_state["deleted"]
+        return self._raw_state.get("deleted", False)
 
     @property
     def state(self):
-        return self._raw_state["state"]
+        return self._raw_state.get("state", False)
 
     @state.setter
     def state(self, state: bool):
