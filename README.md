@@ -1,12 +1,37 @@
 # Bosch Smart Home Controller API Python Library
 
 [![PyPI version](https://img.shields.io/pypi/v/boschshcpy.svg)](https://pypi.org/project/boschshcpy/)
+[![Tests](https://github.com/tschamm/boschshcpy/actions/workflows/tests.yml/badge.svg)](https://github.com/tschamm/boschshcpy/actions/workflows/tests.yml)
 [![BuyMeCoffee][buymecoffeebadge-tschamm]][buymecoffee-tschamm]
 [![BuyMeCoffee][buymecoffeebadge-mosandlts]][buymecoffee-mosandlts]
 
 Python client library for the Bosch Smart Home Controller (SHC) local REST API.
 Communicates directly with the controller over mutual-TLS on the local network — no cloud, no Bosch account required.
 The official API documentation is available at [github.com/BoschSmartHome/bosch-shc-api-docs](https://github.com/BoschSmartHome/bosch-shc-api-docs).
+
+## Architecture
+
+```mermaid
+graph LR
+    subgraph "Your application / HA integration"
+        APP["SHCSession\nor SHCSessionAsync"]
+    end
+    subgraph boschshcpy
+        DH["SHCDeviceHelper\n(typed device accessors)"]
+        DS["SHCDeviceService\n(state + event callbacks)"]
+        RA["SHCAPI / SHCAPIAsync\n(HTTP + mTLS client)"]
+    end
+    SHC["Bosch SHC II\n(port 8444 / 8446)"]
+
+    APP --> DH
+    DH --> DS
+    DS --> RA
+    RA <-->|"REST (8444)\nlong-poll (8446)"| SHC
+```
+
+**Sync path** (`SHCSession` + `SHCAPI`): blocking `requests`/`urllib3` calls. Uses a dedicated `SHCPollingThread` for the long-poll subscription — callbacks fire from that thread. Suitable for scripts and simple consumers.
+
+**Async path** (`SHCSessionAsync` + `SHCAPIAsync`): fully `asyncio`-native with `aiohttp`. Used by the [boschshc-hass](https://github.com/tschamm/boschshc-hass) Home Assistant integration. All write methods are `async def async_*` coroutines.
 
 ## Install
 
@@ -16,7 +41,7 @@ Requires Python ≥ 3.10.
 pip install boschshcpy
 ```
 
-Current PyPI version: **0.3.7**
+Current PyPI version: **0.3.20**
 
 ## Supported device services
 
@@ -78,7 +103,7 @@ This writes a certificate/key pair (`cert.pem` / `key.pem`) to the working direc
 
 More details: [Bosch API docs — register a client](https://github.com/BoschSmartHome/bosch-shc-api-docs/tree/master/postman#register-a-new-client-to-the-bosch-smart-home-controller)
 
-### Python API
+### Python API (sync)
 
 ```python
 import boschshcpy
@@ -127,6 +152,25 @@ session.intrusion_system.arm()
 
 # Raw API dump
 scan_result = session.rawscan(command="devices")
+```
+
+### Python API (async / aiohttp)
+
+```python
+import asyncio
+import boschshcpy
+
+async def main():
+    session = boschshcpy.SHCSessionAsync(
+        controller_ip="192.168.25.51",
+        certificate="cert.pem",
+        key="key.pem",
+    )
+    async with session:
+        for device in session.device_helper.smart_plugs:
+            await device.async_set_state(True)  # turn on
+
+asyncio.run(main())
 ```
 
 ### Device helper accessors (`SHCSession.device_helper`)
