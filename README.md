@@ -12,21 +12,18 @@ The official API documentation is available at [github.com/BoschSmartHome/bosch-
 ## Architecture
 
 ```mermaid
-graph LR
-    subgraph "Your application / HA integration"
-        APP["SHCSession\nor SHCSessionAsync"]
-    end
-    subgraph boschshcpy
-        DH["SHCDeviceHelper\n(typed device accessors)"]
-        DS["SHCDeviceService\n(state + event callbacks)"]
-        RA["SHCAPI / SHCAPIAsync\n(HTTP + mTLS client)"]
-    end
-    SHC["Bosch SHC II\n(port 8444 / 8446)"]
+graph TD
+    APP("Your code\nSHCSession / SHCSessionAsync")
+    DH("SHCDeviceHelper\ntyped device accessors")
+    DS("SHCDeviceService\nstate + event callbacks")
+    RA("SHCAPI / SHCAPIAsync\nHTTP + mTLS client")
+    SHC("Bosch SHC II")
 
     APP --> DH
     DH --> DS
     DS --> RA
-    RA <-->|"REST (8444)\nlong-poll (8446)"| SHC
+    RA -->|"REST port 8444"| SHC
+    SHC -->|"long-poll port 8446"| RA
 ```
 
 **Sync path** (`SHCSession` + `SHCAPI`): blocking `requests`/`urllib3` calls. Uses a dedicated `SHCPollingThread` for the long-poll subscription — callbacks fire from that thread. Suitable for scripts and simple consumers.
