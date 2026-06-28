@@ -99,7 +99,9 @@ class SHCIntrusionSystem:
     @property
     def active_configuration_profile(self) -> Profile:
         try:
-            return self.Profile(int(self._raw_active_configuration_profile["profileId"]))
+            return self.Profile(
+                int(self._raw_active_configuration_profile["profileId"])
+            )
         except (ValueError, KeyError):
             return self.Profile.FULL_PROTECTION
 

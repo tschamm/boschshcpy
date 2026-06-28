@@ -902,11 +902,7 @@ class LatestTamperService(SHCDeviceService):
 
     @property
     def last_tamper_time(self) -> str:
-        return (
-            self.state["lastTamperTime"]
-            if "lastTamperTime" in self.state
-            else "n/a"
-        )
+        return self.state["lastTamperTime"] if "lastTamperTime" in self.state else "n/a"
 
     def summary(self):
         super().summary()
@@ -1024,7 +1020,9 @@ class SmartSensitivityControlService(SHCDeviceService):
     def sensitivities(self) -> list:
         return self.state.get("sensitivities", [])
 
-    def get_sensitivity(self, context: "SmartSensitivityControlService.SmartSensitivityContext"):
+    def get_sensitivity(
+        self, context: "SmartSensitivityControlService.SmartSensitivityContext"
+    ):
         """Return the sensitivity dict for the given context, or None if not found."""
         ctx_value = context.value if hasattr(context, "value") else context
         for entry in self.sensitivities:
@@ -1089,7 +1087,9 @@ class WalkTestService(SHCDeviceService):
 
     class PetImmunityState(Enum):
         PET_IMMUNITY_ENABLED = "PET_IMMUNITY_ENABLED"
-        PET_IMMUNITY_DISABLED = "PET_IMMUNITY_DISABLED"  # APK: WalkTestState.PetImmunityState
+        PET_IMMUNITY_DISABLED = (
+            "PET_IMMUNITY_DISABLED"  # APK: WalkTestState.PetImmunityState
+        )
         UNKNOWN = "UNKNOWN"
 
     @property
@@ -1126,7 +1126,9 @@ class WalkTestService(SHCDeviceService):
         except ValueError:
             return self.PetImmunityState.UNKNOWN
 
-    async def async_set_walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
+    async def async_set_walk_state_request(
+        self, value: "WalkTestService.WalkStateRequest"
+    ):
         await self.async_put_state_element("walkStateRequest", value.value)
 
     def summary(self):
@@ -1277,7 +1279,9 @@ class PowerSwitchConfigurationService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def state_after_power_outage(self) -> "PowerSwitchConfigurationService.StateAfterPowerOutage":
+    def state_after_power_outage(
+        self,
+    ) -> "PowerSwitchConfigurationService.StateAfterPowerOutage":
         raw = self.state.get("stateAfterPowerOutage")
         if raw is None:
             return None
@@ -1615,7 +1619,9 @@ class DisplayedTemperatureConfiguration(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def displayed_temperature(self) -> "DisplayedTemperatureConfiguration.DisplayedTemperature":
+    def displayed_temperature(
+        self,
+    ) -> "DisplayedTemperatureConfiguration.DisplayedTemperature":
         raw = self.state.get("displayedTemperature")
         if raw is None:
             return None
@@ -1733,7 +1739,9 @@ class WallThermostatConfiguration(SHCDeviceService):
     async def async_set_valveType(self, value: "WallThermostatConfiguration.ValveType"):
         await self.async_put_state_element("valveType", value.value)
 
-    async def async_set_heaterType(self, value: "WallThermostatConfiguration.HeaterType"):
+    async def async_set_heaterType(
+        self, value: "WallThermostatConfiguration.HeaterType"
+    ):
         await self.async_put_state_element("heaterType", value.value)
 
     def summary(self):
@@ -2033,9 +2041,13 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
         return int(self.state.get("solarChargingCurrent", 0))
 
     @property
-    def configured_power_supply(self) -> "OutdoorSirenPowerSupplyService.ConfiguredPowerSupply":
+    def configured_power_supply(
+        self,
+    ) -> "OutdoorSirenPowerSupplyService.ConfiguredPowerSupply":
         try:
-            return self.ConfiguredPowerSupply(self.state.get("configuredPowerSupply", "UNKNOWN"))
+            return self.ConfiguredPowerSupply(
+                self.state.get("configuredPowerSupply", "UNKNOWN")
+            )
         except ValueError:
             return self.ConfiguredPowerSupply.UNKNOWN
 
@@ -2047,9 +2059,13 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
             return self.MainPowerSupply.UNKNOWN
 
     @property
-    def solar_charging_score(self) -> "OutdoorSirenPowerSupplyService.SolarChargingScore":
+    def solar_charging_score(
+        self,
+    ) -> "OutdoorSirenPowerSupplyService.SolarChargingScore":
         try:
-            return self.SolarChargingScore(self.state.get("solarChargingScore", "UNKNOWN"))
+            return self.SolarChargingScore(
+                self.state.get("solarChargingScore", "UNKNOWN")
+            )
         except ValueError:
             return self.SolarChargingScore.UNKNOWN
 
@@ -2163,7 +2179,9 @@ class DimmerConfigurationService(SHCDeviceService):
         LEADING = "LEADING"
 
     @property
-    def edge_phase_control_mode(self) -> "DimmerConfigurationService.EdgePhaseControlMode":
+    def edge_phase_control_mode(
+        self,
+    ) -> "DimmerConfigurationService.EdgePhaseControlMode":
         try:
             return self.EdgePhaseControlMode(self.state.get("edgePhaseControlMode"))
         except ValueError:
@@ -2224,7 +2242,9 @@ class DimmerConfigurationService(SHCDeviceService):
     def summary(self):
         super().summary()
         print(f"    edgePhaseControlMode     : {self.edge_phase_control_mode}")
-        print(f"    brightnessRange          : {self.min_brightness}-{self.max_brightness}")
+        print(
+            f"    brightnessRange          : {self.min_brightness}-{self.max_brightness}"
+        )
         print(f"    dimmingSpeed             : {self.dimming_speed}")
 
 

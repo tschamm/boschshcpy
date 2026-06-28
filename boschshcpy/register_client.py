@@ -41,7 +41,7 @@ class SHCRegisterClient:
                 "Systempassword": password_base64.decode("utf-8"),
             }
         )
-        self._requests_session.verify = files('boschshcpy').joinpath('tls_ca_chain.pem')
+        self._requests_session.verify = files("boschshcpy").joinpath("tls_ca_chain.pem")
 
         import urllib3
 

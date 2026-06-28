@@ -31,8 +31,17 @@ jobs:
           pip install pytest flake8 aiohttp  # aiohttp: dev dep for the async (api_async) tests
       - name: Test
         run: pytest tests/ -q
-      - name: Lint (informational)
+      - name: Lint — flake8 (informational)
         # Pre-existing F401 re-exports in __init__.py keep this non-blocking,
         # matching upstream's flake8-only convention.
         continue-on-error: true
         run: flake8 --max-line-length=100 --extend-ignore=E501,W503 boschshcpy
+      - name: Lint — ruff check (gate)
+        # Matches the ruff settings used in boschshc-hass and local-ci.sh so
+        # both repos stay in sync. F401 ignored: __init__.py has intentional
+        # re-export imports that ruff would otherwise flag.
+        run: |
+          pip install ruff
+          ruff check --select=E,W,F --ignore=E501,F401 boschshcpy
+      - name: Lint — ruff format (gate)
+        run: ruff format --check boschshcpy

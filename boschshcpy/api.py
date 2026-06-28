@@ -92,7 +92,9 @@ class SHCAPI:
         except requests.exceptions.ConnectionError as err:
             logger.debug(
                 "%s %s dropped (%s); retrying once on a fresh connection",
-                method, api_url, err,
+                method,
+                api_url,
+                err,
             )
             return verb(api_url, **kwargs)
 
@@ -114,7 +116,10 @@ class SHCAPI:
             else:
                 if len(result.content) > 0:
                     result = json.loads(result.content)
-                    if expected_type is not None and result.get("@type") != expected_type:
+                    if (
+                        expected_type is not None
+                        and result.get("@type") != expected_type
+                    ):
                         raise SHCSessionError(
                             f"Unexpected @type in API response: expected "
                             f"{expected_type!r}, got {result.get('@type')!r}"
@@ -158,7 +163,8 @@ class SHCAPI:
 
     def _process_nok_result(self, result):
         safe_headers = {
-            k: v for k, v in result.request.headers.items()
+            k: v
+            for k, v in result.request.headers.items()
             if k.lower() not in ("systempassword", "authorization", "cookie")
         }
         logger.debug("Body: %s", result.request.body)

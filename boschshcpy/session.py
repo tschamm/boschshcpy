@@ -276,7 +276,7 @@ class SHCSession:
             else:  # New device registered
                 logger.debug("Found new device with id %s", device_id)
                 device = self._add_device(raw_result, update_services=True)
-                for instance, callback in self._subscribers:
+                for instance, callback in list(self._subscribers):
                     if isinstance(device, instance):
                         callback(device)
             return
@@ -295,11 +295,11 @@ class SHCSession:
                     api=self._api, info=self.information, raw_state=raw_result
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
-                for instance, callback in self._subscribers:
+                for instance, callback in list(self._subscribers):
                     if isinstance(userdefinedstate, instance):
                         callback(userdefinedstate)
             if state_id in self._userdefinedstate_callbacks:
-                for callback in self._userdefinedstate_callbacks[state_id]:
+                for callback in list(self._userdefinedstate_callbacks[state_id]):
                     callback()
             return
         if raw_result["@type"] == "link":
@@ -315,9 +315,7 @@ class SHCSession:
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
-                            logger.debug(
-                                "_long_poll returned False. Waiting 1 second."
-                            )
+                            logger.debug("_long_poll returned False. Waiting 1 second.")
                             time.sleep(1.0)
                     except RuntimeError as err:
                         self._stop_polling_thread = True
@@ -472,7 +470,7 @@ class SHCSession:
         ]
 
     def rawscan(self, **kwargs):
-        match (kwargs["command"].lower()):
+        match kwargs["command"].lower():
             case "devices":
                 return self._api.get_devices()
 

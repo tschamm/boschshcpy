@@ -53,8 +53,8 @@ from .userdefinedstate import SHCUserDefinedState
 logger = logging.getLogger("boschshcpy")
 
 # Backoff constants (mirroring sync session.py polling_thread_main)
-_BACKOFF_STALE_POLL_ID = 1.0   # seconds to wait after -32001 before next iteration
-_BACKOFF_OTHER_ERROR = 15.0    # seconds to wait after unexpected error
+_BACKOFF_STALE_POLL_ID = 1.0  # seconds to wait after -32001 before next iteration
+_BACKOFF_OTHER_ERROR = 15.0  # seconds to wait after unexpected error
 
 
 class SHCSessionAsync:
@@ -173,11 +173,15 @@ class SHCSessionAsync:
         # properties that the rest of the session code depends on.
         pub_info = await self._api.get_public_information()
         if pub_info is None:
-            raise SHCConnectionError("Failed to get public information from SHC controller")
+            raise SHCConnectionError(
+                "Failed to get public information from SHC controller"
+            )
 
         info_raw = await self._api.get_information()
         if info_raw is None:
-            raise SHCAuthenticationError("Authentication failed: could not get SHC information")
+            raise SHCAuthenticationError(
+                "Authentication failed: could not get SHC information"
+            )
 
         self._shc_information = _AsyncSHCInformation(pub_info, info_raw, self._api)
 
@@ -203,7 +207,9 @@ class SHCSessionAsync:
         for raw_device in raw_devices:
             self._add_device(raw_device)
 
-    def _add_device(self, raw_device: dict, update_services: bool = False) -> SHCDevice | None:
+    def _add_device(
+        self, raw_device: dict, update_services: bool = False
+    ) -> SHCDevice | None:
         """Sync helper — mirrors SHCSession._add_device().
 
         update_services=True is only used for new-device events that arrive
@@ -306,7 +312,9 @@ class SHCSessionAsync:
 
         self._stop_polling = False
         self._poll_id = await self._api.long_polling_subscribe()
-        logger.debug("Async session subscribed for long poll. Poll id: %s", self._poll_id)
+        logger.debug(
+            "Async session subscribed for long poll. Poll id: %s", self._poll_id
+        )
 
         self._poll_task = asyncio.get_running_loop().create_task(
             self._poll_loop(), name="SHCAsyncPollingTask"
@@ -337,7 +345,9 @@ class SHCSessionAsync:
         if self._poll_id is not None:
             try:
                 await self._api.long_polling_unsubscribe(self._poll_id)
-                logger.debug("Async unsubscribed from long poll, poll id: %s", self._poll_id)
+                logger.debug(
+                    "Async unsubscribed from long poll, poll id: %s", self._poll_id
+                )
             except Exception as ex:
                 logger.debug("Async unsubscribe failed (best-effort): %s", ex)
             finally:
@@ -508,9 +518,7 @@ class SHCSessionAsync:
                     self._services_by_device_id.pop(device_id, None)
                     self._devices_by_id.pop(device_id, None)
             else:
-                logger.debug(
-                    "Async session: found new device with id %s", device_id
-                )
+                logger.debug("Async session: found new device with id %s", device_id)
                 device = await self._async_add_new_device(raw_result)
                 for instance, callback in self._subscribers:
                     if isinstance(device, instance):
@@ -527,7 +535,9 @@ class SHCSessionAsync:
         if raw_result["@type"] == "userDefinedState":
             state_id = raw_result["id"]
             if state_id in self._userdefinedstates_by_id:
-                self._userdefinedstates_by_id[state_id].update_raw_information(raw_result)
+                self._userdefinedstates_by_id[state_id].update_raw_information(
+                    raw_result
+                )
             else:
                 userdefinedstate = SHCUserDefinedState(
                     api=self._api, info=self.information, raw_state=raw_result
@@ -635,6 +645,7 @@ class SHCSessionAsync:
 # ---------------------------------------------------------------------------
 # Lightweight async information wrapper
 # ---------------------------------------------------------------------------
+
 
 class _AsyncSHCInformation:
     """Minimal wrapper around raw SHC information dicts.

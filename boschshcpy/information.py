@@ -156,7 +156,7 @@ class SHCInformation:
                     or host_ip is None
                 ):
                     mac_address = info.name[
-                        info.name.find("[") + 1: info.name.find("]")
+                        info.name.find("[") + 1 : info.name.find("]")
                     ]
                     server_pos = info.server.find(".local.")
                     if server_pos > -1:
@@ -219,7 +219,9 @@ class SHCInformation:
         print(f"  shcIpAddress       : {self.shcIpAddress}")
         print(f"  macAddress         : {self.macAddress}")
         print(f"  SW-Version         : {self.version}")
-        print(f"  updateState        : {self.updateState.name if self.updateState else 'N/A'}")
+        print(
+            f"  updateState        : {self.updateState.name if self.updateState else 'N/A'}"
+        )
         print(f"  uniqueId           : {self.unique_id}")
         print(f"  name               : {self.name}")
 
@@ -241,7 +243,7 @@ def format_mac(mac: str) -> str:
 
     if len(to_test) == 12:
         # no - included
-        return "-".join(to_test.lower()[i:i + 2] for i in range(0, 12, 2))
+        return "-".join(to_test.lower()[i : i + 2] for i in range(0, 12, 2))
 
     # Not sure how formatted, return original
     return mac

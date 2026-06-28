@@ -124,7 +124,8 @@ class SHCAPIAsync:
         self._rpc_root = f"https://{controller_ip}:8444/remote/json-rpc"
 
         self._ssl_ctx = (
-            ssl_context if ssl_context is not None
+            ssl_context
+            if ssl_context is not None
             else build_ssl_context(certificate, key)
         )
         self._owns_session = external_session is None
@@ -285,14 +286,14 @@ class SHCAPIAsync:
         try:
             return await self._get_api_result_or_fail(api_url, extra_headers={})
         except Exception as exc:
-            logger.error("Failed to get public information from SHC controller: %s", exc)
+            logger.error(
+                "Failed to get public information from SHC controller: %s", exc
+            )
             return None
 
     async def get_rooms(self) -> Any:
         api_url = f"{self._api_root}/rooms"
-        return await self._get_api_result_or_fail(
-            api_url, expected_element_type="room"
-        )
+        return await self._get_api_result_or_fail(api_url, expected_element_type="room")
 
     async def get_scenarios(self) -> Any:
         api_url = f"{self._api_root}/scenarios"

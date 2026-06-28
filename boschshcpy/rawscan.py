@@ -68,7 +68,7 @@ def main():
         print(e)
         sys.exit()
 
-    match (args.subcommand):
+    match args.subcommand:
         case "devices":
             print(json.dumps(session.api.get_devices(), indent=4))
 

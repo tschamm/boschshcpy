@@ -83,7 +83,9 @@ class _ChildProtection(SHCDevice):
 
     async def async_set_child_lock(self, state: bool):
         """Async write: set childLockActive on ChildProtection service."""
-        await self._childprotection_service.async_put_state_element("childLockActive", state)
+        await self._childprotection_service.async_put_state_element(
+            "childLockActive", state
+        )
 
 
 class _Thermostat(SHCDevice):
@@ -254,7 +256,11 @@ class _SilentMode(SHCDevice):
 
 
 class SHCSmokeDetector(SHCBatteryDevice):
-    from .services_impl import AlarmService, SmokeSensitivityService, SmokeDetectorCheckService
+    from .services_impl import (
+        AlarmService,
+        SmokeSensitivityService,
+        SmokeDetectorCheckService,
+    )
 
     def __init__(self, api, raw_device, raw_device_services):
         super().__init__(api, raw_device, raw_device_services)
@@ -285,8 +291,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
         only as a read-only smoke state, so this is gated on the model id.
         """
         return (
-            self.device_model == "SMOKE_DETECTOR2"
-            and self._alarm_service is not None
+            self.device_model == "SMOKE_DETECTOR2" and self._alarm_service is not None
         )
 
     @property
@@ -429,7 +434,9 @@ class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
     async def async_set_energy_saving_mode_enabled(self, value: bool):
         """Async write: enable/disable energy saving mode."""
         if self._energy_saving_mode_service is not None:
-            await self._energy_saving_mode_service.async_set_energy_saving_mode_enabled(value)
+            await self._energy_saving_mode_service.async_set_energy_saving_mode_enabled(
+                value
+            )
 
     @property
     def power_threshold(self):
@@ -461,7 +468,9 @@ class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
     async def async_set_enter_duration_seconds(self, value: int):
         """Async write: set enter duration for energy saving mode."""
         if self._energy_saving_mode_service is not None:
-            await self._energy_saving_mode_service.async_set_enter_duration_seconds(value)
+            await self._energy_saving_mode_service.async_set_enter_duration_seconds(
+                value
+            )
 
     @property
     def led_brightness(self):
@@ -569,7 +578,9 @@ class SHCSmartPlugCompact(
     async def async_set_energy_saving_mode_enabled(self, value: bool):
         """Async write: enable/disable energy saving mode."""
         if self._energy_saving_mode_service is not None:
-            await self._energy_saving_mode_service.async_set_energy_saving_mode_enabled(value)
+            await self._energy_saving_mode_service.async_set_energy_saving_mode_enabled(
+                value
+            )
 
     @property
     def power_threshold(self):
@@ -601,7 +612,9 @@ class SHCSmartPlugCompact(
     async def async_set_enter_duration_seconds(self, value: int):
         """Async write: set enter duration for energy saving mode."""
         if self._energy_saving_mode_service is not None:
-            await self._energy_saving_mode_service.async_set_enter_duration_seconds(value)
+            await self._energy_saving_mode_service.async_set_enter_duration_seconds(
+                value
+            )
 
     @property
     def led_brightness(self):
@@ -699,14 +712,14 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
 
     @property
     def keyname(self) -> "KeypadService.KeyState":
-        return self._keypad_service.keyName if self._keypad_service is not None else None
+        return (
+            self._keypad_service.keyName if self._keypad_service is not None else None
+        )
 
     @property
     def eventtype(self) -> "KeypadService.KeyEvent":
         return (
-            self._keypad_service.eventType
-            if self._keypad_service is not None
-            else None
+            self._keypad_service.eventType if self._keypad_service is not None else None
         )
 
     @property
@@ -826,7 +839,9 @@ class SHCMicromoduleRelay(
     async def async_trigger_impulse_state(self):
         """Async write: trigger impulse relay."""
         if self._impulseswitch_service:
-            await self._impulseswitch_service.async_put_state_element("impulseState", True)
+            await self._impulseswitch_service.async_put_state_element(
+                "impulseState", True
+            )
 
     @property
     def impulse_length(self) -> int:
@@ -992,14 +1007,14 @@ class SHCMicromoduleShutterControl(
 
     @property
     def keyname(self) -> KeypadService.KeyState:
-        return self._keypad_service.keyName if self._keypad_service is not None else None
+        return (
+            self._keypad_service.keyName if self._keypad_service is not None else None
+        )
 
     @property
     def eventtype(self) -> KeypadService.KeyEvent:
         return (
-            self._keypad_service.eventType
-            if self._keypad_service is not None
-            else None
+            self._keypad_service.eventType if self._keypad_service is not None else None
         )
 
     @eventtype.setter
@@ -1144,7 +1159,9 @@ class SHCShutterContact2Plus(SHCShutterContact2):
     def sensitivity(self, state: VibrationSensorService.SensitivityState):
         self._vibrationsensor_service.put_state_element("sensitivity", state.name)
 
-    async def async_set_sensitivity(self, state: VibrationSensorService.SensitivityState):
+    async def async_set_sensitivity(
+        self, state: VibrationSensorService.SensitivityState
+    ):
         """Async write: set vibration sensitivity."""
         await self._vibrationsensor_service.async_put_state_element(
             "sensitivity", state.name
@@ -1330,7 +1347,9 @@ class SHCClimateControl(_TemperatureLevel):
     def operation_mode(self, mode: RoomClimateControlService.OperationMode):
         self._roomclimatecontrol_service.operation_mode = mode
 
-    async def async_set_operation_mode(self, mode: RoomClimateControlService.OperationMode):
+    async def async_set_operation_mode(
+        self, mode: RoomClimateControlService.OperationMode
+    ):
         """Async write: set operation mode (AUTOMATIC/MANUAL)."""
         await self._roomclimatecontrol_service.async_put_state_element(
             "operationMode", mode.value
@@ -1346,7 +1365,9 @@ class SHCClimateControl(_TemperatureLevel):
 
     async def async_set_boost_mode(self, value: bool):
         """Async write: set boost mode."""
-        await self._roomclimatecontrol_service.async_put_state_element("boostMode", value)
+        await self._roomclimatecontrol_service.async_put_state_element(
+            "boostMode", value
+        )
 
     @property
     def supports_boost_mode(self) -> bool:
@@ -1382,7 +1403,9 @@ class SHCClimateControl(_TemperatureLevel):
 
     async def async_set_summer_mode(self, value: bool):
         """Async write: set summer mode (off-season / HVAC off)."""
-        await self._roomclimatecontrol_service.async_put_state_element("summerMode", value)
+        await self._roomclimatecontrol_service.async_put_state_element(
+            "summerMode", value
+        )
 
     @property
     def room_control_mode(self) -> str:
@@ -1905,12 +1928,16 @@ class SHCMotionDetector2(SHCBatteryDevice):
         self._latesttamper_service = self.device_service("LatestTamper")
         self._temperaturelevel_service = self.device_service("TemperatureLevel")
         self._pollcontrol_service = self.device_service("PollControl")
-        self._pirsensorconfiguration_service = self.device_service("PirSensorConfiguration")
+        self._pirsensorconfiguration_service = self.device_service(
+            "PirSensorConfiguration"
+        )
         self._occupancydetection_service = self.device_service("OccupancyDetection")
         self._communicationquality_service = self.device_service("CommunicationQuality")
         self._petimmunity_service = self.device_service("PetImmunity")
         self._walktest_service = self.device_service("WalkTest")
-        self._smart_sensitivity_control_service = self.device_service("SmartSensitivityControl")
+        self._smart_sensitivity_control_service = self.device_service(
+            "SmartSensitivityControl"
+        )
 
     @property
     def latestmotion(self) -> str:

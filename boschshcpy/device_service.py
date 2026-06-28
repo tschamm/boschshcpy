@@ -91,7 +91,9 @@ class SHCDeviceService:
 
     def short_poll(self, fire_callbacks=False):
         now = datetime.now(timezone.utc)  # [S2] single clock read
-        if self._last_update is None or (now - self._last_update) > timedelta(seconds=1):
+        if self._last_update is None or (now - self._last_update) > timedelta(
+            seconds=1
+        ):
             self._raw_device_service = self._api.get_device_service(
                 self.device_id.replace("#", "%23"), self.id
             )
@@ -128,7 +130,9 @@ class SHCDeviceService:
         Mirrors short_poll line-for-line otherwise.
         """
         now = datetime.now(timezone.utc)  # [S2] single clock read
-        if self._last_update is None or (now - self._last_update) > timedelta(seconds=1):
+        if self._last_update is None or (now - self._last_update) > timedelta(
+            seconds=1
+        ):
             self._raw_device_service = await self._api.get_device_service(
                 self.device_id.replace("#", "%23"), self.id
             )
@@ -151,9 +155,8 @@ class SHCDeviceService:
         self._raw_device_service = raw_result  # Update device service data
 
         if "state" in self._raw_device_service:
-            if (
-                self.state
-                and raw_result["state"].get("@type") != self.state.get("@type")
+            if self.state and raw_result["state"].get("@type") != self.state.get(
+                "@type"
             ):
                 return
             self._raw_state = raw_result["state"]  # Update state

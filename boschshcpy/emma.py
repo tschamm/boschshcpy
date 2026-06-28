@@ -7,7 +7,6 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCEmma(SHCDevice):
-
     def __init__(self, api, shc_info: SHCInformation = None, raw_result=None):
         _emma_raw_device = {
             "rootDeviceId": shc_info.macAddress if shc_info else "",
@@ -24,7 +23,9 @@ class SHCEmma(SHCDevice):
             "status": (
                 "AVAILABLE"
                 if raw_result
-                else "UNAVAILABLE" if shc_info else "UNDEFINED"
+                else "UNAVAILABLE"
+                if shc_info
+                else "UNDEFINED"
             ),
             "deviceServiceIds": [],
         }

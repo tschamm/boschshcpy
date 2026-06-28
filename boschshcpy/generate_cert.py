@@ -8,9 +8,7 @@ from cryptography.x509.oid import NameOID
 
 
 def generate_certificate(client_id, orgname) -> x509.Certificate:
-    key = rsa.generate_private_key(
-        public_exponent=65537, key_size=2048
-    )
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
     name = x509.Name(
         [
