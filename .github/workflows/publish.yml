@@ -3,22 +3,18 @@ name: Publish to PyPI
 # Two-job build → publish, mirroring the camera-tool release pipeline.
 # Publishes via PyPI Trusted Publishing (OIDC) — no API token/secret.
 #
-# TRIGGER: kept on workflow_dispatch (manual) until the PyPI Trusted Publisher
-# is registered for this project. The Owner (tschamm) adds it once at
-# https://pypi.org/manage/project/boschshcpy/settings/publishing/ —
+# TRIGGER: tag push (v*.*.*) → OIDC publish via PyPI Trusted Publisher.
+# Trusted Publisher registered by tschamm at:
+#   https://pypi.org/manage/project/boschshcpy/settings/publishing/
 #   provider GitHub · owner=tschamm · repo=boschshcpy ·
 #   workflow=publish.yml · environment=pypi
-# Auto-publishing on a tag BEFORE that config only yields a red
-# "invalid-publisher" run, so releases stay manual (twine) for now.
-#
-# AFTER the trusted publisher exists: uncomment the `push: tags` trigger below.
 # `skip-existing: true` keeps it green if a version was already uploaded
-# manually during the transition.
+# manually (e.g. the 0.3.22 twine fallback during OIDC transition).
 
 on:
   workflow_dispatch:
-  # push:
-  #   tags: ["v*.*.*"]
+  push:
+    tags: ["v*.*.*"]
 
 jobs:
   build:
