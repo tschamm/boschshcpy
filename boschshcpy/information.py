@@ -179,9 +179,10 @@ class SHCInformation:
                     mac_address = info.name[
                         info.name.find("[") + 1 : info.name.find("]")
                     ]
-                    server_pos = info.server.find(".local.")
-                    if server_pos > -1:
-                        name = info.server[:server_pos]
+                    if info.server is not None:
+                        server_pos = info.server.find(".local.")
+                        if server_pos > -1:
+                            name = info.server[:server_pos]
         if mac_address is None or name is None:
             return
         self._unique_id = format_mac(mac_address)

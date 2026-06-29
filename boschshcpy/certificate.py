@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import NamedTuple
+from typing import Any, NamedTuple, cast
 
 from .exceptions import SHCCertificateError
 
@@ -46,8 +46,9 @@ def parse_certificate(cert_path: str) -> CertificateInfo:
     # CryptographyDeprecationWarning even when the _utc property is present
     # (root cause of the Python 3.13+ startup crash).
     if hasattr(cert, "not_valid_before_utc"):
-        not_before = cert.not_valid_before_utc
-        not_after = cert.not_valid_after_utc  # type: ignore[attr-defined]
+        _cert = cast(Any, cert)
+        not_before = _cert.not_valid_before_utc
+        not_after = _cert.not_valid_after_utc
     else:  # pragma: no cover - exercised only on cryptography < 42
         not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
         not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)

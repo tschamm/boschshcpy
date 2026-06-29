@@ -183,7 +183,7 @@ class SHCAPI:
         logger.error("Headers: %s", safe_headers)
         logger.error("URL: %s", result.request.url)
         raise SHCSessionError(
-            f"API call returned non-OK result (code {result.status_code})!: {result.content}"
+            f"API call returned non-OK result (code {result.status_code})!: {result.content.decode('utf-8', errors='replace')}"
         )
 
     # API calls here

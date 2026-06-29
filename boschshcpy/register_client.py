@@ -51,7 +51,9 @@ class SHCRegisterClient:
                 "Systempassword": password_base64.decode("utf-8"),
             }
         )
-        self._requests_session.verify = files("boschshcpy").joinpath("tls_ca_chain.pem")
+        self._requests_session.verify = str(
+            files("boschshcpy").joinpath("tls_ca_chain.pem")
+        )
 
         import urllib3
 
@@ -75,7 +77,7 @@ class SHCRegisterClient:
 
     def _process_nok_result(self, result: Response) -> None:
         raise SHCRegistrationError(
-            f"API call returned non-OK result (code {result.status_code})!: {result.content}... Please check your password?"
+            f"API call returned non-OK result (code {result.status_code})!: {result.content.decode('utf-8', errors='replace')}... Please check your password?"
         )
 
     def register(self, client_id: str, name: str) -> dict[str, Any] | None:
