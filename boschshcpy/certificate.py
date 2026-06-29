@@ -47,7 +47,7 @@ def parse_certificate(cert_path: str) -> CertificateInfo:
     # (root cause of the Python 3.13+ startup crash).
     if hasattr(cert, "not_valid_before_utc"):
         not_before = cert.not_valid_before_utc
-        not_after = cert.not_valid_after_utc
+        not_after = cert.not_valid_after_utc  # type: ignore[attr-defined]
     else:  # pragma: no cover - exercised only on cryptography < 42
         not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
         not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)

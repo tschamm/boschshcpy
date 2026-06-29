@@ -65,7 +65,10 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def operation_mode(self) -> OperationMode:
-        return self.OperationMode(self.state["operationMode"])
+        try:
+            return self.OperationMode(self.state.get("operationMode", "MANUAL"))
+        except ValueError:
+            return self.OperationMode.MANUAL
 
     @operation_mode.setter
     def operation_mode(self, value: OperationMode) -> None:
@@ -73,7 +76,7 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def setpoint_temperature(self) -> float:
-        return float(self.state["setpointTemperature"])
+        return float(self.state.get("setpointTemperature", 0.0))
 
     @setpoint_temperature.setter
     def setpoint_temperature(self, value: float) -> None:
@@ -225,7 +228,10 @@ class HeatingCircuitService(SHCDeviceService):
 
     @property
     def operation_mode(self) -> OperationMode:
-        return self.OperationMode(self.state["operationMode"])
+        try:
+            return self.OperationMode(self.state.get("operationMode", "MANUAL"))
+        except ValueError:
+            return self.OperationMode.MANUAL
 
     @operation_mode.setter
     def operation_mode(self, value: OperationMode) -> None:
@@ -233,7 +239,7 @@ class HeatingCircuitService(SHCDeviceService):
 
     @property
     def setpoint_temperature(self) -> float:
-        return float(self.state["setpointTemperature"])
+        return float(self.state.get("setpointTemperature", 0.0))
 
     @setpoint_temperature.setter
     def setpoint_temperature(self, value: float) -> None:
@@ -307,7 +313,13 @@ class SilentModeService(SHCDeviceService):
 
     @property
     def mode(self) -> State:
-        return self.State(self.state["mode"])
+        raw = self.state.get("mode")
+        if raw is None:
+            return self.State.MODE_NORMAL
+        try:
+            return self.State(raw)
+        except ValueError:
+            return self.State.MODE_NORMAL
 
 
 class ShutterContactService(SHCDeviceService):
@@ -317,7 +329,10 @@ class ShutterContactService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.CLOSED
 
     def summary(self) -> None:
         super().summary()
@@ -332,7 +347,10 @@ class BypassService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["state"])
+        try:
+            return self.State(self.state["state"])
+        except (KeyError, ValueError):
+            return self.State.UNKNOWN
 
     def summary(self) -> None:
         super().summary()
@@ -351,18 +369,25 @@ class VibrationSensorService(SHCDeviceService):
         MEDIUM = "MEDIUM"
         LOW = "LOW"
         VERY_LOW = "VERY_LOW"
+        UNKNOWN = "UNKNOWN"
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.UNKNOWN
 
     @property
     def enabled(self) -> bool:
-        return bool(self.state["enabled"])
+        return bool(self.state.get("enabled", False))
 
     @property
     def sensitivity(self) -> SensitivityState:
-        return self.SensitivityState(self.state["sensitivity"])
+        try:
+            return self.SensitivityState(self.state["sensitivity"])
+        except (KeyError, ValueError):
+            return self.SensitivityState.UNKNOWN
 
     def summary(self) -> None:
         super().summary()
@@ -393,11 +418,14 @@ class ValveTappetService(SHCDeviceService):
 
     @property
     def position(self) -> int:
-        return int(self.state["position"])
+        return int(self.state.get("position", 0))
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.UNKNOWN
 
     def summary(self) -> None:
         super().summary()
@@ -426,11 +454,11 @@ class PowerSwitchService(SHCDeviceService):
 class PowerMeterService(SHCDeviceService):
     @property
     def powerconsumption(self) -> float:
-        return float(self.state["powerConsumption"])
+        return float(self.state.get("powerConsumption", 0.0))
 
     @property
     def energyconsumption(self) -> float:
-        return float(self.state["energyConsumption"])
+        return float(self.state.get("energyConsumption", 0.0))
 
     @property
     def energyyield(self) -> float | None:
@@ -454,7 +482,10 @@ class RoutingService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.ENABLED
 
     def summary(self) -> None:
         super().summary()
@@ -502,7 +533,7 @@ class MultiLevelSwitchService(SHCDeviceService):
 class MultiLevelSensorService(SHCDeviceService):
     @property
     def illuminance(self) -> int:
-        return int(self.state["illuminance"])
+        return int(self.state.get("illuminance", 0))
 
     def summary(self) -> None:
         super().summary()
@@ -516,11 +547,11 @@ class HueColorTemperatureService(SHCDeviceService):
 
     @property
     def min_value(self) -> int:
-        return int(self.state["colorTemperatureRange"]["minCt"])
+        return int(self.state.get("colorTemperatureRange", {}).get("minCt", 0))
 
     @property
     def max_value(self) -> int:
-        return int(self.state["colorTemperatureRange"]["maxCt"])
+        return int(self.state.get("colorTemperatureRange", {}).get("maxCt", 0))
 
     def summary(self) -> None:
         super().summary()
@@ -540,11 +571,11 @@ class HSBColorActuatorService(SHCDeviceService):
 
     @property
     def min_value(self) -> int:
-        return int(self.state["colorTemperatureRange"]["minCt"])
+        return int(self.state.get("colorTemperatureRange", {}).get("minCt", 0))
 
     @property
     def max_value(self) -> int:
-        return int(self.state["colorTemperatureRange"]["maxCt"])
+        return int(self.state.get("colorTemperatureRange", {}).get("maxCt", 0))
 
     def summary(self) -> None:
         super().summary()
@@ -585,7 +616,10 @@ class AlarmService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.IDLE_OFF
 
     def summary(self) -> None:
         super().summary()
@@ -611,7 +645,10 @@ class ShutterControlService(SHCDeviceService):
         # operation_state on every update don't crash with a KeyError.
         if "operationState" not in self.state:
             return self.State.STOPPED
-        return self.State(self.state["operationState"])
+        try:
+            return self.State(self.state["operationState"])
+        except ValueError:
+            return self.State.STOPPED
 
     @property
     def calibrated(self) -> bool:
@@ -732,7 +769,10 @@ class CameraNotificationService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"] if "value" in self.state else "DISABLED")
+        try:
+            return self.State(self.state.get("value", "DISABLED"))
+        except ValueError:
+            return self.State.DISABLED
 
     def summary(self) -> None:
         super().summary()
@@ -790,13 +830,19 @@ class KeypadService(SHCDeviceService):
     def keyName(self) -> KeypadService.KeyState | None:
         if "keyName" not in self.state:
             return None
-        return self.KeyState(self.state["keyName"])
+        try:
+            return self.KeyState(self.state["keyName"])
+        except ValueError:
+            return None
 
     @property
     def eventType(self) -> KeypadService.KeyEvent | None:
         if "eventType" not in self.state:
             return None
-        return self.KeyEvent(self.state["eventType"])
+        try:
+            return self.KeyEvent(self.state["eventType"])
+        except ValueError:
+            return None
 
     @eventType.setter
     def eventType(self, value: KeyEvent) -> None:
@@ -878,7 +924,7 @@ class DetectionTestService(SHCDeviceService):
 class LatestTamperService(SHCDeviceService):
     @property
     def tamper_protection_enabled(self) -> bool:
-        return bool(self.state["tamperProtectionEnabled"])
+        return bool(self.state.get("tamperProtectionEnabled", False))
 
     @tamper_protection_enabled.setter
     def tamper_protection_enabled(self, value: bool) -> None:
@@ -901,7 +947,7 @@ class LatestTamperService(SHCDeviceService):
 
     @property
     def was_tampered(self) -> bool:
-        return bool(self.state["wasTampered"])
+        return bool(self.state.get("wasTampered", False))
 
     @property
     def last_tamper_time(self) -> str:
@@ -954,7 +1000,10 @@ class PirSensorConfigurationService(SHCDeviceService):
 
     @property
     def motionSensitivity(self) -> MotionSensitivity:
-        return self.MotionSensitivity(self.state["motionSensitivity"])
+        try:
+            return self.MotionSensitivity(self.state["motionSensitivity"])
+        except (KeyError, ValueError):
+            return self.MotionSensitivity.UNKNOWN
 
     def summary(self) -> None:
         super().summary()
@@ -988,7 +1037,7 @@ class OccupancyDetectionService(SHCDeviceService):
 class PetImmunityService(SHCDeviceService):
     @property
     def enabled(self) -> bool:
-        return bool(self.state["enabled"])
+        return bool(self.state.get("enabled", False))
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
@@ -1347,14 +1396,18 @@ class AirQualityLevelService(SHCDeviceService):
         GOOD = "GOOD"
         MEDIUM = "MEDIUM"
         BAD = "BAD"
+        UNKNOWN = "UNKNOWN"
 
     @property
     def combinedRating(self) -> RatingState:
-        return self.RatingState(self.state["combinedRating"])
+        try:
+            return self.RatingState(self.state["combinedRating"])
+        except (KeyError, ValueError):
+            return self.RatingState.UNKNOWN
 
     @property
     def description(self) -> str:
-        return str(self.state["description"])
+        return str(self.state.get("description", ""))
 
     @property
     def temperature(self) -> int:
@@ -1362,15 +1415,21 @@ class AirQualityLevelService(SHCDeviceService):
 
     @property
     def temperatureRating(self) -> RatingState:
-        return self.RatingState(self.state["temperatureRating"])
+        try:
+            return self.RatingState(self.state["temperatureRating"])
+        except (KeyError, ValueError):
+            return self.RatingState.UNKNOWN
 
     @property
     def humidity(self) -> int:
-        return int(self.state["humidity"])
+        return int(self.state.get("humidity", 0))
 
     @property
     def humidityRating(self) -> RatingState:
-        return self.RatingState(self.state["humidityRating"])
+        try:
+            return self.RatingState(self.state["humidityRating"])
+        except (KeyError, ValueError):
+            return self.RatingState.UNKNOWN
 
     @property
     def purity(self) -> int:
@@ -1378,7 +1437,10 @@ class AirQualityLevelService(SHCDeviceService):
 
     @property
     def purityRating(self) -> RatingState:
-        return self.RatingState(self.state["purityRating"])
+        try:
+            return self.RatingState(self.state["purityRating"])
+        except (KeyError, ValueError):
+            return self.RatingState.UNKNOWN
 
     @property
     def comfortZone(self) -> dict[str, Any]:
@@ -1407,7 +1469,10 @@ class SurveillanceAlarmService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.ALARM_OFF
 
     def summary(self) -> None:
         super().summary()
@@ -1436,8 +1501,11 @@ class BatteryLevelService(SHCDeviceService):
             else None
         )
         if not faults or not faults.get("entries"):
-            return self.State("OK")
-        return self.State(faults["entries"][0]["type"])
+            return self.State.OK
+        try:
+            return self.State(faults["entries"][0]["type"])
+        except (KeyError, ValueError):
+            return self.State.NOT_AVAILABLE
 
     def summary(self) -> None:
         super().summary()
@@ -1469,7 +1537,10 @@ class CommunicationQualityService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["quality"])
+        try:
+            return self.State(self.state["quality"])
+        except (KeyError, ValueError):
+            return self.State.UNKNOWN
 
     def summary(self) -> None:
         super().summary()
@@ -1483,7 +1554,10 @@ class WaterLeakageSensorService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["state"])
+        try:
+            return self.State(self.state["state"])
+        except (KeyError, ValueError):
+            return self.State.NO_LEAKAGE
 
     def summary(self) -> None:
         super().summary()
@@ -1497,11 +1571,17 @@ class WaterLeakageSensorTiltService(SHCDeviceService):
 
     @property
     def pushNotificationState(self) -> State:
-        return self.State(self.state["pushNotificationState"])
+        try:
+            return self.State(self.state["pushNotificationState"])
+        except (KeyError, ValueError):
+            return self.State.DISABLED
 
     @property
     def acousticSignalState(self) -> State:
-        return self.State(self.state["acousticSignalState"])
+        try:
+            return self.State(self.state["acousticSignalState"])
+        except (KeyError, ValueError):
+            return self.State.DISABLED
 
     def summary(self) -> None:
         super().summary()
@@ -1522,7 +1602,7 @@ class WaterLeakageSensorCheckService(SHCDeviceService):
 class PresenceSimulationConfigurationService(SHCDeviceService):
     @property
     def enabled(self) -> bool:
-        return bool(self.state["enabled"])
+        return bool(self.state.get("enabled", False))
 
     @enabled.setter
     def enabled(self, value: bool) -> None:

@@ -5,7 +5,6 @@ from enum import Enum
 from typing import Any
 
 
-
 class SHCIntrusionSystem:
     DOMAIN_STATES = {
         "armingState",
@@ -96,7 +95,7 @@ class SHCIntrusionSystem:
     def alarm_state(self) -> AlarmState:
         try:
             return self.AlarmState(self._raw_alarm_state["value"])
-        except ValueError:
+        except (KeyError, ValueError):
             return self.AlarmState.ALARM_OFF
 
     @property

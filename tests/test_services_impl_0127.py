@@ -86,24 +86,33 @@ def _make_svc_with_api(cls, state_dict):
 # ===========================================================================
 
 class TestAlarmServiceUnknownEnum:
-    def test_alarm_unknown_raises_value_error(self):
+    def test_alarm_unknown_returns_idle_off(self):
         svc = _make_svc(AlarmService, {"value": "UNKNOWN_STATE_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.value
+        assert svc.value == AlarmService.State.IDLE_OFF
+
+    def test_alarm_absent_returns_idle_off(self):
+        svc = _make_svc(AlarmService, {})
+        assert svc.value == AlarmService.State.IDLE_OFF
 
 
 class TestSilentModeServiceUnknownEnum:
-    def test_silent_mode_unknown_raises_value_error(self):
+    def test_silent_mode_unknown_returns_normal(self):
         svc = _make_svc(SilentModeService, {"mode": "UNKNOWN_MODE_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.mode
+        assert svc.mode == SilentModeService.State.MODE_NORMAL
+
+    def test_silent_mode_absent_returns_normal(self):
+        svc = _make_svc(SilentModeService, {})
+        assert svc.mode == SilentModeService.State.MODE_NORMAL
 
 
 class TestShutterContactServiceUnknownEnum:
-    def test_shutter_contact_unknown_raises_value_error(self):
+    def test_shutter_contact_unknown_returns_closed(self):
         svc = _make_svc(ShutterContactService, {"value": "UNKNOWN_STATE_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.value
+        assert svc.value == ShutterContactService.State.CLOSED
+
+    def test_shutter_contact_absent_returns_closed(self):
+        svc = _make_svc(ShutterContactService, {})
+        assert svc.value == ShutterContactService.State.CLOSED
 
 
 class TestPowerSwitchServiceUnknownEnum:
@@ -117,39 +126,50 @@ class TestPowerSwitchServiceUnknownEnum:
 
 
 class TestRoutingServiceUnknownEnum:
-    def test_routing_unknown_raises_value_error(self):
+    def test_routing_unknown_returns_enabled(self):
         svc = _make_svc(RoutingService, {"value": "UNKNOWN_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.value
+        assert svc.value == RoutingService.State.ENABLED
+
+    def test_routing_absent_returns_enabled(self):
+        svc = _make_svc(RoutingService, {})
+        assert svc.value == RoutingService.State.ENABLED
 
 
 class TestRoomClimateControlOperationModeUnknownEnum:
-    def test_rcc_operation_mode_unknown_raises_value_error(self):
+    def test_rcc_operation_mode_unknown_returns_manual(self):
         svc = _make_svc(
             RoomClimateControlService,
             {"operationMode": "UNKNOWN_XYZ", "setpointTemperature": 21.0},
         )
-        with pytest.raises(ValueError):
-            _ = svc.operation_mode
+        assert svc.operation_mode == RoomClimateControlService.OperationMode.MANUAL
+
+    def test_rcc_operation_mode_absent_returns_manual(self):
+        svc = _make_svc(RoomClimateControlService, {"setpointTemperature": 21.0})
+        assert svc.operation_mode == RoomClimateControlService.OperationMode.MANUAL
+
+    def test_rcc_setpoint_temperature_absent_returns_zero(self):
+        svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL"})
+        assert svc.setpoint_temperature == 0.0
 
 
 class TestKeypadServiceKeyNameUnknownEnum:
-    def test_keypad_key_name_unknown_raises_value_error(self):
+    def test_keypad_key_name_unknown_returns_none(self):
         svc = _make_svc(KeypadService, {"keyName": "TOTALLY_UNKNOWN_BUTTON"})
-        with pytest.raises(ValueError):
-            _ = svc.keyName
+        assert svc.keyName is None
 
-    def test_keypad_event_type_unknown_raises_value_error(self):
+    def test_keypad_event_type_unknown_returns_none(self):
         svc = _make_svc(KeypadService, {"eventType": "TOTALLY_UNKNOWN_EVENT"})
-        with pytest.raises(ValueError):
-            _ = svc.eventType
+        assert svc.eventType is None
 
 
 class TestSurveillanceAlarmServiceUnknownEnum:
-    def test_surveillance_alarm_unknown_raises_value_error(self):
+    def test_surveillance_alarm_unknown_returns_alarm_off(self):
         svc = _make_svc(SurveillanceAlarmService, {"value": "UNKNOWN_STATE_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.value
+        assert svc.value == SurveillanceAlarmService.State.ALARM_OFF
+
+    def test_surveillance_alarm_absent_returns_alarm_off(self):
+        svc = _make_svc(SurveillanceAlarmService, {})
+        assert svc.value == SurveillanceAlarmService.State.ALARM_OFF
 
 
 class TestAirQualityLevelServiceCombinedRatingUnknownEnum:
@@ -164,11 +184,15 @@ class TestAirQualityLevelServiceCombinedRatingUnknownEnum:
         "purityRating": "GOOD",
     }
 
-    def test_combined_rating_unknown_raises_value_error(self):
+    def test_combined_rating_unknown_returns_unknown(self):
         svc = _make_svc(AirQualityLevelService,
                         {**self._AQ_BASE, "combinedRating": "UNKNOWN_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.combinedRating
+        assert svc.combinedRating == AirQualityLevelService.RatingState.UNKNOWN
+
+    def test_combined_rating_absent_returns_unknown(self):
+        base = {k: v for k, v in self._AQ_BASE.items() if k != "combinedRating"}
+        svc = _make_svc(AirQualityLevelService, base)
+        assert svc.combinedRating == AirQualityLevelService.RatingState.UNKNOWN
 
 
 class TestBlindsControlServiceBlindsType:
@@ -194,26 +218,37 @@ class TestBlindsControlServiceBlindsType:
 
 
 class TestWaterLeakageSensorServiceUnknownEnum:
-    def test_water_leakage_unknown_raises_value_error(self):
+    def test_water_leakage_unknown_returns_no_leakage(self):
         svc = _make_svc(WaterLeakageSensorService, {"state": "UNKNOWN_STATE_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.value
+        assert svc.value == WaterLeakageSensorService.State.NO_LEAKAGE
+
+    def test_water_leakage_absent_returns_no_leakage(self):
+        svc = _make_svc(WaterLeakageSensorService, {})
+        assert svc.value == WaterLeakageSensorService.State.NO_LEAKAGE
 
 
 class TestWaterLeakageSensorTiltServiceUnknownEnum:
-    def test_push_notification_unknown_raises_value_error(self):
+    def test_push_notification_unknown_returns_disabled(self):
         svc = _make_svc(WaterLeakageSensorTiltService,
                         {"pushNotificationState": "UNKNOWN_XYZ",
                          "acousticSignalState": "ENABLED"})
-        with pytest.raises(ValueError):
-            _ = svc.pushNotificationState
+        assert svc.pushNotificationState == WaterLeakageSensorTiltService.State.DISABLED
 
-    def test_acoustic_signal_unknown_raises_value_error(self):
+    def test_push_notification_absent_returns_disabled(self):
+        svc = _make_svc(WaterLeakageSensorTiltService,
+                        {"acousticSignalState": "ENABLED"})
+        assert svc.pushNotificationState == WaterLeakageSensorTiltService.State.DISABLED
+
+    def test_acoustic_signal_unknown_returns_disabled(self):
         svc = _make_svc(WaterLeakageSensorTiltService,
                         {"pushNotificationState": "ENABLED",
                          "acousticSignalState": "UNKNOWN_XYZ"})
-        with pytest.raises(ValueError):
-            _ = svc.acousticSignalState
+        assert svc.acousticSignalState == WaterLeakageSensorTiltService.State.DISABLED
+
+    def test_acoustic_signal_absent_returns_disabled(self):
+        svc = _make_svc(WaterLeakageSensorTiltService,
+                        {"pushNotificationState": "ENABLED"})
+        assert svc.acousticSignalState == WaterLeakageSensorTiltService.State.DISABLED
 
 
 # ===========================================================================
