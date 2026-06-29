@@ -1,95 +1,102 @@
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
+from typing import Any, Callable
 
 from .api import SHCAPI
 
 
 class SHCDeviceService:
-    def __init__(self, api: SHCAPI, raw_device_service):
+    def __init__(self, api: SHCAPI, raw_device_service: dict[str, Any]) -> None:
         self._api = api
         self._raw_device_service = raw_device_service
-        self._raw_state = (
+        self._raw_state: dict[str, Any] = (
             self._raw_device_service["state"]
             if "state" in self._raw_device_service
             else {}
         )
-        self._last_update = None
+        self._last_update: datetime | None = None
 
-        self._callbacks = {}
-        self._event_callbacks = {}
+        self._callbacks: dict[Any, Callable[[], None]] = {}
+        self._event_callbacks: dict[str, Callable[[], None]] = {}
         # Baseline event timestamp (Keypad eventTimestamp / LatestMotion
         # latestMotionDetected), seeded from the construction snapshot so the
         # first post-subscribe poll of that same last event is suppressed
         # (prevents replaying the last button press on every HA restart). A
         # genuine new event (newer timestamp) still fires — see _process_events.
-        self._last_event_timestamp = self._raw_state.get(
+        self._last_event_timestamp: Any = self._raw_state.get(
             "eventTimestamp"
         ) or self._raw_state.get("latestMotionDetected")
 
     @property
-    def id(self):
-        return self._raw_device_service["id"]
+    def id(self) -> str:
+        return str(self._raw_device_service["id"])
 
     @property
-    def device_id(self):
-        return self._raw_device_service["deviceId"]
+    def device_id(self) -> str:
+        return str(self._raw_device_service["deviceId"])
 
     @property
-    def state(self):
+    def state(self) -> dict[str, Any]:
         return self._raw_state
 
     @property
-    def path(self):
-        return self._raw_device_service["path"]
+    def path(self) -> str:
+        return str(self._raw_device_service["path"])
 
-    def subscribe_callback(self, entity, callback):
+    def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
         self._callbacks[entity] = callback
 
-    def unsubscribe_callback(self, entity):
+    def unsubscribe_callback(self, entity: Any) -> None:
         self._callbacks.pop(entity, None)
 
-    def register_event(self, event, callback):
+    def register_event(self, event: str, callback: Callable[[], None]) -> None:
         self._event_callbacks[event] = callback
 
-    def summary(self):
+    def summary(self) -> None:
         print(f"  Device Service: {self.id}")
         print(f"    State: {self.state}")
         print(f"    Path:  {self.path}")
 
-    def put_state(self, key_value_pairs):
+    def put_state(self, key_value_pairs: dict[str, Any]) -> None:
         self._api.put_device_service_state(
             self.device_id.replace("#", "%23"),
             self.id,
             {"@type": self.state.get("@type", ""), **key_value_pairs},
         )
 
-    def put_state_element(self, key, value):
+    def put_state_element(self, key: str, value: Any) -> None:
         self.put_state({key: value})
 
-    async def async_put_state(self, key_value_pairs):
+    async def async_put_state(self, key_value_pairs: dict[str, Any]) -> None:
         """Async counterpart to put_state — awaits the async API."""
-        await self._api.put_device_service_state(
+        await self._api.put_device_service_state(  # type: ignore[misc, func-returns-value]
             self.device_id.replace("#", "%23"),
             self.id,
             {"@type": self.state.get("@type", ""), **key_value_pairs},
         )
 
-    async def async_put_state_element(self, key, value):
+    async def async_put_state_element(self, key: str, value: Any) -> None:
         """Async counterpart to put_state_element — awaits the async API."""
         await self.async_put_state({key: value})
 
-    def post_operation(self, operation, data=None):
+    def post_operation(
+        self, operation: str, data: dict[str, Any] | None = None
+    ) -> Any:
         """POST a service operation (e.g. triggerTestAlarm) — sync."""
         return self._api.post_device_service_operation(
             self.device_id.replace("#", "%23"), self.id, operation, data
         )
 
-    async def async_post_operation(self, operation, data=None):
+    async def async_post_operation(
+        self, operation: str, data: dict[str, Any] | None = None
+    ) -> Any:
         """Async counterpart to post_operation — awaits the async API."""
         return await self._api.post_device_service_operation(
             self.device_id.replace("#", "%23"), self.id, operation, data
         )
 
-    def short_poll(self, fire_callbacks=False):
+    def short_poll(self, fire_callbacks: bool = False) -> None:
         now = datetime.now(timezone.utc)  # [S2] single clock read
         if self._last_update is None or (now - self._last_update) > timedelta(
             seconds=1
@@ -121,7 +128,7 @@ class SHCDeviceService:
                 for fn in list(self._callbacks.values()):  # [S4]
                     fn()
 
-    async def async_short_poll(self, fire_callbacks=False):
+    async def async_short_poll(self, fire_callbacks: bool = False) -> None:
         """Async counterpart to short_poll for the aiohttp (SHCAPIAsync) path.
 
         The sync short_poll calls a blocking GET; under the async session the
@@ -146,7 +153,7 @@ class SHCDeviceService:
                 for fn in list(self._callbacks.values()):  # [S4]
                     fn()
 
-    def process_long_polling_poll_result(self, raw_result):
+    def process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
         # Defensive: skip malformed/mismatched results rather than assert
         # (asserts vanish under -O and an AssertionError would kill the poll
         # thread for this service permanently on a firmware schema change).
@@ -166,7 +173,7 @@ class SHCDeviceService:
 
             self._process_events(raw_result)
 
-    def _is_replayed_event(self, timestamp):
+    def _is_replayed_event(self, timestamp: Any) -> bool:
         """True if this event must be suppressed (replay on (re)subscribe).
 
         The SHC's first long-poll snapshot after a subscribe carries the
@@ -185,7 +192,7 @@ class SHCDeviceService:
         self._last_event_timestamp = timestamp
         return False
 
-    def _process_events(self, raw_result):
+    def _process_events(self, raw_result: dict[str, Any]) -> None:
         if raw_result["id"] == "Keypad":
             state = raw_result.get("state", {})
             if self._is_replayed_event(state.get("eventTimestamp")):

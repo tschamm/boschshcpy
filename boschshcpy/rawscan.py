@@ -10,7 +10,7 @@ logger = logging.getLogger("boschshcpy")
 # Main Program
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser()

@@ -7,8 +7,10 @@ import time
 import typing
 from collections import defaultdict
 from collections.abc import Callable
+from typing import Any, cast
 
-from .api import SHCAPI, JSONRPCError
+from .api import SHCAPI
+from .api import JSONRPCError as JSONRPCError  # noqa: F401 -- explicit re-export
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem
@@ -28,14 +30,14 @@ class SHCSession:
     def __init__(
         self,
         controller_ip: str,
-        certificate,
-        key,
-        lazy=False,
-        zeroconf=None,
+        certificate: str,
+        key: str,
+        lazy: bool = False,
+        zeroconf: Any = None,
         long_poll_timeout: int = 10,
         verify_hostname: bool = False,
         ssl_verify: bool = True,
-    ):
+    ) -> None:
         # API
         self._long_poll_timeout = long_poll_timeout
         self._api = SHCAPI(
@@ -48,36 +50,36 @@ class SHCSession:
         self._device_helper = SHCDeviceHelper(self._api)
 
         # Subscription status
-        self._poll_id = None
+        self._poll_id: str | None = None
 
         # SHC Information
-        self._shc_information = None
-        self._zeroconf = zeroconf
+        self._shc_information: SHCInformation | None = None
+        self._zeroconf: Any = zeroconf
 
         # All devices
-        self._rooms_by_id = {}
-        self._scenarios_by_id = {}
-        self._devices_by_id = {}
-        self._services_by_device_id = defaultdict(list)
-        self._domains_by_id = {}
-        self._messages_by_id = {}
-        self._userdefinedstates_by_id = {}
-        self._subscribers = []
+        self._rooms_by_id: dict[str, SHCRoom] = {}
+        self._scenarios_by_id: dict[str, SHCScenario] = {}
+        self._devices_by_id: dict[str, SHCDevice] = {}
+        self._services_by_device_id: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self._domains_by_id: dict[str, Any] = {}
+        self._messages_by_id: dict[str, SHCMessage] = {}
+        self._userdefinedstates_by_id: dict[str, SHCUserDefinedState] = {}
+        self._subscribers: list[Any] = []
         self._emma: SHCEmma = SHCEmma(self._api)
 
         if not lazy:
             self._enumerate_all()
 
-        self._polling_thread = None
-        self._stop_polling_thread = False
+        self._polling_thread: threading.Thread | None = None
+        self._stop_polling_thread: bool = False
 
         # Stop polling function
-        self.reset_connection_listener = None
+        self.reset_connection_listener: Callable[[], None] | None = None
 
-        self._scenario_callbacks = {}
-        self._userdefinedstate_callbacks = defaultdict(list)
+        self._scenario_callbacks: dict[str, Callable[..., Any]] = {}
+        self._userdefinedstate_callbacks: dict[str, list[Callable[[], None]]] = defaultdict(list)
 
-    def _enumerate_all(self):
+    def _enumerate_all(self) -> None:
         self.authenticate()
         self._enumerate_services()
         self._enumerate_devices()
@@ -88,7 +90,7 @@ class SHCSession:
         self._initialize_domains()
         self._initialize_emma()
 
-    def _add_device(self, raw_device, update_services=False) -> SHCDevice:
+    def _add_device(self, raw_device: dict[str, Any], update_services: bool = False) -> SHCDevice | None:
         device_id = raw_device["id"]
 
         if update_services:
@@ -112,11 +114,11 @@ class SHCSession:
         self._devices_by_id[device_id] = device
         return device
 
-    def _update_device(self, raw_device):
-        device_id = raw_device["id"]
+    def _update_device(self, raw_device: dict[str, Any]) -> None:
+        device_id = str(raw_device["id"])
         self._devices_by_id[device_id].update_raw_information(raw_device)
 
-    def _enumerate_services(self):
+    def _enumerate_services(self) -> None:
         raw_services = self._api.get_services()
         for service in raw_services:
             if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
@@ -124,53 +126,54 @@ class SHCSession:
             device_id = service["deviceId"]
             self._services_by_device_id[device_id].append(service)
 
-    def _enumerate_devices(self):
+    def _enumerate_devices(self) -> None:
         raw_devices = self._api.get_devices()
 
         for raw_device in raw_devices:
             self._add_device(raw_device)
 
-    def _enumerate_rooms(self):
+    def _enumerate_rooms(self) -> None:
         raw_rooms = self._api.get_rooms()
         for raw_room in raw_rooms:
             room_id = raw_room["id"]
             room = SHCRoom(api=self._api, raw_room=raw_room)
             self._rooms_by_id[room_id] = room
 
-    def _enumerate_scenarios(self):
+    def _enumerate_scenarios(self) -> None:
         raw_scenarios = self._api.get_scenarios()
         for raw_scenario in raw_scenarios:
             scenario_id = raw_scenario["id"]
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
 
-    def _enumerate_messages(self):
+    def _enumerate_messages(self) -> None:
         raw_messages = self._api.get_messages()
         for raw_message in raw_messages:
             message_id = raw_message["id"]
             message = SHCMessage(api=self._api, raw_message=raw_message)
             self._messages_by_id[message_id] = message
 
-    def _enumerate_userdefinedstates(self):
+    def _enumerate_userdefinedstates(self) -> None:
         raw_states = self._api.get_userdefinedstates()
         for raw_state in raw_states:
             userdefinedstate_id = raw_state["id"]
             userdefinedstate = SHCUserDefinedState(
-                api=self._api, info=self.information, raw_state=raw_state
+                api=self._api, info=cast(SHCInformation, self.information), raw_state=raw_state
             )
             self._userdefinedstates_by_id[userdefinedstate_id] = userdefinedstate
 
-    def _initialize_domains(self):
+    def _initialize_domains(self) -> None:
+        assert self._shc_information is not None
         self._domains_by_id["IDS"] = SHCIntrusionSystem(
             self._api,
             self._api.get_domain_intrusion_detection(),
-            self.information.macAddress,
+            self._shc_information.macAddress,
         )
 
-    def _initialize_emma(self):
+    def _initialize_emma(self) -> None:
         self._emma = SHCEmma(self._api, self._shc_information, None)
 
-    def _long_poll(self, wait_seconds=None):
+    def _long_poll(self, wait_seconds: int | None = None) -> bool:
         if wait_seconds is None:
             wait_seconds = self._long_poll_timeout
         resubscribed = False
@@ -220,13 +223,13 @@ class SHCSession:
             else:
                 raise json_rpc_error
 
-    def _maybe_unsubscribe(self):
+    def _maybe_unsubscribe(self) -> None:
         if self._poll_id is not None:
             self.api.long_polling_unsubscribe(self._poll_id)
             logger.debug(f"Unsubscribed from long poll w/ poll id {self._poll_id}")
             self._poll_id = None
 
-    def _process_long_polling_poll_result(self, raw_result):
+    def _process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
         logger.debug(f"Long poll: {raw_result}")
         if raw_result["@type"] == "DeviceServiceData":
             device_id = raw_result["deviceId"]
@@ -275,10 +278,11 @@ class SHCSession:
                     self._devices_by_id.pop(device_id, None)
             else:  # New device registered
                 logger.debug("Found new device with id %s", device_id)
-                device = self._add_device(raw_result, update_services=True)
-                for instance, callback in list(self._subscribers):
-                    if isinstance(device, instance):
-                        callback(device)
+                new_device = self._add_device(raw_result, update_services=True)
+                if new_device is not None:
+                    for instance, callback in list(self._subscribers):
+                        if isinstance(new_device, instance):
+                            callback(new_device)
             return
         if raw_result["@type"] in SHCIntrusionSystem.DOMAIN_STATES:
             if self.intrusion_system is not None:
@@ -292,7 +296,7 @@ class SHCSession:
                 )
             else:
                 userdefinedstate = SHCUserDefinedState(
-                    api=self._api, info=self.information, raw_state=raw_result
+                    api=self._api, info=cast(SHCInformation, self.information), raw_state=raw_result
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
                 for instance, callback in list(self._subscribers):
@@ -308,10 +312,10 @@ class SHCSession:
                 self._emma.update_emma_data(raw_result)
         return
 
-    def start_polling(self):
+    def start_polling(self) -> None:
         if self._polling_thread is None:
 
-            def polling_thread_main():
+            def polling_thread_main() -> None:
                 while not self._stop_polling_thread:
                     try:
                         if not self._long_poll():
@@ -343,7 +347,7 @@ class SHCSession:
         else:
             raise SHCSessionError("Already polling!")
 
-    def stop_polling(self):
+    def stop_polling(self) -> None:
         if self._polling_thread is not None:
             logger.debug("Unsubscribing from long poll")
             self._stop_polling_thread = True
@@ -365,35 +369,35 @@ class SHCSession:
         else:
             raise SHCSessionError("Not polling!")
 
-    def subscribe(self, callback_tuple) -> Callable:
+    def subscribe(self, callback_tuple: Any) -> None:
         self._subscribers.append(callback_tuple)
 
-    def subscribe_scenario_callback(self, scenario_id, callback) -> Callable:
+    def subscribe_scenario_callback(self, scenario_id: str, callback: Callable[..., Any]) -> None:
         self._scenario_callbacks[scenario_id] = callback
 
-    def unsubscribe_scenario_callback(self, scenario_id) -> Callable:
+    def unsubscribe_scenario_callback(self, scenario_id: str) -> None:
         self._scenario_callbacks.pop(scenario_id, None)
 
     def subscribe_userdefinedstate_callback(
-        self, userdefinedstate_id, callback
-    ) -> Callable:
+        self, userdefinedstate_id: str, callback: Callable[[], None]
+    ) -> None:
         self._userdefinedstate_callbacks[userdefinedstate_id].append(callback)
 
-    def unsubscribe_userdefinedstate_callbacks(self, userdefinedstate_id) -> Callable:
+    def unsubscribe_userdefinedstate_callbacks(self, userdefinedstate_id: str) -> None:
         self._userdefinedstate_callbacks.pop(userdefinedstate_id, None)
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
         return list(self._devices_by_id.values())
 
-    def device(self, device_id) -> SHCDevice:
+    def device(self, device_id: str) -> SHCDevice:
         return self._devices_by_id[device_id]
 
     @property
     def rooms(self) -> typing.Sequence[SHCRoom]:
         return list(self._rooms_by_id.values())
 
-    def room(self, room_id) -> SHCRoom:
+    def room(self, room_id: str | None) -> SHCRoom:
         if room_id is not None:
             return self._rooms_by_id[room_id]
 
@@ -410,7 +414,7 @@ class SHCSession:
             scenario_names.append(scenario.name)
         return scenario_names
 
-    def scenario(self, scenario_id) -> SHCScenario:
+    def scenario(self, scenario_id: str) -> SHCScenario:
         return self._scenarios_by_id[scenario_id]
 
     @property
@@ -425,10 +429,10 @@ class SHCSession:
     def userdefinedstates(self) -> typing.Sequence[SHCUserDefinedState]:
         return list(self._userdefinedstates_by_id.values())
 
-    def userdefinedstate(self, userdefinedstate_id) -> SHCUserDefinedState:
+    def userdefinedstate(self, userdefinedstate_id: str) -> SHCUserDefinedState:
         return self._userdefinedstates_by_id[userdefinedstate_id]
 
-    def authenticate(self):
+    def authenticate(self) -> None:
         self._shc_information = SHCInformation(api=self._api, zeroconf=self._zeroconf)
 
     def mdns_info(self) -> SHCInformation:
@@ -437,15 +441,15 @@ class SHCSession:
         )
 
     @property
-    def information(self) -> SHCInformation:
+    def information(self) -> SHCInformation | None:
         return self._shc_information
 
     @property
     def intrusion_system(self) -> SHCIntrusionSystem:
-        return self._domains_by_id["IDS"]
+        return cast(SHCIntrusionSystem, self._domains_by_id["IDS"])
 
     @property
-    def api(self):
+    def api(self) -> SHCAPI:
         return self._api
 
     @property
@@ -453,7 +457,7 @@ class SHCSession:
         return self._device_helper
 
     @property
-    def rawscan_commands(self):
+    def rawscan_commands(self) -> list[str]:
         return [
             "devices",
             "device",
@@ -469,7 +473,7 @@ class SHCSession:
             "intrusion_detection",
         ]
 
-    def rawscan(self, **kwargs):
+    def rawscan(self, **kwargs: Any) -> Any:
         match kwargs["command"].lower():
             case "devices":
                 return self._api.get_devices()

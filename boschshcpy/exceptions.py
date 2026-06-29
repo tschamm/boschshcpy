@@ -1,35 +1,35 @@
 class JSONRPCError(Exception):
     """Error to indicate a JSON RPC problem."""
 
-    def __init__(self, code, message):
+    def __init__(self, code: int, message: str) -> None:
         super().__init__()
         self._code = code
         self._message = message
 
     @property
-    def code(self):
+    def code(self) -> int:
         return self._code
 
     @property
-    def message(self):
+    def message(self) -> str:
         return self._message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"JSONRPCError (code: {self.code}, message: {self.message})"
 
 
 class SHCException(Exception):
     """Generic SHC exception."""
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         super().__init__()
         self._message = message
 
     @property
-    def message(self):
+    def message(self) -> str:
         return self._message
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"SHC Error (message: {self.message})"
 
 

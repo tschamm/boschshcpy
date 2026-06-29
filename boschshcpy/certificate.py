@@ -9,7 +9,7 @@ from typing import NamedTuple
 from .exceptions import SHCCertificateError
 
 try:
-    from cryptography import x509  # type: ignore
+    from cryptography import x509
 except Exception as exc:  # pragma: no cover - cryptography should exist in HA
     raise SHCCertificateError("cryptography library not available") from exc
 

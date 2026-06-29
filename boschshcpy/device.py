@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 import typing
+from typing import Any, Callable
 
+from .api import SHCAPI
 from .device_service import SHCDeviceService
 from .exceptions import SHCException
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS, build
@@ -11,19 +13,24 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCDevice:
-    def __init__(self, api, raw_device, raw_device_services):
+    def __init__(
+        self,
+        api: SHCAPI,
+        raw_device: dict[str, Any],
+        raw_device_services: list[dict[str, Any]],
+    ) -> None:
         self._api = api
         self._raw_device = raw_device
 
-        self._callbacks = {}
-        self._device_services_by_id = {}
+        self._callbacks: dict[Any, Callable[[], None]] = {}
+        self._device_services_by_id: dict[str, SHCDeviceService] = {}
         if not raw_device_services:
             raw_device_services = self._enumerate_services()
 
         self._init_services(raw_device_services)
 
-    def _enumerate_services(self):
-        raw_device_services = []
+    def _enumerate_services(self) -> list[dict[str, Any]]:
+        raw_device_services: list[dict[str, Any]] = []
         for device_service_id in self._raw_device["deviceServiceIds"]:
             if device_service_id not in SUPPORTED_DEVICE_SERVICE_IDS:
                 continue
@@ -34,53 +41,53 @@ class SHCDevice:
             raw_device_services.append(raw_device_service_data)
         return raw_device_services
 
-    def _init_services(self, raw_device_services):
+    def _init_services(self, raw_device_services: list[dict[str, Any]]) -> None:
         for raw_device_service_data in raw_device_services:
             device_service = build(self._api, raw_device_service_data)
             self._device_services_by_id[raw_device_service_data["id"]] = device_service
 
     @property
-    def root_device_id(self):
-        return self._raw_device["rootDeviceId"]
+    def root_device_id(self) -> str:
+        return str(self._raw_device["rootDeviceId"])
 
     @property
-    def id(self):
-        return self._raw_device["id"]
+    def id(self) -> str:
+        return str(self._raw_device["id"])
 
     @property
-    def manufacturer(self):
-        return self._raw_device["manufacturer"]
+    def manufacturer(self) -> str:
+        return str(self._raw_device["manufacturer"])
 
     @property
-    def room_id(self):
-        return self._raw_device["roomId"] if "roomId" in self._raw_device else None
+    def room_id(self) -> str | None:
+        return str(self._raw_device["roomId"]) if "roomId" in self._raw_device else None
 
     @property
-    def device_model(self):
-        return self._raw_device["deviceModel"]
+    def device_model(self) -> str:
+        return str(self._raw_device["deviceModel"])
 
     @property
-    def serial(self):
-        return self._raw_device["serial"] if "serial" in self._raw_device else None
+    def serial(self) -> str | None:
+        return str(self._raw_device["serial"]) if "serial" in self._raw_device else None
 
     @property
-    def profile(self):
-        return self._raw_device["profile"] if "profile" in self._raw_device else None
+    def profile(self) -> str | None:
+        return str(self._raw_device["profile"]) if "profile" in self._raw_device else None
 
     @property
-    def supported_profiles(self):
-        return self._raw_device.get("supportedProfiles", [])
+    def supported_profiles(self) -> list[Any]:
+        return list(self._raw_device.get("supportedProfiles", []))
 
     @property
-    def name(self):
-        return self._raw_device["name"]
+    def name(self) -> str:
+        return str(self._raw_device["name"])
 
     @property
-    def status(self):
-        return self._raw_device["status"]
+    def status(self) -> str:
+        return str(self._raw_device["status"])
 
     @property
-    def deleted(self):
+    def deleted(self) -> bool:
         return (
             True
             if "deleted" in self._raw_device and self._raw_device["deleted"] is True
@@ -88,23 +95,23 @@ class SHCDevice:
         )
 
     @property
-    def child_device_ids(self):
+    def child_device_ids(self) -> list[str] | None:
         return (
-            self._raw_device["childDeviceIds"]
+            list(self._raw_device["childDeviceIds"])
             if "childDeviceIds" in self._raw_device
             else None
         )
 
     @property
-    def parent_device_id(self):
+    def parent_device_id(self) -> str | None:
         return (
-            self._raw_device["parentDeviceId"]
+            str(self._raw_device["parentDeviceId"])
             if "parentDeviceId" in self._raw_device
             else None
         )
 
     @property
-    def software_update(self):
+    def software_update(self) -> SHCDeviceService | None:
         """The per-device SoftwareUpdate service, or None if not exposed.
 
         Spec-grounded (APK 10.33). Most devices do not carry this service, so
@@ -125,13 +132,13 @@ class SHCDevice:
     def device_service_ids(self) -> typing.Set[str]:
         return set(self._device_services_by_id.keys())
 
-    def subscribe_callback(self, entity, callback):
+    def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
         self._callbacks[entity] = callback
 
-    def unsubscribe_callback(self, entity):
+    def unsubscribe_callback(self, entity: Any) -> None:
         self._callbacks.pop(entity, None)
 
-    def update_raw_information(self, raw_device):
+    def update_raw_information(self, raw_device: dict[str, Any]) -> None:
         if self._raw_device["id"] != raw_device["id"]:
             raise SHCException("Error due to mismatching device ids!")
         self._raw_device = raw_device
@@ -139,18 +146,18 @@ class SHCDevice:
         for fn in list(self._callbacks.values()):
             fn()
 
-    def device_service(self, device_service_id):
+    def device_service(self, device_service_id: str) -> SHCDeviceService | None:
         return (
             self._device_services_by_id[device_service_id]
             if device_service_id in self._device_services_by_id
             else None
         )
 
-    def update(self, fire_callbacks=False):
+    def update(self, fire_callbacks: bool = False) -> None:
         for service in self.device_services:
             service.short_poll(fire_callbacks=fire_callbacks)
 
-    async def async_update(self, fire_callbacks=False):
+    async def async_update(self, fire_callbacks: bool = False) -> None:
         """Async counterpart to update() for the SHCAPIAsync path.
 
         HA should_poll entities (e.g. camera switches) call this for an
@@ -160,7 +167,7 @@ class SHCDevice:
         for service in self.device_services:
             await service.async_short_poll(fire_callbacks=fire_callbacks)
 
-    def summary(self):
+    def summary(self) -> None:
         print(f"Device: {self.id}")
         print(f"  Name          : {self.name}")
         print(f"  Manufacturer  : {self.manufacturer}")
@@ -175,7 +182,7 @@ class SHCDevice:
         for device_service in self.device_services:
             device_service.summary()
 
-    def process_long_polling_poll_result(self, raw_result):
+    def process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
         if raw_result.get("@type") != "DeviceServiceData":
             return
         device_service_id = raw_result["id"]

@@ -264,11 +264,11 @@ def test_message_arguments():
 
 
 def test_message_message_code_is_dict():
-    """message_code property returns the raw dict (not a MessageCode object)."""
+    """message_code property returns a MessageCode object with .name/.category."""
     msg = _make_message()
     mc = msg.message_code
-    assert mc["name"] == "SMOKE_ALARM"
-    assert mc["category"] == "ALARM"
+    assert mc.name == "SMOKE_ALARM"
+    assert mc.category == "ALARM"
 
 
 def test_message_code_class_name():

@@ -8,7 +8,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="boschshcpy",
-    version="0.3.21",
+    version="0.3.22",
     url="https://github.com/tschamm/boschshcpy",
     author="Clemens-Alexander Brust, Thomas Schamm",
     author_email="cabrust@pm.me, thomas@tschamm.de",
@@ -24,7 +24,7 @@ setup(
             "boschshc_registerclient=boschshcpy.register_client:main",
         ],
     },
-    package_data={"": ["tls_ca_chain.pem"]},
+    package_data={"": ["tls_ca_chain.pem"], "boschshcpy": ["py.typed"]},
     classifiers=[
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",

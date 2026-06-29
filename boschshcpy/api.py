@@ -1,18 +1,24 @@
+from __future__ import annotations
+
 import importlib.resources
 import json
 import logging
+from typing import Any, NoReturn, cast
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.poolmanager import PoolManager
 
-from .exceptions import SHCConnectionError, SHCSessionError, JSONRPCError  # noqa: F401
+from .exceptions import SHCConnectionError, SHCSessionError
+from .exceptions import JSONRPCError as JSONRPCError  # noqa: F401 -- explicit re-export
 
 logger = logging.getLogger("boschshcpy")
 
 
-class HostNameIgnoringAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
+class HostNameIgnoringAdapter(HTTPAdapter):  # type: ignore[misc]
+    def init_poolmanager(
+        self, connections: int, maxsize: int, block: bool = False, **connection_pool_kw: Any
+    ) -> None:
         self.poolmanager = PoolManager(
             num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
         )
@@ -22,11 +28,11 @@ class SHCAPI:
     def __init__(
         self,
         controller_ip: str,
-        certificate,
-        key,
+        certificate: str,
+        key: str,
         verify_hostname: bool = False,
         ssl_verify: bool = True,
-    ):
+    ) -> None:
         self._certificate = certificate
         self._key = key
         self._controller_ip = controller_ip
@@ -70,10 +76,10 @@ class SHCAPI:
             urllib3.disable_warnings(InsecureRequestWarning)
 
     @property
-    def controller_ip(self):
+    def controller_ip(self) -> str:
         return self._controller_ip
 
-    def _session_request(self, method, api_url, **kwargs):
+    def _session_request(self, method: str, api_url: str, **kwargs: Any) -> requests.Response:
         """Issue a request, retrying once on a bare connection drop.
 
         #281: the SHC silently closes idle keep-alive connections. The next
@@ -88,7 +94,7 @@ class SHCAPI:
         # observe the same call surface as before this retry wrapper existed.
         verb = getattr(self._requests_session, method.lower())
         try:
-            return verb(api_url, **kwargs)
+            return cast(requests.Response, verb(api_url, **kwargs))
         except requests.exceptions.ConnectionError as err:
             logger.debug(
                 "%s %s dropped (%s); retrying once on a fresh connection",
@@ -96,16 +102,16 @@ class SHCAPI:
                 api_url,
                 err,
             )
-            return verb(api_url, **kwargs)
+            return cast(requests.Response, verb(api_url, **kwargs))
 
     def _get_api_result_or_fail(
         self,
-        api_url,
-        expected_type=None,
-        expected_element_type=None,
-        headers=None,
-        timeout=30,
-    ):
+        api_url: str,
+        expected_type: str | None = None,
+        expected_element_type: str | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: int = 30,
+    ) -> Any:
         try:
             result = self._session_request(
                 "GET", api_url, headers=headers, timeout=timeout
@@ -139,7 +145,7 @@ class SHCAPI:
         except requests.exceptions.SSLError as e:
             raise SHCConnectionError(f"API call returned SSLError: {e}.") from e
 
-    def _put_api_or_fail(self, api_url, body, timeout=30):
+    def _put_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
         result = self._session_request(
             "PUT", api_url, data=json.dumps(body), timeout=timeout
         )
@@ -150,7 +156,7 @@ class SHCAPI:
         else:
             return {}
 
-    def _post_api_or_fail(self, api_url, body, timeout=30):
+    def _post_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
         result = self._session_request(
             "POST", api_url, data=json.dumps(body), timeout=timeout
         )
@@ -161,7 +167,7 @@ class SHCAPI:
         else:
             return {}
 
-    def _process_nok_result(self, result):
+    def _process_nok_result(self, result: requests.Response) -> NoReturn:
         safe_headers = {
             k: v
             for k, v in result.request.headers.items()
@@ -175,7 +181,7 @@ class SHCAPI:
         )
 
     # API calls here
-    def get_information(self):
+    def get_information(self) -> Any:
         api_url = f"{self._api_root}/information"
         try:
             result = self._get_api_result_or_fail(api_url)
@@ -184,7 +190,7 @@ class SHCAPI:
             return None
         return result
 
-    def get_public_information(self):
+    def get_public_information(self) -> Any:
         api_url = f"{self._public_root}/information"
         try:
             result = self._get_api_result_or_fail(api_url, headers={})
@@ -193,76 +199,76 @@ class SHCAPI:
             return None
         return result
 
-    def get_rooms(self):
+    def get_rooms(self) -> Any:
         api_url = f"{self._api_root}/rooms"
         return self._get_api_result_or_fail(api_url, expected_element_type="room")
 
-    def get_scenarios(self):
+    def get_scenarios(self) -> Any:
         api_url = f"{self._api_root}/scenarios"
         return self._get_api_result_or_fail(api_url, expected_element_type="scenario")
 
-    def get_userdefinedstates(self):
+    def get_userdefinedstates(self) -> Any:
         api_url = f"{self._api_root}/userdefinedstates"
         return self._get_api_result_or_fail(
             api_url, expected_element_type="userDefinedState"
         )
 
-    def get_messages(self):
+    def get_messages(self) -> Any:
         api_url = f"{self._api_root}/messages"
         return self._get_api_result_or_fail(api_url, expected_element_type="message")
 
-    def get_devices(self):
+    def get_devices(self) -> Any:
         api_url = f"{self._api_root}/devices"
         return self._get_api_result_or_fail(api_url, expected_element_type="device")
 
-    def get_device(self, device_id):
+    def get_device(self, device_id: str) -> Any:
         api_url = f"{self._api_root}/devices/{device_id}"
         return self._get_api_result_or_fail(api_url, expected_type="device")
 
-    def get_services(self):
+    def get_services(self) -> Any:
         api_url = f"{self._api_root}/services"
         return self._get_api_result_or_fail(
             api_url, expected_element_type="DeviceServiceData"
         )
 
-    def get_device_services(self, device_id):
+    def get_device_services(self, device_id: str) -> Any:
         api_url = f"{self._api_root}/devices/{device_id}/services"
         return self._get_api_result_or_fail(api_url)
 
-    def get_device_service(self, device_id, service_id):
+    def get_device_service(self, device_id: str, service_id: str) -> Any:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}"
         return self._get_api_result_or_fail(api_url, expected_type="DeviceServiceData")
 
-    def put_device_service_state(self, device_id, service_id, state_update):
+    def put_device_service_state(self, device_id: str, service_id: str, state_update: Any) -> None:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         self._put_api_or_fail(api_url, state_update)
 
     def post_device_service_operation(
-        self, device_id, service_id, operation, data=None
-    ):
+        self, device_id: str, service_id: str, operation: str, data: Any = None
+    ) -> Any:
         api_url = (
             f"{self._api_root}/devices/{device_id}/services/{service_id}"
             f"/operation/{operation}"
         )
         return self._post_api_or_fail(api_url, body=data)
 
-    def get_domain_intrusion_detection(self):
+    def get_domain_intrusion_detection(self) -> Any:
         api_url = f"{self._api_root}/intrusion/states/system"
         return self._get_api_result_or_fail(api_url, expected_type="systemState")
 
-    def post_domain_action(self, path, data=None):
+    def post_domain_action(self, path: str, data: Any = None) -> None:
         api_url = f"{self._api_root}/{path}"
         self._post_api_or_fail(api_url, body=data)
 
     @staticmethod
-    def _check_jsonrpc_version(result, method):
+    def _check_jsonrpc_version(result: Any, method: str) -> None:
         if result[0].get("jsonrpc") != "2.0":
             raise SHCSessionError(
                 f"Unexpected JSON-RPC version in {method} response: "
                 f"{result[0].get('jsonrpc')!r}"
             )
 
-    def long_polling_subscribe(self):
+    def long_polling_subscribe(self) -> Any:
         data = [
             {
                 "jsonrpc": "2.0",
@@ -279,7 +285,7 @@ class SHCAPI:
         else:
             return result[0]["result"]
 
-    def long_polling_poll(self, poll_id, wait_seconds=30):
+    def long_polling_poll(self, poll_id: str, wait_seconds: int = 30) -> Any:
         data = [
             {
                 "jsonrpc": "2.0",
@@ -296,7 +302,7 @@ class SHCAPI:
         else:
             return result[0]["result"]
 
-    def long_polling_unsubscribe(self, poll_id):
+    def long_polling_unsubscribe(self, poll_id: str) -> Any:
         data = [{"jsonrpc": "2.0", "method": "RE/unsubscribe", "params": [poll_id]}]
         result = self._post_api_or_fail(self._rpc_root, data)
         self._check_jsonrpc_version(result, "RE/unsubscribe")

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -7,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
 
-def generate_certificate(client_id, orgname) -> x509.Certificate:
+def generate_certificate(client_id: str, orgname: str) -> tuple[bytes, bytes]:
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
     name = x509.Name(

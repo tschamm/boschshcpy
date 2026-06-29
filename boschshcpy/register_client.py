@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import base64
 import json
 import logging
 import os.path
 import sys
+from typing import Any
 
 import requests
 from importlib.resources import files
 from requests.adapters import HTTPAdapter
+from requests import Response
 from urllib3.poolmanager import PoolManager
 from urllib3.exceptions import InsecureRequestWarning
 
@@ -16,8 +20,14 @@ from .generate_cert import generate_certificate
 logger = logging.getLogger("boschshcpy")
 
 
-class HostNameIgnoringAdapter(HTTPAdapter):
-    def init_poolmanager(self, connections, maxsize, block=False):
+class HostNameIgnoringAdapter(HTTPAdapter):  # type: ignore[misc]
+    def init_poolmanager(
+        self,
+        connections: int,
+        maxsize: int,
+        block: bool = False,
+        **connection_pool_kw: Any,
+    ) -> None:
         self.poolmanager = PoolManager(
             num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
         )
@@ -26,7 +36,7 @@ class HostNameIgnoringAdapter(HTTPAdapter):
 class SHCRegisterClient:
     """Press and hold the button at the front of the SHC until the lights are flashing before you POST the command. When the SHC is not in pairing mode, there will be a connection error."""
 
-    def __init__(self, controller_ip: str, password: str):
+    def __init__(self, controller_ip: str, password: str) -> None:
         """Initializes with IP address and access credentials."""
         self._controller_ip = controller_ip
         self._url = f"https://{self._controller_ip}:8443/smarthome/clients"
@@ -47,7 +57,7 @@ class SHCRegisterClient:
 
         urllib3.disable_warnings(InsecureRequestWarning)
 
-    def _post_api_or_fail(self, body, timeout=30):
+    def _post_api_or_fail(self, body: Any, timeout: int = 30) -> dict[str, Any]:
         try:
             result = self._requests_session.post(
                 self._url, data=json.dumps(body), timeout=timeout
@@ -55,7 +65,7 @@ class SHCRegisterClient:
             if not result.ok:
                 self._process_nok_result(result)
             if len(result.content) > 0:
-                return json.loads(result.content)
+                return dict(json.loads(result.content))
             else:
                 return {}
         except requests.exceptions.SSLError as e:
@@ -63,12 +73,12 @@ class SHCRegisterClient:
                 f"SHC probably not in pairing mode! Please press the Bosch Smart Home Controller button until LED starts flashing.\n(SSL Error: {e})."
             )
 
-    def _process_nok_result(self, result):
+    def _process_nok_result(self, result: Response) -> None:
         raise SHCRegistrationError(
             f"API call returned non-OK result (code {result.status_code})!: {result.content}... Please check your password?"
         )
 
-    def register(self, client_id, name):
+    def register(self, client_id: str, name: str) -> dict[str, Any] | None:
         cert, key = generate_certificate(client_id, name)
         cert_str = (
             cert.decode("utf-8")
@@ -102,7 +112,7 @@ def write_tls_asset(filename: str, asset: bytes) -> None:
         file_handle.write(asset.decode("utf-8"))
 
 
-def main():
+def main() -> None:
     import argparse
 
     logging.basicConfig(level=logging.DEBUG)

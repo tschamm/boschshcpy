@@ -44,7 +44,7 @@ logger = logging.getLogger("boschshcpy")
 
 # Re-export so callers can ``from boschshcpy.api_async import JSONRPCError``
 # without importing the sync api module.
-from .api import JSONRPCError  # noqa: E402  (after stdlib imports is fine)
+from .api import JSONRPCError as JSONRPCError  # noqa: E402  -- explicit re-export for mypy
 
 
 def build_ssl_context(certificate: str, key: str) -> ssl.SSLContext:
@@ -390,7 +390,7 @@ class SHCAPIAsync:
             raise JSONRPCError(
                 result[0]["error"]["code"], result[0]["error"]["message"]
             )
-        return result[0]["result"]
+        return str(result[0]["result"])
 
     async def long_polling_poll(self, poll_id: str, wait_seconds: int = 30) -> Any:
         """POST RE/longPoll → returns list of event dicts.

@@ -1,1 +1,2 @@
 include boschshcpy/tls_ca_chain.pem
+include boschshcpy/py.typed

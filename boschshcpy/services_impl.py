@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 from enum import Enum
+from typing import Any
 
 from .device_service import SHCDeviceService
 
@@ -12,7 +15,7 @@ class TemperatureOffsetService(SHCDeviceService):
         return float(self.state["offset"] if "offset" in self.state else 0.0)
 
     @offset.setter
-    def offset(self, value: float):
+    def offset(self, value: float) -> None:
         self.put_state_element("offset", value)
 
     @property
@@ -27,7 +30,7 @@ class TemperatureOffsetService(SHCDeviceService):
     def max_offset(self) -> float:
         return float(self.state["maxOffset"] if "maxOffset" in self.state else 0.0)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    TemperatureOffset        : {self.offset}")
         print(f"    stepSize                 : {self.step_size}")
@@ -40,7 +43,7 @@ class TemperatureLevelService(SHCDeviceService):
     def temperature(self) -> float:
         return float(self.state["temperature"] if "temperature" in self.state else 0.0)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Temperature              : {self.temperature}")
 
@@ -50,7 +53,7 @@ class HumidityLevelService(SHCDeviceService):
     def humidity(self) -> float:
         return float(self.state["humidity"] if "humidity" in self.state else 0.0)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Humidity              : {self.humidity}")
 
@@ -65,7 +68,7 @@ class RoomClimateControlService(SHCDeviceService):
         return self.OperationMode(self.state["operationMode"])
 
     @operation_mode.setter
-    def operation_mode(self, value: OperationMode):
+    def operation_mode(self, value: OperationMode) -> None:
         self.put_state_element("operationMode", value.value)
 
     @property
@@ -73,7 +76,7 @@ class RoomClimateControlService(SHCDeviceService):
         return float(self.state["setpointTemperature"])
 
     @setpoint_temperature.setter
-    def setpoint_temperature(self, value: float):
+    def setpoint_temperature(self, value: float) -> None:
         self.put_state_element("setpointTemperature", value)
 
     @property
@@ -88,14 +91,14 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def ventilation_mode(self) -> bool:
-        return self.state.get("ventilationMode", False)
+        return bool(self.state.get("ventilationMode", False))
 
     @property
     def low(self) -> bool:
-        return self.state.get("low", False)
+        return bool(self.state.get("low", False))
 
     @low.setter
-    def low(self, value: bool):
+    def low(self, value: bool) -> None:
         self.put_state_element("low", value)
 
     @property
@@ -113,26 +116,26 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def boost_mode(self) -> bool:
-        return self.state.get("boostMode", False)
+        return bool(self.state.get("boostMode", False))
 
     @boost_mode.setter
-    def boost_mode(self, value: bool):
+    def boost_mode(self, value: bool) -> None:
         self.put_state_element("boostMode", value)
 
     @property
     def summer_mode(self) -> bool:
-        return self.state.get("summerMode", False)
+        return bool(self.state.get("summerMode", False))
 
     @summer_mode.setter
-    def summer_mode(self, value: bool) -> bool:
+    def summer_mode(self, value: bool) -> None:
         self.put_state_element("summerMode", value)
 
     @property
     def room_control_mode(self) -> str:
-        return self.state.get("roomControlMode", "HEATING")
+        return str(self.state.get("roomControlMode", "HEATING"))
 
     @room_control_mode.setter
-    def room_control_mode(self, value: str):
+    def room_control_mode(self, value: str) -> None:
         self.put_state_element("roomControlMode", value)
 
     @property
@@ -140,7 +143,7 @@ class RoomClimateControlService(SHCDeviceService):
         return self.room_control_mode == "COOLING"
 
     @cooling_mode.setter
-    def cooling_mode(self, value: bool):
+    def cooling_mode(self, value: bool) -> None:
         self.room_control_mode = "COOLING" if value else "HEATING"
 
     @property
@@ -159,17 +162,17 @@ class RoomClimateControlService(SHCDeviceService):
 
     @property
     def supports_boost_mode(self) -> bool:
-        return self.state.get("supportsBoostMode", False)
+        return bool(self.state.get("supportsBoostMode", False))
 
     @property
     def show_setpoint_temperature(self) -> bool:
-        return self.state.get("showSetpointTemperature", False)
+        return bool(self.state.get("showSetpointTemperature", False))
 
     @property
     def has_demand(self) -> bool:
         return bool(self.state.get("hasDemand", False))
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Operation Mode           : {self.operation_mode}")
         print(f"    Setpoint Temperature     : {self.setpoint_temperature}")
@@ -195,14 +198,14 @@ class ThermostatSupportedControlModeService(SHCDeviceService):
     # the `roomControlMode` field of RoomClimateControl is present even on
     # heating-only rooms on newer firmware, so field-presence is unreliable.
     @property
-    def supported_control_modes(self) -> list:
-        return self.state.get("supportedControlModes", [])
+    def supported_control_modes(self) -> list[Any]:
+        return list(self.state.get("supportedControlModes", []))
 
     @property
     def supports_cooling(self) -> bool:
         return "COOLING" in self.supported_control_modes
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Supported Control Modes  : {self.supported_control_modes}")
 
@@ -225,7 +228,7 @@ class HeatingCircuitService(SHCDeviceService):
         return self.OperationMode(self.state["operationMode"])
 
     @operation_mode.setter
-    def operation_mode(self, value: OperationMode):
+    def operation_mode(self, value: OperationMode) -> None:
         self.put_state_element("operationMode", value.value)
 
     @property
@@ -233,7 +236,7 @@ class HeatingCircuitService(SHCDeviceService):
         return float(self.state["setpointTemperature"])
 
     @setpoint_temperature.setter
-    def setpoint_temperature(self, value: float):
+    def setpoint_temperature(self, value: float) -> None:
         self.put_state_element("setpointTemperature", value)
 
     @property
@@ -242,7 +245,7 @@ class HeatingCircuitService(SHCDeviceService):
         return float(value) if value is not None else None
 
     @setpoint_temperature_eco.setter
-    def setpoint_temperature_eco(self, value: float):
+    def setpoint_temperature_eco(self, value: float) -> None:
         self.put_state_element("setpointTemperatureForLevelEco", value)
 
     @property
@@ -251,27 +254,27 @@ class HeatingCircuitService(SHCDeviceService):
         return float(value) if value is not None else None
 
     @setpoint_temperature_comfort.setter
-    def setpoint_temperature_comfort(self, value: float):
+    def setpoint_temperature_comfort(self, value: float) -> None:
         self.put_state_element("setpointTemperatureForLevelComfort", value)
 
     @property
     def temperature_override_mode_active(self) -> bool:
-        return self.state.get("temperatureOverrideModeActive", False)
+        return bool(self.state.get("temperatureOverrideModeActive", False))
 
     @property
     def temperature_override_feature_enabled(self) -> bool:
-        return self.state.get("temperatureOverrideFeatureEnabled", False)
+        return bool(self.state.get("temperatureOverrideFeatureEnabled", False))
 
     @property
     def energy_saving_feature_enabled(self) -> bool:
-        return self.state.get("energySavingFeatureEnabled", False)
+        return bool(self.state.get("energySavingFeatureEnabled", False))
 
     @property
     def on(self) -> bool:
-        return self.state.get("on", False)
+        return bool(self.state.get("on", False))
 
     @property
-    def heating_type(self):
+    def heating_type(self) -> HeatingCircuitService.HeatingType | None:
         raw = self.state.get("heatingType")
         if raw is None:
             return None
@@ -280,7 +283,7 @@ class HeatingCircuitService(SHCDeviceService):
         except ValueError:
             return self.HeatingType.UNKNOWN
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Operation Mode             : {self.operation_mode}")
         print(f"    Setpoint Temperature       : {self.setpoint_temperature}")
@@ -316,7 +319,7 @@ class ShutterContactService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Value                    : {self.value}")
 
@@ -331,7 +334,7 @@ class BypassService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["state"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    State                    : {self.value}")
 
@@ -355,13 +358,13 @@ class VibrationSensorService(SHCDeviceService):
 
     @property
     def enabled(self) -> bool:
-        return self.state["enabled"]
+        return bool(self.state["enabled"])
 
     @property
     def sensitivity(self) -> SensitivityState:
         return self.SensitivityState(self.state["sensitivity"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Value                    : {self.value}")
         print(f"    Sensitivity              : {self.sensitivity}")
@@ -396,7 +399,7 @@ class ValveTappetService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    Position                 : {self.position}")
 
@@ -414,7 +417,7 @@ class PowerSwitchService(SHCDeviceService):
     def powerofftime(self) -> int:
         return int(self.state.get("automaticPowerOffTime", 0))
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    switchState              : {self.value}")
         print(f"    automaticPowerOffTime    : {self.powerofftime}")
@@ -430,14 +433,14 @@ class PowerMeterService(SHCDeviceService):
         return float(self.state["energyConsumption"])
 
     @property
-    def energyyield(self) -> float:
+    def energyyield(self) -> float | None:
         # #331: Smart Plug [+M] in Mini-PV mode reports PV production as a
         # separate energyYield (Wh). Older Zigbee plugs / firmware omit the
         # field → return None so the HA layer can skip the yield entities.
         value = self.state.get("energyYield")
         return None if value is None else float(value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    powerConsumption         : {self.powerconsumption}")
         print(f"    energyConsumption        : {self.energyconsumption}")
@@ -453,7 +456,7 @@ class RoutingService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    value                    : {self.value}")
 
@@ -468,10 +471,10 @@ class PowerSwitchProgramService(SHCDeviceService):
         return self.State(self.state["operationMode"])
 
     @value.setter
-    def value(self, state: State):
+    def value(self, state: State) -> None:
         self.put_state_element("operationMode", state.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    operationMode            : {self.value}")
 
@@ -479,9 +482,9 @@ class PowerSwitchProgramService(SHCDeviceService):
 class BinarySwitchService(SHCDeviceService):
     @property
     def value(self) -> bool:
-        return self.state["on"]
+        return bool(self.state["on"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    switchState              : {self.value}")
 
@@ -489,9 +492,9 @@ class BinarySwitchService(SHCDeviceService):
 class MultiLevelSwitchService(SHCDeviceService):
     @property
     def value(self) -> int:
-        return self.state["level"]
+        return int(self.state["level"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    multiLevelSwitchState    : {self.value}")
 
@@ -499,9 +502,9 @@ class MultiLevelSwitchService(SHCDeviceService):
 class MultiLevelSensorService(SHCDeviceService):
     @property
     def illuminance(self) -> int:
-        return self.state["illuminance"]
+        return int(self.state["illuminance"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    multiLevelSensorState    : {self.illuminance}")
 
@@ -509,17 +512,17 @@ class MultiLevelSensorService(SHCDeviceService):
 class HueColorTemperatureService(SHCDeviceService):
     @property
     def value(self) -> int:
-        return self.state["colorTemperature"]
+        return int(self.state["colorTemperature"])
 
     @property
     def min_value(self) -> int:
-        return self.state["colorTemperatureRange"]["minCt"]
+        return int(self.state["colorTemperatureRange"]["minCt"])
 
     @property
     def max_value(self) -> int:
-        return self.state["colorTemperatureRange"]["maxCt"]
+        return int(self.state["colorTemperatureRange"]["maxCt"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    colorTemperature         : {self.value}")
         print(f"    minColorTemperature      : {self.min_value}")
@@ -529,21 +532,21 @@ class HueColorTemperatureService(SHCDeviceService):
 class HSBColorActuatorService(SHCDeviceService):
     @property
     def value(self) -> int:
-        return self.state["rgb"]
+        return int(self.state["rgb"])
 
     @property
     def gamut(self) -> str:
-        return self.state["gamut"]
+        return str(self.state["gamut"])
 
     @property
     def min_value(self) -> int:
-        return self.state["colorTemperatureRange"]["minCt"]
+        return int(self.state["colorTemperatureRange"]["minCt"])
 
     @property
     def max_value(self) -> int:
-        return self.state["colorTemperatureRange"]["maxCt"]
+        return int(self.state["colorTemperatureRange"]["maxCt"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    rgb                      : {self.value}")
         print(f"    gamut                    : {self.gamut}")
@@ -562,7 +565,7 @@ class SmokeDetectorCheckService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    smokeDetectorCheckState  : {self.value}")
 
@@ -584,7 +587,7 @@ class AlarmService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    alarmState               : {self.value}")
 
@@ -597,7 +600,7 @@ class ShutterControlService(SHCDeviceService):
         OPENING = "OPENING"
         CLOSING = "CLOSING"
 
-    def __init__(self, api, raw_device_service):
+    def __init__(self, api: Any, raw_device_service: dict[str, Any]) -> None:
         super().__init__(api=api, raw_device_service=raw_device_service)
 
     @property
@@ -613,7 +616,7 @@ class ShutterControlService(SHCDeviceService):
     @property
     def calibrated(self) -> bool:
         # Shutter Control I does not expose `calibrated`; default to False.
-        return self.state.get("calibrated", False)
+        return bool(self.state.get("calibrated", False))
 
     @property
     def level(self) -> float:
@@ -621,7 +624,7 @@ class ShutterControlService(SHCDeviceService):
         # Control II as a number. Coerce to float so position math works for both.
         return float(self.state.get("level", 0.0))
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    operationState           : {self.operation_state}")
         print(f"    Level                    : {self.level}")
@@ -637,24 +640,24 @@ class BlindsControlService(SHCDeviceService):
 
     @property
     def current_angle(self) -> float:
-        return self.state.get("currentAngle", 0.0)
+        return float(self.state.get("currentAngle", 0.0))
 
     @property
     def target_angle(self) -> float:
-        return self.state.get("targetAngle", 0.0)
+        return float(self.state.get("targetAngle", 0.0))
 
     @target_angle.setter
-    def target_angle(self, value: float):
+    def target_angle(self, value: float) -> None:
         self.put_state_element("targetAngle", value)
 
     @property
-    def blinds_type(self):
+    def blinds_type(self) -> BlindsControlService.BlindsType | None:
         raw = self.state.get("blindsType")
         if raw is None:
             return None
         return self.BlindsType(raw)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    currentAngle              : {self.current_angle}")
         print(f"    targetAngle               : {self.target_angle}")
@@ -663,23 +666,23 @@ class BlindsControlService(SHCDeviceService):
 class BlindsSceneControlService(SHCDeviceService):
     @property
     def level(self) -> float:
-        return self.state.get("level", 0.0)
+        return float(self.state.get("level", 0.0))
 
     @level.setter
-    def level(self, value: float):
+    def level(self, value: float) -> None:
         # Spec requires both level + angle in the BlindsSceneControl PUT.
         self.put_state({"level": value, "angle": self.angle})
 
     @property
     def angle(self) -> float:
-        return self.state.get("angle", 0.0)
+        return float(self.state.get("angle", 0.0))
 
     @angle.setter
-    def angle(self, value: float):
+    def angle(self, value: float) -> None:
         # Spec requires both level + angle in the BlindsSceneControl PUT.
         self.put_state({"angle": value, "level": self.level})
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    level              : {self.level}")
         print(f"    angle               : {self.angle}")
@@ -695,7 +698,7 @@ class CameraLightService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"] if "value" in self.state else "NONE")
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    value                    : {self.value}")
 
@@ -717,7 +720,7 @@ class PrivacyModeService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"] if "value" in self.state else "DISABLED")
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    value                    : {self.value}")
 
@@ -731,7 +734,7 @@ class CameraNotificationService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"] if "value" in self.state else "DISABLED")
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    value                    : {self.value}")
 
@@ -739,9 +742,9 @@ class CameraNotificationService(SHCDeviceService):
 class ChildProtectionService(SHCDeviceService):
     @property
     def childLockActive(self) -> bool:
-        return self.state["childLockActive"]
+        return bool(self.state["childLockActive"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    childLockActive                    : {self.childLockActive}")
 
@@ -749,17 +752,17 @@ class ChildProtectionService(SHCDeviceService):
 class ImpulseSwitchService(SHCDeviceService):
     @property
     def impulse_state(self) -> bool:
-        return self.state["impulseState"]
+        return bool(self.state["impulseState"])
 
     @property
     def impulse_length(self) -> int:
-        return self.state["impulseLength"]
+        return int(self.state["impulseLength"])
 
     @property
-    def instant_of_last_impulse(self) -> str:
+    def instant_of_last_impulse(self) -> str | None:
         if "instantOfLastImpulse" not in self.state:
             return None
-        return self.state["instantOfLastImpulse"]
+        return str(self.state["instantOfLastImpulse"])
 
 
 class KeypadService(SHCDeviceService):
@@ -781,31 +784,31 @@ class KeypadService(SHCDeviceService):
 
     @property
     def keyCode(self) -> int:
-        return self.state["keyCode"] if "keyCode" in self.state else 0
+        return int(self.state["keyCode"]) if "keyCode" in self.state else 0
 
     @property
-    def keyName(self) -> KeyState:
+    def keyName(self) -> KeypadService.KeyState | None:
         if "keyName" not in self.state:
             return None
         return self.KeyState(self.state["keyName"])
 
     @property
-    def eventType(self) -> KeyEvent:
+    def eventType(self) -> KeypadService.KeyEvent | None:
         if "eventType" not in self.state:
             return None
         return self.KeyEvent(self.state["eventType"])
 
     @eventType.setter
-    def eventType(self, value: KeyEvent):
+    def eventType(self, value: KeyEvent) -> None:
         self.state["eventType"] = value.value
 
     @property
     def eventTimestamp(self) -> int:
         if "eventTimestamp" not in self.state:
             return 0
-        return self.state["eventTimestamp"]
+        return int(self.state["eventTimestamp"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    keyCode                  : {self.keyCode}")
         print(f"    keyName                  : {self.keyName}")
@@ -822,7 +825,7 @@ class LatestMotionService(SHCDeviceService):
             else "n/a"
         )
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    latestMotionDetected     : {self.latestMotionDetected}")
 
@@ -842,7 +845,7 @@ class DetectionTestService(SHCDeviceService):
         DETECTION_STATE_STOP = "DETECTION_STATE_STOP"
 
     @property
-    def detection_state(self) -> "DetectionTestService.DetectionState":
+    def detection_state(self) -> DetectionTestService.DetectionState:
         raw = self.state.get("detectionState")
         if raw is None:
             return self.DetectionState.DETECTION_TEST_UNKNOWN
@@ -852,8 +855,8 @@ class DetectionTestService(SHCDeviceService):
             return self.DetectionState.DETECTION_TEST_UNKNOWN
 
     def set_detection_state_request(
-        self, value: "DetectionTestService.DetectionStateRequest"
-    ):
+        self, value: DetectionTestService.DetectionStateRequest
+    ) -> None:
         # Write to detectionStateRequest, NOT detectionState. detectionState is
         # the read-only reported state (DETECTION_TEST_STARTED/STOPPED); the
         # controller rejects a write to it with 503 SERVICE_INVOCATION_FAILED
@@ -863,11 +866,11 @@ class DetectionTestService(SHCDeviceService):
         self.put_state_element("detectionStateRequest", value.value)
 
     async def async_set_detection_state_request(
-        self, value: "DetectionTestService.DetectionStateRequest"
-    ):
+        self, value: DetectionTestService.DetectionStateRequest
+    ) -> None:
         await self.async_put_state_element("detectionStateRequest", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    detectionState           : {self.detection_state}")
 
@@ -875,22 +878,22 @@ class DetectionTestService(SHCDeviceService):
 class LatestTamperService(SHCDeviceService):
     @property
     def tamper_protection_enabled(self) -> bool:
-        return self.state["tamperProtectionEnabled"]
+        return bool(self.state["tamperProtectionEnabled"])
 
     @tamper_protection_enabled.setter
-    def tamper_protection_enabled(self, value: bool):
+    def tamper_protection_enabled(self, value: bool) -> None:
         self.put_state_element("tamperProtectionEnabled", bool(value))
 
-    async def async_set_tamper_protection_enabled(self, value: bool):
+    async def async_set_tamper_protection_enabled(self, value: bool) -> None:
         await self.async_put_state_element("tamperProtectionEnabled", bool(value))
 
-    def reset_tampered_state(self):
+    def reset_tampered_state(self) -> None:
         """POST operation/resetTamperedState — confirm the device is back in place."""
         self._api.post_device_service_operation(
             self.device_id.replace("#", "%23"), self.id, "resetTamperedState"
         )
 
-    async def async_reset_tampered_state(self):
+    async def async_reset_tampered_state(self) -> None:
         """Async counterpart to reset_tampered_state."""
         await self._api.post_device_service_operation(
             self.device_id.replace("#", "%23"), self.id, "resetTamperedState"
@@ -898,13 +901,13 @@ class LatestTamperService(SHCDeviceService):
 
     @property
     def was_tampered(self) -> bool:
-        return self.state["wasTampered"]
+        return bool(self.state["wasTampered"])
 
     @property
     def last_tamper_time(self) -> str:
         return self.state["lastTamperTime"] if "lastTamperTime" in self.state else "n/a"
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    tamperProtectionEnabled  : {self.tamper_protection_enabled}")
         print(f"    wasTampered              : {self.was_tampered}")
@@ -928,16 +931,16 @@ class PollControlService(SHCDeviceService):
             return self.PollControlState.UNKNOWN
 
     @longPollInterval.setter
-    def longPollInterval(self, value: "PollControlService.PollControlState"):
+    def longPollInterval(self, value: PollControlService.PollControlState) -> None:
         # Spec only accepts SHORT / LONG for writes.
         self.put_state_element("longPollInterval", value.value)
 
     async def async_set_long_poll_interval(
-        self, value: "PollControlService.PollControlState"
-    ):
+        self, value: PollControlService.PollControlState
+    ) -> None:
         await self.async_put_state_element("longPollInterval", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    longPollInterval         : {self.longPollInterval}")
 
@@ -953,7 +956,7 @@ class PirSensorConfigurationService(SHCDeviceService):
     def motionSensitivity(self) -> MotionSensitivity:
         return self.MotionSensitivity(self.state["motionSensitivity"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    motionSensitivity        : {self.motionSensitivity}")
 
@@ -961,7 +964,7 @@ class PirSensorConfigurationService(SHCDeviceService):
 class OccupancyDetectionService(SHCDeviceService):
     @property
     def isOccupied(self) -> bool:
-        return self.state["isOccupied"]
+        return bool(self.state["isOccupied"])
 
     @property
     def lastOccupancyChangeTime(self) -> str:
@@ -972,10 +975,11 @@ class OccupancyDetectionService(SHCDeviceService):
         )
 
     @property
-    def last_occupancy_change_time(self):
-        return self.state.get("lastOccupancyChangeTime")
+    def last_occupancy_change_time(self) -> str | None:
+        raw = self.state.get("lastOccupancyChangeTime")
+        return str(raw) if raw is not None else None
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    isOccupied                : {self.isOccupied}")
         print(f"    lastOccupancyChangeTime   : {self.lastOccupancyChangeTime}")
@@ -984,13 +988,13 @@ class OccupancyDetectionService(SHCDeviceService):
 class PetImmunityService(SHCDeviceService):
     @property
     def enabled(self) -> bool:
-        return self.state["enabled"]
+        return bool(self.state["enabled"])
 
     @enabled.setter
-    def enabled(self, value: bool):
+    def enabled(self, value: bool) -> None:
         self.put_state_element("enabled", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    enabled                  : {self.enabled}")
 
@@ -1013,31 +1017,31 @@ class SmartSensitivityControlService(SHCDeviceService):
         return bool(self.state.get("enabled", False))
 
     @enabled.setter
-    def enabled(self, value: bool):
+    def enabled(self, value: bool) -> None:
         self.put_state_element("enabled", value)
 
     @property
-    def sensitivities(self) -> list:
-        return self.state.get("sensitivities", [])
+    def sensitivities(self) -> list[Any]:
+        return list(self.state.get("sensitivities", []))
 
     def get_sensitivity(
-        self, context: "SmartSensitivityControlService.SmartSensitivityContext"
-    ):
+        self, context: SmartSensitivityControlService.SmartSensitivityContext
+    ) -> dict[str, Any] | None:
         """Return the sensitivity dict for the given context, or None if not found."""
         ctx_value = context.value if hasattr(context, "value") else context
         for entry in self.sensitivities:
             if entry.get("context") == ctx_value:
-                return entry
+                return entry  # type: ignore[no-any-return]
         return None
 
-    async def async_set_enabled(self, value: bool):
+    async def async_set_enabled(self, value: bool) -> None:
         await self.async_put_state_element("enabled", value)
 
     def set_manual_level(
         self,
-        context: "SmartSensitivityControlService.SmartSensitivityContext",
-        level: "SmartSensitivityControlService.MotionSensitivity",
-    ):
+        context: SmartSensitivityControlService.SmartSensitivityContext,
+        level: SmartSensitivityControlService.MotionSensitivity,
+    ) -> None:
         """Set manualLevel (MotionSensitivity enum) for the given context.
 
         APK: manualLevel and automaticLevel are MotionSensitivity enum strings
@@ -1055,9 +1059,9 @@ class SmartSensitivityControlService(SHCDeviceService):
 
     async def async_set_manual_level(
         self,
-        context: "SmartSensitivityControlService.SmartSensitivityContext",
-        level: "SmartSensitivityControlService.MotionSensitivity",
-    ):
+        context: SmartSensitivityControlService.SmartSensitivityContext,
+        level: SmartSensitivityControlService.MotionSensitivity,
+    ) -> None:
         """Async version of set_manual_level."""
         ctx_value = context.value if hasattr(context, "value") else context
         level_value = level.value if hasattr(level, "value") else level
@@ -1068,7 +1072,7 @@ class SmartSensitivityControlService(SHCDeviceService):
             updated.append(entry)
         await self.async_put_state({"enabled": self.enabled, "sensitivities": updated})
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    enabled                  : {self.enabled}")
         print(f"    sensitivities            : {self.sensitivities}")
@@ -1093,7 +1097,7 @@ class WalkTestService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def walk_state(self) -> "WalkTestService.WalkState":
+    def walk_state(self) -> WalkTestService.WalkState:
         raw = self.state.get("walkState")
         if raw is None:
             return self.WalkState.UNKNOWN
@@ -1103,7 +1107,7 @@ class WalkTestService(SHCDeviceService):
             return self.WalkState.UNKNOWN
 
     @property
-    def walk_state_request(self) -> "WalkTestService.WalkStateRequest":
+    def walk_state_request(self) -> WalkTestService.WalkStateRequest:
         raw = self.state.get("walkStateRequest")
         if raw is None:
             return self.WalkStateRequest.UNKNOWN
@@ -1113,11 +1117,11 @@ class WalkTestService(SHCDeviceService):
             return self.WalkStateRequest.UNKNOWN
 
     @walk_state_request.setter
-    def walk_state_request(self, value: "WalkTestService.WalkStateRequest"):
+    def walk_state_request(self, value: WalkTestService.WalkStateRequest) -> None:
         self.put_state_element("walkStateRequest", value.value)
 
     @property
-    def pet_immunity_state(self) -> "WalkTestService.PetImmunityState":
+    def pet_immunity_state(self) -> WalkTestService.PetImmunityState:
         raw = self.state.get("petImmunityState")
         if raw is None:
             return self.PetImmunityState.UNKNOWN
@@ -1127,11 +1131,11 @@ class WalkTestService(SHCDeviceService):
             return self.PetImmunityState.UNKNOWN
 
     async def async_set_walk_state_request(
-        self, value: "WalkTestService.WalkStateRequest"
-    ):
+        self, value: WalkTestService.WalkStateRequest
+    ) -> None:
         await self.async_put_state_element("walkStateRequest", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    walkState                : {self.walk_state}")
         print(f"    walkStateRequest         : {self.walk_state_request}")
@@ -1146,7 +1150,9 @@ class SmokeSensitivityService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def smoke_sensitivity(self) -> "SmokeSensitivityService.SmokeSensitivityLevel":
+    def smoke_sensitivity(
+        self,
+    ) -> SmokeSensitivityService.SmokeSensitivityLevel | None:
         raw = self.state.get("smokeSensitivity")
         if raw is None:
             return None
@@ -1156,7 +1162,9 @@ class SmokeSensitivityService(SHCDeviceService):
             return self.SmokeSensitivityLevel.UNKNOWN
 
     @smoke_sensitivity.setter
-    def smoke_sensitivity(self, value: "SmokeSensitivityService.SmokeSensitivityLevel"):
+    def smoke_sensitivity(
+        self, value: SmokeSensitivityService.SmokeSensitivityLevel
+    ) -> None:
         self.put_state_element("smokeSensitivity", value.value)
 
     @property
@@ -1164,18 +1172,18 @@ class SmokeSensitivityService(SHCDeviceService):
         return bool(self.state.get("preAlarmEnabled", False))
 
     @pre_alarm_enabled.setter
-    def pre_alarm_enabled(self, value: bool):
+    def pre_alarm_enabled(self, value: bool) -> None:
         self.put_state_element("preAlarmEnabled", value)
 
     async def async_set_smoke_sensitivity(
-        self, value: "SmokeSensitivityService.SmokeSensitivityLevel"
-    ):
+        self, value: SmokeSensitivityService.SmokeSensitivityLevel
+    ) -> None:
         await self.async_put_state_element("smokeSensitivity", value.value)
 
-    async def async_set_pre_alarm_enabled(self, value: bool):
+    async def async_set_pre_alarm_enabled(self, value: bool) -> None:
         await self.async_put_state_element("preAlarmEnabled", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    smokeSensitivity         : {self.smoke_sensitivity}")
         print(f"    preAlarmEnabled          : {self.pre_alarm_enabled}")
@@ -1187,13 +1195,13 @@ class TwinguardNightlyPromiseService(SHCDeviceService):
         return bool(self.state.get("nightlyPromiseEnabled", False))
 
     @nightly_promise_enabled.setter
-    def nightly_promise_enabled(self, value: bool):
+    def nightly_promise_enabled(self, value: bool) -> None:
         self.put_state_element("nightlyPromiseEnabled", value)
 
-    async def async_set_nightly_promise_enabled(self, value: bool):
+    async def async_set_nightly_promise_enabled(self, value: bool) -> None:
         await self.async_put_state_element("nightlyPromiseEnabled", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    nightlyPromiseEnabled    : {self.nightly_promise_enabled}")
 
@@ -1204,15 +1212,15 @@ class EnergySavingModeService(SHCDeviceService):
         return bool(self.state.get("energySavingModeEnabled", False))
 
     @energy_saving_mode_enabled.setter
-    def energy_saving_mode_enabled(self, value: bool):
+    def energy_saving_mode_enabled(self, value: bool) -> None:
         self.put_state_element("energySavingModeEnabled", value)
 
     @property
-    def power_threshold(self):
+    def power_threshold(self) -> Any:
         return self.state.get("powerThreshold")
 
     @power_threshold.setter
-    def power_threshold(self, value):
+    def power_threshold(self, value: Any) -> None:
         self.put_state_element("powerThreshold", value)
 
     @property
@@ -1220,19 +1228,19 @@ class EnergySavingModeService(SHCDeviceService):
         return int(self.state.get("enterDurationSeconds", 0))
 
     @enter_duration_seconds.setter
-    def enter_duration_seconds(self, value: int):
+    def enter_duration_seconds(self, value: int) -> None:
         self.put_state_element("enterDurationSeconds", value)
 
-    async def async_set_energy_saving_mode_enabled(self, value: bool):
+    async def async_set_energy_saving_mode_enabled(self, value: bool) -> None:
         await self.async_put_state_element("energySavingModeEnabled", value)
 
-    async def async_set_power_threshold(self, value):
+    async def async_set_power_threshold(self, value: Any) -> None:
         await self.async_put_state_element("powerThreshold", value)
 
-    async def async_set_enter_duration_seconds(self, value: int):
+    async def async_set_enter_duration_seconds(self, value: int) -> None:
         await self.async_put_state_element("enterDurationSeconds", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    energySavingModeEnabled  : {self.energy_saving_mode_enabled}")
         print(f"    powerThreshold           : {self.power_threshold}")
@@ -1241,29 +1249,33 @@ class EnergySavingModeService(SHCDeviceService):
 
 class LedBrightnessConfigurationService(SHCDeviceService):
     @property
-    def brightness(self):
-        return self.state.get("brightness")
+    def brightness(self) -> int | None:
+        raw = self.state.get("brightness")
+        return int(raw) if raw is not None else None
 
     @brightness.setter
-    def brightness(self, value):
+    def brightness(self, value: int) -> None:
         self.put_state_element("brightness", value)
 
     @property
-    def max_brightness(self):
-        return self.state.get("maxBrightness")
+    def max_brightness(self) -> int | None:
+        raw = self.state.get("maxBrightness")
+        return int(raw) if raw is not None else None
 
     @property
-    def min_brightness(self):
-        return self.state.get("minBrightness")
+    def min_brightness(self) -> int | None:
+        raw = self.state.get("minBrightness")
+        return int(raw) if raw is not None else None
 
     @property
-    def step_size(self):
-        return self.state.get("stepSize")
+    def step_size(self) -> int | None:
+        raw = self.state.get("stepSize")
+        return int(raw) if raw is not None else None
 
-    async def async_set_brightness(self, value):
+    async def async_set_brightness(self, value: int) -> None:
         await self.async_put_state_element("brightness", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    brightness               : {self.brightness}")
         print(f"    maxBrightness            : {self.max_brightness}")
@@ -1281,7 +1293,7 @@ class PowerSwitchConfigurationService(SHCDeviceService):
     @property
     def state_after_power_outage(
         self,
-    ) -> "PowerSwitchConfigurationService.StateAfterPowerOutage":
+    ) -> PowerSwitchConfigurationService.StateAfterPowerOutage | None:
         raw = self.state.get("stateAfterPowerOutage")
         if raw is None:
             return None
@@ -1292,20 +1304,20 @@ class PowerSwitchConfigurationService(SHCDeviceService):
 
     @state_after_power_outage.setter
     def state_after_power_outage(
-        self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
-    ):
+        self, value: PowerSwitchConfigurationService.StateAfterPowerOutage
+    ) -> None:
         self.put_state_element("stateAfterPowerOutage", value.value)
 
     @property
-    def supported_states_after_power_outage(self) -> list:
-        return self.state.get("supportedStatesAfterPowerOutage", [])
+    def supported_states_after_power_outage(self) -> list[Any]:
+        return list(self.state.get("supportedStatesAfterPowerOutage", []))
 
     async def async_set_state_after_power_outage(
-        self, value: "PowerSwitchConfigurationService.StateAfterPowerOutage"
-    ):
+        self, value: PowerSwitchConfigurationService.StateAfterPowerOutage
+    ) -> None:
         await self.async_put_state_element("stateAfterPowerOutage", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    stateAfterPowerOutage            : {self.state_after_power_outage}")
         print(
@@ -1319,13 +1331,13 @@ class PowerSwitchWarningService(SHCDeviceService):
         return bool(self.state.get("warningSuppressed", False))
 
     @warning_suppressed.setter
-    def warning_suppressed(self, value: bool):
+    def warning_suppressed(self, value: bool) -> None:
         self.put_state_element("warningSuppressed", value)
 
-    async def async_set_warning_suppressed(self, value: bool):
+    async def async_set_warning_suppressed(self, value: bool) -> None:
         await self.async_put_state_element("warningSuppressed", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    warningSuppressed        : {self.warning_suppressed}")
 
@@ -1342,11 +1354,11 @@ class AirQualityLevelService(SHCDeviceService):
 
     @property
     def description(self) -> str:
-        return self.state["description"]
+        return str(self.state["description"])
 
     @property
     def temperature(self) -> int:
-        return self.state["temperature"]
+        return int(self.state["temperature"])
 
     @property
     def temperatureRating(self) -> RatingState:
@@ -1354,7 +1366,7 @@ class AirQualityLevelService(SHCDeviceService):
 
     @property
     def humidity(self) -> int:
-        return self.state["humidity"]
+        return int(self.state["humidity"])
 
     @property
     def humidityRating(self) -> RatingState:
@@ -1362,17 +1374,20 @@ class AirQualityLevelService(SHCDeviceService):
 
     @property
     def purity(self) -> int:
-        return self.state["purity"]
+        return int(self.state["purity"])
 
     @property
     def purityRating(self) -> RatingState:
         return self.RatingState(self.state["purityRating"])
 
     @property
-    def comfortZone(self) -> dict:
-        return self.state.get("comfortZone", {})
+    def comfortZone(self) -> dict[str, Any]:
+        raw = self.state.get("comfortZone")
+        if isinstance(raw, dict):
+            return raw
+        return {}
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    combinedRating           : {self.combinedRating}")
         print(f"    description              : {self.description}")
@@ -1394,13 +1409,13 @@ class SurveillanceAlarmService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["value"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    value                    : {self.value}")
 
 
 class SmokeDetectionControlService(SHCDeviceService):
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print("    not yet implemented!")
 
@@ -1424,7 +1439,7 @@ class BatteryLevelService(SHCDeviceService):
             return self.State("OK")
         return self.State(faults["entries"][0]["type"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    warningLevel             : {self.warningLevel}")
 
@@ -1438,7 +1453,7 @@ class ThermostatService(SHCDeviceService):
     def childLock(self) -> State:
         return self.State(self.state["childLock"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    childLock                : {self.childLock}")
 
@@ -1456,7 +1471,7 @@ class CommunicationQualityService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["quality"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    quality                  : {self.value}")
 
@@ -1470,7 +1485,7 @@ class WaterLeakageSensorService(SHCDeviceService):
     def value(self) -> State:
         return self.State(self.state["state"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    waterLeakageSensorState  : {self.value}")
 
@@ -1488,7 +1503,7 @@ class WaterLeakageSensorTiltService(SHCDeviceService):
     def acousticSignalState(self) -> State:
         return self.State(self.state["acousticSignalState"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    pushNotificationState    : {self.pushNotificationState}")
         print(f"    acousticSignalState      : {self.acousticSignalState}")
@@ -1497,9 +1512,9 @@ class WaterLeakageSensorTiltService(SHCDeviceService):
 class WaterLeakageSensorCheckService(SHCDeviceService):
     @property
     def value(self) -> str:
-        return self.state["result"]
+        return str(self.state["result"])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    waterLeakageSensorCheck  : {self.value}")
 
@@ -1507,77 +1522,85 @@ class WaterLeakageSensorCheckService(SHCDeviceService):
 class PresenceSimulationConfigurationService(SHCDeviceService):
     @property
     def enabled(self) -> bool:
-        return self.state["enabled"]
+        return bool(self.state["enabled"])
 
     @enabled.setter
-    def enabled(self, value: bool):
+    def enabled(self, value: bool) -> None:
         self.put_state_element("enabled", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    presenceSimulationConfigurationState  : {self.enabled}")
 
 
 class DisplayConfiguration(SHCDeviceService):
     @property
-    def display_brightness(self):
-        return self.state.get("displayBrightness")
+    def display_brightness(self) -> int | None:
+        raw = self.state.get("displayBrightness")
+        return int(raw) if raw is not None else None
 
     @display_brightness.setter
-    def display_brightness(self, value):
+    def display_brightness(self, value: int) -> None:
         self.put_state_element("displayBrightness", value)
 
     @property
-    def display_brightness_max(self):
-        return self.state.get("displayBrightnessMax")
+    def display_brightness_max(self) -> int | None:
+        raw = self.state.get("displayBrightnessMax")
+        return int(raw) if raw is not None else None
 
     @property
-    def display_brightness_min(self):
-        return self.state.get("displayBrightnessMin")
+    def display_brightness_min(self) -> int | None:
+        raw = self.state.get("displayBrightnessMin")
+        return int(raw) if raw is not None else None
 
     @property
-    def display_brightness_step_size(self):
-        return self.state.get("displayBrightnessStepSize")
+    def display_brightness_step_size(self) -> int | None:
+        raw = self.state.get("displayBrightnessStepSize")
+        return int(raw) if raw is not None else None
 
     @property
-    def display_on_time(self):
-        return self.state.get("displayOnTime")
+    def display_on_time(self) -> int | None:
+        raw = self.state.get("displayOnTime")
+        return int(raw) if raw is not None else None
 
     @display_on_time.setter
-    def display_on_time(self, value):
+    def display_on_time(self, value: int) -> None:
         self.put_state_element("displayOnTime", value)
 
     @property
-    def display_on_time_max(self):
-        return self.state.get("displayOnTimeMax")
+    def display_on_time_max(self) -> int | None:
+        raw = self.state.get("displayOnTimeMax")
+        return int(raw) if raw is not None else None
 
     @property
-    def display_on_time_min(self):
-        return self.state.get("displayOnTimeMin")
+    def display_on_time_min(self) -> int | None:
+        raw = self.state.get("displayOnTimeMin")
+        return int(raw) if raw is not None else None
 
     @property
-    def display_on_time_step_size(self):
-        return self.state.get("displayOnTimeStepSize")
+    def display_on_time_step_size(self) -> int | None:
+        raw = self.state.get("displayOnTimeStepSize")
+        return int(raw) if raw is not None else None
 
     @property
-    def humidity_warning_enabled(self):
+    def humidity_warning_enabled(self) -> bool | None:
         v = self.state.get("humidityWarningEnabled")
         return None if v is None else bool(v)
 
     @humidity_warning_enabled.setter
-    def humidity_warning_enabled(self, value: bool):
+    def humidity_warning_enabled(self, value: bool) -> None:
         self.put_state_element("humidityWarningEnabled", value)
 
-    async def async_set_displayBrightness(self, value):
+    async def async_set_displayBrightness(self, value: int) -> None:
         await self.async_put_state_element("displayBrightness", value)
 
-    async def async_set_displayOnTime(self, value):
+    async def async_set_displayOnTime(self, value: int) -> None:
         await self.async_put_state_element("displayOnTime", value)
 
-    async def async_set_humidityWarningEnabled(self, value: bool):
+    async def async_set_humidityWarningEnabled(self, value: bool) -> None:
         await self.async_put_state_element("humidityWarningEnabled", value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    displayBrightness        : {self.display_brightness}")
         print(f"    displayOnTime            : {self.display_on_time}")
@@ -1591,7 +1614,7 @@ class DisplayDirection(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def direction(self) -> "DisplayDirection.Direction":
+    def direction(self) -> DisplayDirection.Direction | None:
         raw = self.state.get("direction")
         if raw is None:
             return None
@@ -1601,13 +1624,13 @@ class DisplayDirection(SHCDeviceService):
             return self.Direction.UNKNOWN
 
     @direction.setter
-    def direction(self, value: "DisplayDirection.Direction"):
+    def direction(self, value: DisplayDirection.Direction) -> None:
         self.put_state_element("direction", value.value)
 
-    async def async_set_direction(self, value: "DisplayDirection.Direction"):
+    async def async_set_direction(self, value: DisplayDirection.Direction) -> None:
         await self.async_put_state_element("direction", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    direction                : {self.direction}")
 
@@ -1621,7 +1644,7 @@ class DisplayedTemperatureConfiguration(SHCDeviceService):
     @property
     def displayed_temperature(
         self,
-    ) -> "DisplayedTemperatureConfiguration.DisplayedTemperature":
+    ) -> DisplayedTemperatureConfiguration.DisplayedTemperature | None:
         raw = self.state.get("displayedTemperature")
         if raw is None:
             return None
@@ -1632,16 +1655,16 @@ class DisplayedTemperatureConfiguration(SHCDeviceService):
 
     @displayed_temperature.setter
     def displayed_temperature(
-        self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
-    ):
+        self, value: DisplayedTemperatureConfiguration.DisplayedTemperature
+    ) -> None:
         self.put_state_element("displayedTemperature", value.value)
 
     async def async_set_displayedTemperature(
-        self, value: "DisplayedTemperatureConfiguration.DisplayedTemperature"
-    ):
+        self, value: DisplayedTemperatureConfiguration.DisplayedTemperature
+    ) -> None:
         await self.async_put_state_element("displayedTemperature", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    displayedTemperature     : {self.displayed_temperature}")
 
@@ -1663,7 +1686,7 @@ class TerminalConfiguration(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def type(self) -> "TerminalConfiguration.Type":
+    def type(self) -> TerminalConfiguration.Type | None:
         raw = self.state.get("type")
         if raw is None:
             return None
@@ -1673,21 +1696,22 @@ class TerminalConfiguration(SHCDeviceService):
             return self.Type.UNKNOWN
 
     @type.setter
-    def type(self, value: "TerminalConfiguration.Type"):
+    def type(self, value: TerminalConfiguration.Type) -> None:
         self.put_state_element("type", value.value)
 
     @property
-    def supported_types(self) -> list:
-        return self.state.get("supportedTypes", [])
+    def supported_types(self) -> list[Any]:
+        return list(self.state.get("supportedTypes", []))
 
     @property
-    def temperature(self):
-        return self.state.get("temperature")
+    def temperature(self) -> float | None:
+        raw = self.state.get("temperature")
+        return float(raw) if raw is not None else None
 
-    async def async_set_type(self, value: "TerminalConfiguration.Type"):
+    async def async_set_type(self, value: TerminalConfiguration.Type) -> None:
         await self.async_put_state_element("type", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    type                     : {self.type}")
         print(f"    supportedTypes           : {self.supported_types}")
@@ -1709,7 +1733,7 @@ class WallThermostatConfiguration(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def valve_type(self) -> "WallThermostatConfiguration.ValveType":
+    def valve_type(self) -> WallThermostatConfiguration.ValveType | None:
         raw = self.state.get("valveType")
         if raw is None:
             return None
@@ -1719,11 +1743,11 @@ class WallThermostatConfiguration(SHCDeviceService):
             return self.ValveType.UNKNOWN
 
     @valve_type.setter
-    def valve_type(self, value: "WallThermostatConfiguration.ValveType"):
+    def valve_type(self, value: WallThermostatConfiguration.ValveType) -> None:
         self.put_state_element("valveType", value.value)
 
     @property
-    def heater_type(self) -> "WallThermostatConfiguration.HeaterType":
+    def heater_type(self) -> WallThermostatConfiguration.HeaterType | None:
         raw = self.state.get("heaterType")
         if raw is None:
             return None
@@ -1733,18 +1757,20 @@ class WallThermostatConfiguration(SHCDeviceService):
             return self.HeaterType.UNKNOWN
 
     @heater_type.setter
-    def heater_type(self, value: "WallThermostatConfiguration.HeaterType"):
+    def heater_type(self, value: WallThermostatConfiguration.HeaterType) -> None:
         self.put_state_element("heaterType", value.value)
 
-    async def async_set_valveType(self, value: "WallThermostatConfiguration.ValveType"):
+    async def async_set_valveType(
+        self, value: WallThermostatConfiguration.ValveType
+    ) -> None:
         await self.async_put_state_element("valveType", value.value)
 
     async def async_set_heaterType(
-        self, value: "WallThermostatConfiguration.HeaterType"
-    ):
+        self, value: WallThermostatConfiguration.HeaterType
+    ) -> None:
         await self.async_put_state_element("heaterType", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    valveType                : {self.valve_type}")
         print(f"    heaterType               : {self.heater_type}")
@@ -1773,7 +1799,7 @@ class SwitchConfiguration(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def switch_type(self) -> "SwitchConfiguration.SwitchType":
+    def switch_type(self) -> SwitchConfiguration.SwitchType | None:
         raw = self.state.get("switchType")
         if raw is None:
             return None
@@ -1783,7 +1809,7 @@ class SwitchConfiguration(SHCDeviceService):
             return self.SwitchType.UNKNOWN
 
     @switch_type.setter
-    def switch_type(self, value: "SwitchConfiguration.SwitchType"):
+    def switch_type(self, value: SwitchConfiguration.SwitchType) -> None:
         self.put_state_element("switchType", value.value)
 
     @property
@@ -1791,7 +1817,7 @@ class SwitchConfiguration(SHCDeviceService):
         return bool(self.state.get("swapInputs", False))
 
     @swap_inputs.setter
-    def swap_inputs(self, value: bool):
+    def swap_inputs(self, value: bool) -> None:
         self.put_state_element("swapInputs", value)
 
     @property
@@ -1799,11 +1825,11 @@ class SwitchConfiguration(SHCDeviceService):
         return bool(self.state.get("swapOutputs", False))
 
     @swap_outputs.setter
-    def swap_outputs(self, value: bool):
+    def swap_outputs(self, value: bool) -> None:
         self.put_state_element("swapOutputs", value)
 
     @property
-    def actuator_type(self) -> "SwitchConfiguration.ActuatorType":
+    def actuator_type(self) -> SwitchConfiguration.ActuatorType | None:
         raw = self.state.get("actuatorType")
         if raw is None:
             return None
@@ -1813,11 +1839,11 @@ class SwitchConfiguration(SHCDeviceService):
             return self.ActuatorType.UNKNOWN
 
     @actuator_type.setter
-    def actuator_type(self, value: "SwitchConfiguration.ActuatorType"):
+    def actuator_type(self, value: SwitchConfiguration.ActuatorType) -> None:
         self.put_state_element("actuatorType", value.value)
 
     @property
-    def output_mode(self) -> "SwitchConfiguration.OutputMode":
+    def output_mode(self) -> SwitchConfiguration.OutputMode | None:
         raw = self.state.get("outputMode")
         if raw is None:
             return None
@@ -1827,33 +1853,40 @@ class SwitchConfiguration(SHCDeviceService):
             return self.OutputMode.UNKNOWN
 
     @output_mode.setter
-    def output_mode(self, value: "SwitchConfiguration.OutputMode"):
+    def output_mode(self, value: SwitchConfiguration.OutputMode) -> None:
         self.put_state_element("outputMode", value.value)
 
     @property
-    def supports_swap_outputs(self):
-        return self.state.get("supportsSwapOutputs")
+    def supports_swap_outputs(self) -> bool | None:
+        raw = self.state.get("supportsSwapOutputs")
+        return bool(raw) if raw is not None else None
 
     @property
-    def supported_output_modes(self) -> list:
-        return self.state.get("supportedOutputModes", [])
+    def supported_output_modes(self) -> list[Any]:
+        return list(self.state.get("supportedOutputModes", []))
 
-    async def async_set_switchType(self, value: "SwitchConfiguration.SwitchType"):
+    async def async_set_switchType(
+        self, value: SwitchConfiguration.SwitchType
+    ) -> None:
         await self.async_put_state_element("switchType", value.value)
 
-    async def async_set_swapInputs(self, value: bool):
+    async def async_set_swapInputs(self, value: bool) -> None:
         await self.async_put_state_element("swapInputs", value)
 
-    async def async_set_swapOutputs(self, value: bool):
+    async def async_set_swapOutputs(self, value: bool) -> None:
         await self.async_put_state_element("swapOutputs", value)
 
-    async def async_set_actuatorType(self, value: "SwitchConfiguration.ActuatorType"):
+    async def async_set_actuatorType(
+        self, value: SwitchConfiguration.ActuatorType
+    ) -> None:
         await self.async_put_state_element("actuatorType", value.value)
 
-    async def async_set_outputMode(self, value: "SwitchConfiguration.OutputMode"):
+    async def async_set_outputMode(
+        self, value: SwitchConfiguration.OutputMode
+    ) -> None:
         await self.async_put_state_element("outputMode", value.value)
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    switchType               : {self.switch_type}")
         print(f"    swapInputs               : {self.swap_inputs}")
@@ -1899,7 +1932,7 @@ class OutdoorSirenService(SHCDeviceService):
         return bool(self.state.get("smartAlarm", False))
 
     @property
-    def _config(self) -> dict:
+    def _config(self) -> dict[str, Any]:
         return self.state.get("outdoorSirenConfiguration", {}) or {}
 
     @property
@@ -1919,16 +1952,16 @@ class OutdoorSirenService(SHCDeviceService):
         return int(self._config.get("flashDelay", 0))
 
     @property
-    def sound_level(self) -> "OutdoorSirenService.SoundLevel":
+    def sound_level(self) -> OutdoorSirenService.SoundLevel:
         try:
             return self.SoundLevel(self._config.get("soundLevel", "MEDIUM"))
         except ValueError:
             return self.SoundLevel.MEDIUM
 
-    def _merged_config(self, **overrides) -> dict:
+    def _merged_config(self, **overrides: Any) -> dict[str, Any]:
         # The PUT requires the full configuration block (all 5 fields). Start
         # from the current config and override only the changed field.
-        cfg = {
+        cfg: dict[str, Any] = {
             "alarmDuration": self.alarm_duration,
             "flashDuration": self.flash_duration,
             "soundLevel": self.sound_level.value,
@@ -1941,12 +1974,12 @@ class OutdoorSirenService(SHCDeviceService):
     async def async_set_configuration(
         self,
         *,
-        alarm_duration: int = None,
-        flash_duration: int = None,
-        sound_level: "OutdoorSirenService.SoundLevel" = None,
-        alarm_delay: int = None,
-        flash_delay: int = None,
-    ):
+        alarm_duration: int | None = None,
+        flash_duration: int | None = None,
+        sound_level: OutdoorSirenService.SoundLevel | None = None,
+        alarm_delay: int | None = None,
+        flash_delay: int | None = None,
+    ) -> None:
         """Async write: update one or more configuration fields.
 
         Bosch requires the whole configuration block on every PUT, so unchanged
@@ -1962,7 +1995,7 @@ class OutdoorSirenService(SHCDeviceService):
                 self.device_id,
             )
             return
-        overrides = {}
+        overrides: dict[str, Any] = {}
         if alarm_duration is not None:
             overrides["alarmDuration"] = alarm_duration
         if flash_duration is not None:
@@ -1978,13 +2011,13 @@ class OutdoorSirenService(SHCDeviceService):
         )
 
     async def async_trigger_test_alarm(
-        self, sound_level: "OutdoorSirenService.SoundLevel" = None
-    ):
+        self, sound_level: OutdoorSirenService.SoundLevel | None = None
+    ) -> None:
         """Async: fire a short test alarm (operation/triggerTestAlarm)."""
         level = (sound_level or self.sound_level).value
         await self.async_post_operation("triggerTestAlarm", {"soundLevel": level})
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    acousticAlarmOn          : {self.acoustic_alarm_on}")
         print(f"    visualAlarmOn            : {self.visual_alarm_on}")
@@ -2043,7 +2076,7 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
     @property
     def configured_power_supply(
         self,
-    ) -> "OutdoorSirenPowerSupplyService.ConfiguredPowerSupply":
+    ) -> OutdoorSirenPowerSupplyService.ConfiguredPowerSupply:
         try:
             return self.ConfiguredPowerSupply(
                 self.state.get("configuredPowerSupply", "UNKNOWN")
@@ -2052,7 +2085,7 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
             return self.ConfiguredPowerSupply.UNKNOWN
 
     @property
-    def main_power_supply(self) -> "OutdoorSirenPowerSupplyService.MainPowerSupply":
+    def main_power_supply(self) -> OutdoorSirenPowerSupplyService.MainPowerSupply:
         try:
             return self.MainPowerSupply(self.state.get("mainPowerSupply", "UNKNOWN"))
         except ValueError:
@@ -2061,7 +2094,7 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
     @property
     def solar_charging_score(
         self,
-    ) -> "OutdoorSirenPowerSupplyService.SolarChargingScore":
+    ) -> OutdoorSirenPowerSupplyService.SolarChargingScore:
         try:
             return self.SolarChargingScore(
                 self.state.get("solarChargingScore", "UNKNOWN")
@@ -2069,7 +2102,7 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
         except ValueError:
             return self.SolarChargingScore.UNKNOWN
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    batteryPercentage        : {self.battery_percentage_remaining}")
         print(f"    mainPowerSupply          : {self.main_power_supply}")
@@ -2088,20 +2121,21 @@ class KeypadTriggerService(SHCDeviceService):
     """
 
     @property
-    def switch_type(self) -> str:
-        return self.state.get("switchType")
+    def switch_type(self) -> str | None:
+        raw = self.state.get("switchType")
+        return str(raw) if raw is not None else None
 
     @property
-    def scenario_id_associations(self) -> list:
+    def scenario_id_associations(self) -> list[Any]:
         # Each entry maps a key (keyName/keyState) to a scenarioId. Shape is not
         # yet confirmed by a rawscan, so it is surfaced verbatim.
-        return self.state.get("scenarioIdAssociations", []) or []
+        return list(self.state.get("scenarioIdAssociations", []) or [])
 
     @property
-    def ids_to_trigger(self) -> list:
-        return self.state.get("idsToTrigger", []) or []
+    def ids_to_trigger(self) -> list[Any]:
+        return list(self.state.get("idsToTrigger", []) or [])
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    switchType               : {self.switch_type}")
         print(f"    scenarioIdAssociations   : {self.scenario_id_associations}")
@@ -2130,7 +2164,7 @@ class SoftwareUpdateService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def sw_update_state(self) -> "SoftwareUpdateService.SwUpdateState":
+    def sw_update_state(self) -> SoftwareUpdateService.SwUpdateState:
         raw = self.state.get("swUpdateState")
         if raw is None:
             return self.SwUpdateState.UNKNOWN
@@ -2140,22 +2174,25 @@ class SoftwareUpdateService(SHCDeviceService):
             return self.SwUpdateState.UNKNOWN
 
     @property
-    def sw_update_last_result(self) -> str:
-        return self.state.get("swUpdateLastResult")
+    def sw_update_last_result(self) -> str | None:
+        raw = self.state.get("swUpdateLastResult")
+        return str(raw) if raw is not None else None
 
     @property
-    def sw_update_available_version(self) -> str:
-        return self.state.get("swUpdateAvailableVersion")
+    def sw_update_available_version(self) -> str | None:
+        raw = self.state.get("swUpdateAvailableVersion")
+        return str(raw) if raw is not None else None
 
     @property
-    def sw_installed_version(self) -> str:
-        return self.state.get("swInstalledVersion")
+    def sw_installed_version(self) -> str | None:
+        raw = self.state.get("swInstalledVersion")
+        return str(raw) if raw is not None else None
 
     @property
     def automatic_updates_enabled(self) -> bool:
         return bool(self.state.get("automaticUpdatesEnabled", False))
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    swUpdateState            : {self.sw_update_state}")
         print(f"    swInstalledVersion       : {self.sw_installed_version}")
@@ -2181,14 +2218,14 @@ class DimmerConfigurationService(SHCDeviceService):
     @property
     def edge_phase_control_mode(
         self,
-    ) -> "DimmerConfigurationService.EdgePhaseControlMode":
+    ) -> DimmerConfigurationService.EdgePhaseControlMode:
         try:
             return self.EdgePhaseControlMode(self.state.get("edgePhaseControlMode"))
         except ValueError:
             return self.EdgePhaseControlMode.TRAILING
 
     @property
-    def _brightness_range(self) -> dict:
+    def _brightness_range(self) -> dict[str, Any]:
         return self.state.get("brightnessRange", {}) or {}
 
     @property
@@ -2204,18 +2241,21 @@ class DimmerConfigurationService(SHCDeviceService):
         return int(self.state.get("dimmingSpeed", 5))
 
     async def async_set_edge_phase_control_mode(
-        self, mode: "DimmerConfigurationService.EdgePhaseControlMode"
-    ):
+        self, mode: DimmerConfigurationService.EdgePhaseControlMode
+    ) -> None:
         """Async write: set the phase-control mode (TRAILING/LEADING)."""
         await self.async_put_state_element("edgePhaseControlMode", mode.value)
 
-    async def async_set_dimming_speed(self, speed: int):
+    async def async_set_dimming_speed(self, speed: int) -> None:
         """Async write: set the dimming speed (1-10)."""
         await self.async_put_state_element("dimmingSpeed", int(speed))
 
     async def async_set_brightness_range(
-        self, *, min_brightness: int = None, max_brightness: int = None
-    ):
+        self,
+        *,
+        min_brightness: int | None = None,
+        max_brightness: int | None = None,
+    ) -> None:
         """Async write: update the calibrated brightness range.
 
         Sent as a whole sub-object (both bounds), filling the unchanged bound
@@ -2231,15 +2271,15 @@ class DimmerConfigurationService(SHCDeviceService):
         }
         await self.async_put_state_element("brightnessRange", rng)
 
-    async def async_preview_max_brightness(self):
+    async def async_preview_max_brightness(self) -> None:
         """Async: flash the load at the configured maximum (calibration)."""
         await self.async_post_operation("previewMaxBrightness")
 
-    async def async_preview_min_brightness(self):
+    async def async_preview_min_brightness(self) -> None:
         """Async: flash the load at the configured minimum (calibration)."""
         await self.async_post_operation("previewMinBrightness")
 
-    def summary(self):
+    def summary(self) -> None:
         super().summary()
         print(f"    edgePhaseControlMode     : {self.edge_phase_control_mode}")
         print(
@@ -2326,7 +2366,7 @@ SERVICE_MAPPING = {
 SUPPORTED_DEVICE_SERVICE_IDS = SERVICE_MAPPING.keys()
 
 
-def build(api, raw_device_service):
+def build(api: Any, raw_device_service: dict[str, Any]) -> SHCDeviceService:
     device_service_id = raw_device_service["id"]
     if device_service_id not in SUPPORTED_DEVICE_SERVICE_IDS:
         raise ValueError(f"Unsupported device service: {device_service_id!r}")

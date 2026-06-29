@@ -2005,7 +2005,7 @@ class TestSHCMicromoduleDimmer:
         obj._huecolortemperature_service = None
         obj._hsbcoloractuator_service = None
         obj._capabilities = _L.Capabilities(0) | _L.Capabilities.BRIGHTNESS
-        assert obj.binarystate is None
+        assert obj.binarystate is False
 
 
 # ---------------------------------------------------------------------------
