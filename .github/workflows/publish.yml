@@ -66,16 +66,36 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Create GitHub release (idempotent, auto-notes)
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk "/^## $VERSION( |$)/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md \
+            > /tmp/release-notes.md
+          if [ ! -s /tmp/release-notes.md ]; then
+            echo "No CHANGELOG entry found for $VERSION — falling back to auto-notes."
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fallback=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FALLBACK: ${{ steps.notes.outputs.fallback }}
         run: |
           TAG="${GITHUB_REF_NAME}"
+          TITLE="${TAG#v}"
+          NOTES_FLAG="--notes-file /tmp/release-notes.md"
+          [ "$FALLBACK" = "true" ] && NOTES_FLAG="--generate-notes"
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $TAG already exists — leaving untouched."
+            gh release edit "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              $NOTES_FLAG
           else
             gh release create "$TAG" \
               --repo "$GITHUB_REPOSITORY" \
-              --title "${TAG#v}" \
-              --generate-notes
+              --title "$TITLE" \
+              $NOTES_FLAG
           fi
