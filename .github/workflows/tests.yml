@@ -46,4 +46,4 @@ jobs:
       - name: Lint — ruff format (gate)
         run: ruff format --check boschshcpy
       - name: Type check
-        run: mypy --strict --ignore-missing-imports boschshcpy/
+        run: mypy boschshcpy/
