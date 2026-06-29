@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.2
+
+**No breaking API changes.** Fully backward-compatible with 0.4.x.
+
+### Fixed
+
+- **More `number` readings were truncated to whole units** (follow-up to #352).
+  The same `int()` truncation as the Twinguard temperature also affected three
+  fields the local API types as `number`:
+  - `AirQualityLevelService.humidity` (Twinguard) — was inconsistent with
+    `HumidityLevelService.humidity`, which already returns `float`.
+  - `AirQualityLevelService.purity` (Twinguard).
+  - `ValveTappetService.position` (Thermostat II valve tappet).
+
+  All three now return the full `float`; the matching model properties
+  (`SHCTwinguard.humidity`/`purity`, valve `position`) changed `int` → `float`.
+  This restores decimal resolution in the recorder/long-term statistics
+  (the HA sensors display these rounded, so the visible value is unchanged).
+
 ## 0.4.1
 
 **No breaking API changes.** Fully backward-compatible with 0.4.0.

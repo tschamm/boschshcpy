@@ -1543,7 +1543,7 @@ class SHCThermostat(
         )  # type: ignore[assignment]
 
     @property
-    def position(self) -> int:
+    def position(self) -> float:
         return self._valvetappet_service.position
 
     @property
@@ -2524,7 +2524,7 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._airqualitylevel_service.temperatureRating
 
     @property
-    def humidity(self) -> int:
+    def humidity(self) -> float:
         return self._airqualitylevel_service.humidity
 
     @property
@@ -2532,7 +2532,7 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._airqualitylevel_service.humidityRating
 
     @property
-    def purity(self) -> int:
+    def purity(self) -> float:
         return self._airqualitylevel_service.purity
 
     @property
