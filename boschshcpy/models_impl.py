@@ -77,7 +77,6 @@ from .services_impl import (
 
 
 class SHCBatteryDevice(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -101,7 +100,6 @@ class SHCBatteryDevice(SHCDevice):
 
 
 class _CommunicationQuality(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -109,8 +107,10 @@ class _CommunicationQuality(SHCDevice):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._communicationquality_service: CommunicationQualityService = self.device_service(  # type: ignore[assignment]
-            "CommunicationQuality"
+        self._communicationquality_service: CommunicationQualityService = (
+            self.device_service(  # type: ignore[assignment]
+                "CommunicationQuality"
+            )
         )
 
     @property
@@ -119,7 +119,6 @@ class _CommunicationQuality(SHCDevice):
 
 
 class _PowerMeter(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -152,7 +151,6 @@ class _PowerMeter(SHCDevice):
 
 
 class _ChildProtection(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -180,7 +178,6 @@ class _ChildProtection(SHCDevice):
 
 
 class _Thermostat(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -210,7 +207,6 @@ class _Thermostat(SHCDevice):
 
 
 class _PowerSwitch(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -240,7 +236,6 @@ class _PowerSwitch(SHCDevice):
 
 
 class _PowerSwitchProgram(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -248,15 +243,16 @@ class _PowerSwitchProgram(SHCDevice):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._powerswitchprogram_service: PowerSwitchProgramService | None = self.device_service(  # type: ignore[assignment]
-            "PowerSwitchProgram"
+        self._powerswitchprogram_service: PowerSwitchProgramService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "PowerSwitchProgram"
+            )
         )
 
     # To be implemented
 
 
 class _TemperatureLevel(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -264,8 +260,10 @@ class _TemperatureLevel(SHCDevice):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._temperaturelevel_service: TemperatureLevelService | None = self.device_service(  # type: ignore[assignment]
-            "TemperatureLevel"
+        self._temperaturelevel_service: TemperatureLevelService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "TemperatureLevel"
+            )
         )
 
     @property
@@ -276,7 +274,6 @@ class _TemperatureLevel(SHCDevice):
 
 
 class _HumidityLevel(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -300,7 +297,6 @@ class _HumidityLevel(SHCDevice):
 
 
 class _TemperatureOffset(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -308,8 +304,10 @@ class _TemperatureOffset(SHCDevice):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._temperatureoffset_service: TemperatureOffsetService | None = self.device_service(  # type: ignore[assignment]
-            "TemperatureOffset"
+        self._temperatureoffset_service: TemperatureOffsetService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "TemperatureOffset"
+            )
         )
 
     @property
@@ -348,7 +346,6 @@ class _TemperatureOffset(SHCDevice):
 
 
 class _SilentMode(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -386,7 +383,6 @@ class _SilentMode(SHCDevice):
 
 
 class SHCSmokeDetector(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -396,11 +392,15 @@ class SHCSmokeDetector(SHCBatteryDevice):
         super().__init__(api, raw_device, raw_device_services)
 
         self._alarm_service: AlarmService = self.device_service("Alarm")  # type: ignore[assignment]
-        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(  # type: ignore[assignment]
-            "SmokeDetectorCheck"
+        self._smokedetectorcheck_service: SmokeDetectorCheckService = (
+            self.device_service(  # type: ignore[assignment]
+                "SmokeDetectorCheck"
+            )
         )
-        self._smoke_sensitivity_service: SmokeSensitivityService | None = self.device_service(  # type: ignore[assignment]
-            "SmokeSensitivity"
+        self._smoke_sensitivity_service: SmokeSensitivityService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "SmokeSensitivity"
+            )
         )
 
     @property
@@ -484,7 +484,9 @@ class SHCSmokeDetector(SHCBatteryDevice):
         return self._smoke_sensitivity_service.smoke_sensitivity
 
     @smoke_sensitivity.setter
-    def smoke_sensitivity(self, value: SmokeSensitivityService.SmokeSensitivityLevel) -> None:
+    def smoke_sensitivity(
+        self, value: SmokeSensitivityService.SmokeSensitivityLevel
+    ) -> None:
         if self._smoke_sensitivity_service is not None:
             self._smoke_sensitivity_service.smoke_sensitivity = value
 
@@ -517,7 +519,6 @@ class SHCSmokeDetector(SHCBatteryDevice):
 
 
 class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -527,17 +528,25 @@ class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
         super().__init__(api, raw_device, raw_device_services)
 
         self._routing_service: RoutingService = self.device_service("Routing")  # type: ignore[assignment]
-        self._energy_saving_mode_service: EnergySavingModeService | None = self.device_service(  # type: ignore[assignment]
-            "EnergySavingMode"
+        self._energy_saving_mode_service: EnergySavingModeService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "EnergySavingMode"
+            )
         )
-        self._led_brightness_configuration_service: LedBrightnessConfigurationService | None = self.device_service(  # type: ignore[assignment]
+        self._led_brightness_configuration_service: (
+            LedBrightnessConfigurationService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "LedBrightnessConfiguration"
         )
-        self._power_switch_configuration_service: PowerSwitchConfigurationService | None = self.device_service(  # type: ignore[assignment]
+        self._power_switch_configuration_service: (
+            PowerSwitchConfigurationService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "PowerSwitchConfiguration"
         )
-        self._power_switch_warning_service: PowerSwitchWarningService | None = self.device_service(  # type: ignore[assignment]
-            "PowerSwitchWarning"
+        self._power_switch_warning_service: PowerSwitchWarningService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "PowerSwitchWarning"
+            )
         )
 
     @property
@@ -625,7 +634,9 @@ class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
             await self._led_brightness_configuration_service.async_set_brightness(value)
 
     @property
-    def state_after_power_outage(self) -> PowerSwitchConfigurationService.StateAfterPowerOutage | None:
+    def state_after_power_outage(
+        self,
+    ) -> PowerSwitchConfigurationService.StateAfterPowerOutage | None:
         if self._power_switch_configuration_service is None:
             return None
         return self._power_switch_configuration_service.state_after_power_outage
@@ -682,7 +693,6 @@ class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
 class SHCSmartPlugCompact(
     _CommunicationQuality, _PowerMeter, _PowerSwitch, _PowerSwitchProgram
 ):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -690,17 +700,25 @@ class SHCSmartPlugCompact(
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._energy_saving_mode_service: EnergySavingModeService | None = self.device_service(  # type: ignore[assignment]
-            "EnergySavingMode"
+        self._energy_saving_mode_service: EnergySavingModeService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "EnergySavingMode"
+            )
         )
-        self._led_brightness_configuration_service: LedBrightnessConfigurationService | None = self.device_service(  # type: ignore[assignment]
+        self._led_brightness_configuration_service: (
+            LedBrightnessConfigurationService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "LedBrightnessConfiguration"
         )
-        self._power_switch_configuration_service: PowerSwitchConfigurationService | None = self.device_service(  # type: ignore[assignment]
+        self._power_switch_configuration_service: (
+            PowerSwitchConfigurationService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "PowerSwitchConfiguration"
         )
-        self._power_switch_warning_service: PowerSwitchWarningService | None = self.device_service(  # type: ignore[assignment]
-            "PowerSwitchWarning"
+        self._power_switch_warning_service: PowerSwitchWarningService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "PowerSwitchWarning"
+            )
         )
 
     @property
@@ -772,7 +790,9 @@ class SHCSmartPlugCompact(
             await self._led_brightness_configuration_service.async_set_brightness(value)
 
     @property
-    def state_after_power_outage(self) -> PowerSwitchConfigurationService.StateAfterPowerOutage | None:
+    def state_after_power_outage(
+        self,
+    ) -> PowerSwitchConfigurationService.StateAfterPowerOutage | None:
         if self._power_switch_configuration_service is None:
             return None
         return self._power_switch_configuration_service.state_after_power_outage
@@ -835,7 +855,6 @@ class SHCLightSwitchBSM(SHCLightSwitch, _PowerMeter):
 
 
 class SHCLightControl(_CommunicationQuality, _PowerMeter):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -857,11 +876,15 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
 
     @property
     def keyname(self) -> KeypadService.KeyState | None:
-        return self._keypad_service.keyName if self._keypad_service is not None else None
+        return (
+            self._keypad_service.keyName if self._keypad_service is not None else None
+        )
 
     @property
     def eventtype(self) -> KeypadService.KeyEvent | None:
-        return self._keypad_service.eventType if self._keypad_service is not None else None
+        return (
+            self._keypad_service.eventType if self._keypad_service is not None else None
+        )
 
     @property
     def eventtimestamp(self) -> int:
@@ -882,7 +905,9 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
         if self._switch_config_service is not None:
             self._switch_config_service.switch_type = value
 
-    async def async_set_switch_type(self, value: SwitchConfiguration.SwitchType) -> None:
+    async def async_set_switch_type(
+        self, value: SwitchConfiguration.SwitchType
+    ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_switchType(value)
 
@@ -927,7 +952,9 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
         if self._switch_config_service is not None:
             self._switch_config_service.actuator_type = value
 
-    async def async_set_actuator_type(self, value: SwitchConfiguration.ActuatorType) -> None:
+    async def async_set_actuator_type(
+        self, value: SwitchConfiguration.ActuatorType
+    ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_actuatorType(value)
 
@@ -942,7 +969,9 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
         if self._switch_config_service is not None:
             self._switch_config_service.output_mode = value
 
-    async def async_set_output_mode(self, value: SwitchConfiguration.OutputMode) -> None:
+    async def async_set_output_mode(
+        self, value: SwitchConfiguration.OutputMode
+    ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_outputMode(value)
 
@@ -950,7 +979,6 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
 class SHCMicromoduleRelay(
     _CommunicationQuality, _ChildProtection, _PowerSwitch, _PowerSwitchProgram
 ):
-
     class RelayType(Enum):
         BUTTON = "BUTTON"
         SWITCH = "SWITCH"
@@ -1025,7 +1053,9 @@ class SHCMicromoduleRelay(
         if self._switch_config_service is not None:
             self._switch_config_service.switch_type = value
 
-    async def async_set_switch_type(self, value: SwitchConfiguration.SwitchType) -> None:
+    async def async_set_switch_type(
+        self, value: SwitchConfiguration.SwitchType
+    ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_switchType(value)
 
@@ -1070,7 +1100,9 @@ class SHCMicromoduleRelay(
         if self._switch_config_service is not None:
             self._switch_config_service.actuator_type = value
 
-    async def async_set_actuator_type(self, value: SwitchConfiguration.ActuatorType) -> None:
+    async def async_set_actuator_type(
+        self, value: SwitchConfiguration.ActuatorType
+    ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_actuatorType(value)
 
@@ -1085,7 +1117,9 @@ class SHCMicromoduleRelay(
         if self._switch_config_service is not None:
             self._switch_config_service.output_mode = value
 
-    async def async_set_output_mode(self, value: SwitchConfiguration.OutputMode) -> None:
+    async def async_set_output_mode(
+        self, value: SwitchConfiguration.OutputMode
+    ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_outputMode(value)
 
@@ -1095,7 +1129,6 @@ class SHCMicromoduleRelay(
 
 
 class SHCShutterControl(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1132,7 +1165,6 @@ class SHCShutterControl(SHCDevice):
 class SHCMicromoduleShutterControl(
     SHCShutterControl, _CommunicationQuality, _ChildProtection, _PowerMeter
 ):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1162,11 +1194,15 @@ class SHCMicromoduleShutterControl(
 
     @property
     def keyname(self) -> KeypadService.KeyState | None:
-        return self._keypad_service.keyName if self._keypad_service is not None else None
+        return (
+            self._keypad_service.keyName if self._keypad_service is not None else None
+        )
 
     @property
     def eventtype(self) -> KeypadService.KeyEvent | None:
-        return self._keypad_service.eventType if self._keypad_service is not None else None
+        return (
+            self._keypad_service.eventType if self._keypad_service is not None else None
+        )
 
     @eventtype.setter
     def eventtype(self, value: KeypadService.KeyEvent) -> None:
@@ -1185,7 +1221,6 @@ class SHCMicromoduleShutterControl(
 
 
 class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1196,8 +1231,10 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
         self._blindscontrol_service: BlindsControlService = self.device_service(  # type: ignore[assignment]
             "BlindsControl"
         )
-        self._blindsscenecontrol_service: BlindsSceneControlService = self.device_service(  # type: ignore[assignment]
-            "BlindsSceneControl"
+        self._blindsscenecontrol_service: BlindsSceneControlService = (
+            self.device_service(  # type: ignore[assignment]
+                "BlindsSceneControl"
+            )
         )
 
     @property
@@ -1248,7 +1285,6 @@ class SHCMicromoduleBlinds(SHCMicromoduleShutterControl):
 
 
 class SHCShutterContact(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1268,7 +1304,6 @@ class SHCShutterContact(SHCBatteryDevice):
 
 
 class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1296,7 +1331,6 @@ class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
 
 
 class SHCShutterContact2Plus(SHCShutterContact2):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1342,7 +1376,6 @@ class SHCShutterContact2Plus(SHCShutterContact2):
 
 
 class SHCCamera360(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1354,8 +1387,10 @@ class SHCCamera360(SHCDevice):
         self._privacymode_service: PrivacyModeService = self.device_service(  # type: ignore[assignment]
             "PrivacyMode"
         )
-        self._cameranotification_service: CameraNotificationService | None = self.device_service(  # type: ignore[assignment]
-            "CameraNotification"
+        self._cameranotification_service: CameraNotificationService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "CameraNotification"
+            )
         )
 
     @property
@@ -1396,7 +1431,6 @@ class SHCCamera360(SHCDevice):
 
 
 class SHCCameraEyes(SHCCamera360):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1430,7 +1464,6 @@ class SHCCameraEyes(SHCCamera360):
 
 
 class SHCCameraOutdoorGen2(SHCCamera360):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1438,11 +1471,15 @@ class SHCCameraOutdoorGen2(SHCCamera360):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._cameraambientlight_service: CameraAmbientLightService | None = self.device_service(  # type: ignore[assignment]
-            "CameraAmbientLight"
+        self._cameraambientlight_service: CameraAmbientLightService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "CameraAmbientLight"
+            )
         )
-        self._camerafrontlight_service: CameraFrontLightService | None = self.device_service(  # type: ignore[assignment]
-            "CameraFrontLight"
+        self._camerafrontlight_service: CameraFrontLightService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "CameraFrontLight"
+            )
         )
 
     @property
@@ -1494,7 +1531,6 @@ class SHCThermostat(
     _TemperatureLevel,
     _TemperatureOffset,
 ):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1502,7 +1538,9 @@ class SHCThermostat(
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._valvetappet_service: ValveTappetService = self.device_service("ValveTappet")  # type: ignore[assignment]
+        self._valvetappet_service: ValveTappetService = self.device_service(
+            "ValveTappet"
+        )  # type: ignore[assignment]
 
     @property
     def position(self) -> int:
@@ -1514,7 +1552,6 @@ class SHCThermostat(
 
 
 class SHCClimateControl(_TemperatureLevel):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1522,10 +1559,14 @@ class SHCClimateControl(_TemperatureLevel):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._roomclimatecontrol_service: RoomClimateControlService = self.device_service(  # type: ignore[assignment]
-            "RoomClimateControl"
+        self._roomclimatecontrol_service: RoomClimateControlService = (
+            self.device_service(  # type: ignore[assignment]
+                "RoomClimateControl"
+            )
         )
-        self._supportedcontrolmode_service: ThermostatSupportedControlModeService | None = self.device_service(  # type: ignore[assignment]
+        self._supportedcontrolmode_service: (
+            ThermostatSupportedControlModeService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "ThermostatSupportedControlMode"
         )
 
@@ -1661,7 +1702,6 @@ class SHCClimateControl(_TemperatureLevel):
 
 
 class SHCHeatingCircuit(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1695,7 +1735,9 @@ class SHCHeatingCircuit(SHCDevice):
     def operation_mode(self, mode: HeatingCircuitService.OperationMode) -> None:
         self._heating_circuit_service.operation_mode = mode
 
-    async def async_set_operation_mode(self, mode: HeatingCircuitService.OperationMode) -> None:
+    async def async_set_operation_mode(
+        self, mode: HeatingCircuitService.OperationMode
+    ) -> None:
         """Async write: set HeatingCircuit operation mode (AUTOMATIC/MANUAL)."""
         await self._heating_circuit_service.async_put_state_element(
             "operationMode", mode.value
@@ -1741,7 +1783,6 @@ class SHCWallThermostat(
 
 
 class SHCThermostatGen2(SHCThermostat):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1755,11 +1796,15 @@ class SHCThermostatGen2(SHCThermostat):
         self._display_direction_service: DisplayDirection | None = self.device_service(  # type: ignore[assignment]
             "DisplayDirection"
         )
-        self._displayed_temp_service: DisplayedTemperatureConfiguration | None = self.device_service(  # type: ignore[assignment]
-            "DisplayedTemperatureConfiguration"
+        self._displayed_temp_service: DisplayedTemperatureConfiguration | None = (
+            self.device_service(  # type: ignore[assignment]
+                "DisplayedTemperatureConfiguration"
+            )
         )
-        self._wall_thermostat_config_service: WallThermostatConfiguration | None = self.device_service(  # type: ignore[assignment]
-            "WallThermostatConfiguration"
+        self._wall_thermostat_config_service: WallThermostatConfiguration | None = (
+            self.device_service(  # type: ignore[assignment]
+                "WallThermostatConfiguration"
+            )
         )
 
     @property
@@ -1818,12 +1863,16 @@ class SHCThermostatGen2(SHCThermostat):
         if self._display_direction_service is not None:
             self._display_direction_service.direction = value
 
-    async def async_set_display_direction(self, value: DisplayDirection.Direction) -> None:
+    async def async_set_display_direction(
+        self, value: DisplayDirection.Direction
+    ) -> None:
         if self._display_direction_service is not None:
             await self._display_direction_service.async_set_direction(value)
 
     @property
-    def displayed_temperature(self) -> DisplayedTemperatureConfiguration.DisplayedTemperature | None:
+    def displayed_temperature(
+        self,
+    ) -> DisplayedTemperatureConfiguration.DisplayedTemperature | None:
         if self._displayed_temp_service is None:
             return None
         return self._displayed_temp_service.displayed_temperature
@@ -1898,7 +1947,6 @@ class SHCRoomThermostat2(
     _Thermostat,
     _TemperatureOffset,
 ):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -1912,11 +1960,15 @@ class SHCRoomThermostat2(
         self._display_direction_service: DisplayDirection | None = self.device_service(  # type: ignore[assignment]
             "DisplayDirection"
         )
-        self._displayed_temp_service: DisplayedTemperatureConfiguration | None = self.device_service(  # type: ignore[assignment]
-            "DisplayedTemperatureConfiguration"
+        self._displayed_temp_service: DisplayedTemperatureConfiguration | None = (
+            self.device_service(  # type: ignore[assignment]
+                "DisplayedTemperatureConfiguration"
+            )
         )
-        self._terminal_config_service: TerminalConfiguration | None = self.device_service(  # type: ignore[assignment]
-            "TerminalConfiguration"
+        self._terminal_config_service: TerminalConfiguration | None = (
+            self.device_service(  # type: ignore[assignment]
+                "TerminalConfiguration"
+            )
         )
 
     @property
@@ -1975,12 +2027,16 @@ class SHCRoomThermostat2(
         if self._display_direction_service is not None:
             self._display_direction_service.direction = value
 
-    async def async_set_display_direction(self, value: DisplayDirection.Direction) -> None:
+    async def async_set_display_direction(
+        self, value: DisplayDirection.Direction
+    ) -> None:
         if self._display_direction_service is not None:
             await self._display_direction_service.async_set_direction(value)
 
     @property
-    def displayed_temperature(self) -> DisplayedTemperatureConfiguration.DisplayedTemperature | None:
+    def displayed_temperature(
+        self,
+    ) -> DisplayedTemperatureConfiguration.DisplayedTemperature | None:
         if self._displayed_temp_service is None:
             return None
         return self._displayed_temp_service.displayed_temperature
@@ -2043,7 +2099,6 @@ class SHCRoomThermostat2(
 
 
 class SHCUniversalSwitch(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2092,7 +2147,6 @@ class SHCUniversalSwitch(SHCBatteryDevice):
 
 
 class SHCUniversalSwitch2(SHCUniversalSwitch):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2112,7 +2166,6 @@ class SHCUniversalSwitch2(SHCUniversalSwitch):
 
 
 class SHCMotionDetector(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2135,7 +2188,6 @@ class SHCMotionDetector(SHCBatteryDevice):
 
 
 class SHCMotionDetector2(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2167,14 +2219,20 @@ class SHCMotionDetector2(SHCBatteryDevice):
         self._pollcontrol_service: PollControlService = self.device_service(  # type: ignore[assignment]
             "PollControl"
         )
-        self._pirsensorconfiguration_service: PirSensorConfigurationService = self.device_service(  # type: ignore[assignment]
-            "PirSensorConfiguration"
+        self._pirsensorconfiguration_service: PirSensorConfigurationService = (
+            self.device_service(  # type: ignore[assignment]
+                "PirSensorConfiguration"
+            )
         )
-        self._occupancydetection_service: OccupancyDetectionService = self.device_service(  # type: ignore[assignment]
-            "OccupancyDetection"
+        self._occupancydetection_service: OccupancyDetectionService = (
+            self.device_service(  # type: ignore[assignment]
+                "OccupancyDetection"
+            )
         )
-        self._communicationquality_service: CommunicationQualityService = self.device_service(  # type: ignore[assignment]
-            "CommunicationQuality"
+        self._communicationquality_service: CommunicationQualityService = (
+            self.device_service(  # type: ignore[assignment]
+                "CommunicationQuality"
+            )
         )
         self._petimmunity_service: PetImmunityService = self.device_service(  # type: ignore[assignment]
             "PetImmunity"
@@ -2182,7 +2240,9 @@ class SHCMotionDetector2(SHCBatteryDevice):
         self._walktest_service: WalkTestService | None = self.device_service(  # type: ignore[assignment]
             "WalkTest"
         )
-        self._smart_sensitivity_control_service: SmartSensitivityControlService | None = self.device_service(  # type: ignore[assignment]
+        self._smart_sensitivity_control_service: (
+            SmartSensitivityControlService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "SmartSensitivityControl"
         )
 
@@ -2379,7 +2439,9 @@ class SHCMotionDetector2(SHCBatteryDevice):
         if self._smart_sensitivity_control_service is not None:
             await self._smart_sensitivity_control_service.async_set_enabled(value)
 
-    def get_smart_sensitivity(self, context: SmartSensitivityControlService.SmartSensitivityContext) -> dict[str, Any] | None:
+    def get_smart_sensitivity(
+        self, context: SmartSensitivityControlService.SmartSensitivityContext
+    ) -> dict[str, Any] | None:
         """Return the sensitivity dict for the given context."""
         if self._smart_sensitivity_control_service is None:
             return None
@@ -2419,7 +2481,6 @@ class SHCMotionDetector2(SHCBatteryDevice):
 
 
 class SHCTwinguard(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2430,13 +2491,19 @@ class SHCTwinguard(SHCBatteryDevice):
         self._airqualitylevel_service: AirQualityLevelService = self.device_service(  # type: ignore[assignment]
             "AirQualityLevel"
         )
-        self._smokedetectorcheck_service: SmokeDetectorCheckService = self.device_service(  # type: ignore[assignment]
-            "SmokeDetectorCheck"
+        self._smokedetectorcheck_service: SmokeDetectorCheckService = (
+            self.device_service(  # type: ignore[assignment]
+                "SmokeDetectorCheck"
+            )
         )
-        self._smoke_sensitivity_service: SmokeSensitivityService | None = self.device_service(  # type: ignore[assignment]
-            "SmokeSensitivity"
+        self._smoke_sensitivity_service: SmokeSensitivityService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "SmokeSensitivity"
+            )
         )
-        self._twinguard_nightly_promise_service: TwinguardNightlyPromiseService | None = self.device_service(  # type: ignore[assignment]
+        self._twinguard_nightly_promise_service: (
+            TwinguardNightlyPromiseService | None
+        ) = self.device_service(  # type: ignore[assignment]
             "TwinguardNightlyPromise"
         )
 
@@ -2494,7 +2561,9 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._smoke_sensitivity_service.smoke_sensitivity
 
     @smoke_sensitivity.setter
-    def smoke_sensitivity(self, value: SmokeSensitivityService.SmokeSensitivityLevel) -> None:
+    def smoke_sensitivity(
+        self, value: SmokeSensitivityService.SmokeSensitivityLevel
+    ) -> None:
         if self._smoke_sensitivity_service is not None:
             self._smoke_sensitivity_service.smoke_sensitivity = value
 
@@ -2549,7 +2618,6 @@ class SHCTwinguard(SHCBatteryDevice):
 
 
 class SHCSmokeDetectionSystem(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2568,7 +2636,6 @@ class SHCSmokeDetectionSystem(SHCDevice):
 
 
 class SHCPresenceSimulationSystem(SHCDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2596,7 +2663,6 @@ class SHCPresenceSimulationSystem(SHCDevice):
 
 
 class SHCLight(SHCDevice):
-
     class Capabilities(Flag):
         BRIGHTNESS = auto()
         COLOR_TEMP = auto()
@@ -2613,14 +2679,20 @@ class SHCLight(SHCDevice):
         self._binaryswitch_service: BinarySwitchService = self.device_service(  # type: ignore[assignment]
             "BinarySwitch"
         )
-        self._multilevelswitch_service: MultiLevelSwitchService | None = self.device_service(  # type: ignore[assignment]
-            "MultiLevelSwitch"
+        self._multilevelswitch_service: MultiLevelSwitchService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "MultiLevelSwitch"
+            )
         )
-        self._huecolortemperature_service: HueColorTemperatureService | None = self.device_service(  # type: ignore[assignment]
-            "HueColorTemperature"
+        self._huecolortemperature_service: HueColorTemperatureService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "HueColorTemperature"
+            )
         )
-        self._hsbcoloractuator_service: HSBColorActuatorService | None = self.device_service(  # type: ignore[assignment]
-            "HSBColorActuator"
+        self._hsbcoloractuator_service: HSBColorActuatorService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "HSBColorActuator"
+            )
         )
 
         self._capabilities = self.Capabilities(0)
@@ -2727,7 +2799,6 @@ class SHCLight(SHCDevice):
 
 
 class SHCWaterLeakageSensor(SHCBatteryDevice):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2742,8 +2813,10 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
         self._tilt_service: WaterLeakageSensorTiltService = self.device_service(  # type: ignore[assignment]
             "WaterLeakageSensorTilt"
         )
-        self._sensor_check_service: WaterLeakageSensorCheckService = self.device_service(  # type: ignore[assignment]
-            "WaterLeakageSensorCheck"
+        self._sensor_check_service: WaterLeakageSensorCheckService = (
+            self.device_service(  # type: ignore[assignment]
+                "WaterLeakageSensorCheck"
+            )
         )
 
     @property
@@ -2766,7 +2839,6 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 class SHCMicromoduleDimmer(
     SHCLight, _CommunicationQuality, _ChildProtection, _PowerSwitch
 ):
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2775,8 +2847,10 @@ class SHCMicromoduleDimmer(
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
         # #123: optional dimmer calibration config; guard on None.
-        self._dimmerconfig_service: DimmerConfigurationService | None = self.device_service(  # type: ignore[assignment]
-            "DimmerConfiguration"
+        self._dimmerconfig_service: DimmerConfigurationService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "DimmerConfiguration"
+            )
         )
 
     @property
@@ -2818,7 +2892,6 @@ class SHCOutdoorSiren(SHCBatteryDevice):
     intrusion system; the only on-demand acoustic check is the test alarm.
     """
 
-
     def __init__(
         self,
         api: SHCAPI,
@@ -2827,8 +2900,10 @@ class SHCOutdoorSiren(SHCBatteryDevice):
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
         self._siren_service: OutdoorSirenService = self.device_service("OutdoorSiren")  # type: ignore[assignment]
-        self._powersupply_service: OutdoorSirenPowerSupplyService | None = self.device_service(  # type: ignore[assignment]
-            "OutdoorSirenPowerSupply"
+        self._powersupply_service: OutdoorSirenPowerSupplyService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "OutdoorSirenPowerSupply"
+            )
         )
 
     @property

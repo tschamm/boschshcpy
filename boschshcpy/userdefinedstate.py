@@ -8,7 +8,9 @@ from .information import SHCInformation
 
 
 class SHCUserDefinedState:
-    def __init__(self, api: SHCAPI, info: SHCInformation, raw_state: dict[str, Any]) -> None:
+    def __init__(
+        self, api: SHCAPI, info: SHCInformation, raw_state: dict[str, Any]
+    ) -> None:
         self._api = api
         self._info = info
         self._raw_state = raw_state

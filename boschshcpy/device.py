@@ -72,7 +72,9 @@ class SHCDevice:
 
     @property
     def profile(self) -> str | None:
-        return str(self._raw_device["profile"]) if "profile" in self._raw_device else None
+        return (
+            str(self._raw_device["profile"]) if "profile" in self._raw_device else None
+        )
 
     @property
     def supported_profiles(self) -> list[Any]:

@@ -43,7 +43,6 @@ from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem
 from .emma import SHCEmma
 from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCSessionError
-from .information import SHCInformation
 from .message import SHCMessage
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -140,7 +139,9 @@ class SHCSessionAsync:
 
         # Callback registries (same API as SHCSession)
         self._scenario_callbacks: dict[str, Callable[..., Any]] = {}
-        self._userdefinedstate_callbacks: dict[str, list[Callable[..., Any]]] = defaultdict(list)
+        self._userdefinedstate_callbacks: dict[str, list[Callable[..., Any]]] = (
+            defaultdict(list)
+        )
 
     # ------------------------------------------------------------------
     # Initialisation (async)
@@ -234,7 +235,9 @@ class SHCSessionAsync:
         self._devices_by_id[device_id] = device
         return device
 
-    async def _async_add_new_device(self, raw_device: dict[str, Any]) -> SHCDevice | None:
+    async def _async_add_new_device(
+        self, raw_device: dict[str, Any]
+    ) -> SHCDevice | None:
         """Async version of _add_device(update_services=True) for new-device events."""
         device_id = raw_device["id"]
         self._services_by_device_id.pop(device_id, None)
@@ -277,7 +280,8 @@ class SHCSessionAsync:
             userdefinedstate_id = raw_state["id"]
             userdefinedstate = SHCUserDefinedState(
                 api=self._api,  # type: ignore[arg-type]
-                info=self.information, raw_state=raw_state
+                info=self.information,
+                raw_state=raw_state,
             )
             self._userdefinedstates_by_id[userdefinedstate_id] = userdefinedstate
 
@@ -462,7 +466,9 @@ class SHCSessionAsync:
     # Long-poll result dispatch
     # ------------------------------------------------------------------
 
-    async def _process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
+    async def _process_long_polling_poll_result(
+        self, raw_result: dict[str, Any]
+    ) -> None:
         """Dispatch a single long-poll event to the correct handler.
 
         Mirrors SHCSession._process_long_polling_poll_result() line-for-line
@@ -545,7 +551,8 @@ class SHCSessionAsync:
             else:
                 userdefinedstate = SHCUserDefinedState(
                     api=self._api,  # type: ignore[arg-type]
-                    info=self.information, raw_state=raw_result
+                    info=self.information,
+                    raw_state=raw_result,
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
                 for instance, callback in self._subscribers:
@@ -570,7 +577,9 @@ class SHCSessionAsync:
     def subscribe(self, callback_tuple: Any) -> None:
         self._subscribers.append(callback_tuple)
 
-    def subscribe_scenario_callback(self, scenario_id: str, callback: Callable[..., Any]) -> None:
+    def subscribe_scenario_callback(
+        self, scenario_id: str, callback: Callable[..., Any]
+    ) -> None:
         self._scenario_callbacks[scenario_id] = callback
 
     def unsubscribe_scenario_callback(self, scenario_id: str) -> None:
@@ -662,7 +671,9 @@ class _AsyncSHCInformation:
     exposed to integrations are implemented here.
     """
 
-    def __init__(self, pub_info: dict[str, Any], info: dict[str, Any], api: Any = None) -> None:
+    def __init__(
+        self, pub_info: dict[str, Any], info: dict[str, Any], api: Any = None
+    ) -> None:
         self._pub_info = pub_info
         self._info = info
         self._api = api

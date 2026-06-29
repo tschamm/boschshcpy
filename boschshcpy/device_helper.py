@@ -91,7 +91,9 @@ class SHCDeviceHelper:
         for model in SUPPORTED_MODELS:
             self._devices_by_model[model] = {}
 
-    def device_init(self, raw_device: dict[str, Any], device_services: list[dict[str, Any]]) -> SHCDevice:
+    def device_init(
+        self, raw_device: dict[str, Any], device_services: list[dict[str, Any]]
+    ) -> SHCDevice:
         device_id = str(raw_device["id"])
         device_model = str(raw_device["deviceModel"])
         device: SHCDevice
@@ -207,7 +209,9 @@ class SHCDeviceHelper:
     def smart_plugs(self) -> typing.Sequence[SHCSmartPlug]:
         if "PSM" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCSmartPlug], list(self._devices_by_model["PSM"].values()))
+        return cast(
+            typing.Sequence[SHCSmartPlug], list(self._devices_by_model["PSM"].values())
+        )
 
     @property
     def smart_plugs_compact(self) -> typing.Sequence[SHCSmartPlugCompact]:
@@ -231,7 +235,10 @@ class SHCDeviceHelper:
     def climate_controls(self) -> typing.Sequence[SHCClimateControl]:
         if "ROOM_CLIMATE_CONTROL" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCClimateControl], list(self._devices_by_model["ROOM_CLIMATE_CONTROL"].values()))
+        return cast(
+            typing.Sequence[SHCClimateControl],
+            list(self._devices_by_model["ROOM_CLIMATE_CONTROL"].values()),
+        )
 
     @property
     def thermostats(self) -> typing.Sequence[SHCThermostat]:
@@ -268,19 +275,28 @@ class SHCDeviceHelper:
     def motion_detectors(self) -> typing.Sequence[SHCMotionDetector]:
         if "MD" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCMotionDetector], list(self._devices_by_model["MD"].values()))
+        return cast(
+            typing.Sequence[SHCMotionDetector],
+            list(self._devices_by_model["MD"].values()),
+        )
 
     @property
     def motion_detectors2(self) -> typing.Sequence[SHCMotionDetector2]:
         if "MD2" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCMotionDetector2], list(self._devices_by_model["MD2"].values()))
+        return cast(
+            typing.Sequence[SHCMotionDetector2],
+            list(self._devices_by_model["MD2"].values()),
+        )
 
     @property
     def twinguards(self) -> typing.Sequence[SHCTwinguard]:
         if "TWINGUARD" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCTwinguard], list(self._devices_by_model["TWINGUARD"].values()))
+        return cast(
+            typing.Sequence[SHCTwinguard],
+            list(self._devices_by_model["TWINGUARD"].values()),
+        )
 
     @property
     def universal_switches(self) -> typing.Sequence[SHCUniversalSwitch]:
@@ -295,37 +311,55 @@ class SHCDeviceHelper:
     def camera_eyes(self) -> typing.Sequence[SHCCameraEyes]:
         if "CAMERA_EYES" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCCameraEyes], list(self._devices_by_model["CAMERA_EYES"].values()))
+        return cast(
+            typing.Sequence[SHCCameraEyes],
+            list(self._devices_by_model["CAMERA_EYES"].values()),
+        )
 
     @property
     def camera_360(self) -> typing.Sequence[SHCCamera360]:
         if "CAMERA_360" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCCamera360], list(self._devices_by_model["CAMERA_360"].values()))
+        return cast(
+            typing.Sequence[SHCCamera360],
+            list(self._devices_by_model["CAMERA_360"].values()),
+        )
 
     @property
     def camera_outdoor_gen2(self) -> typing.Sequence[SHCCameraOutdoorGen2]:
         if "CAMERA_OUTDOOR_GEN2" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCCameraOutdoorGen2], list(self._devices_by_model["CAMERA_OUTDOOR_GEN2"].values()))
+        return cast(
+            typing.Sequence[SHCCameraOutdoorGen2],
+            list(self._devices_by_model["CAMERA_OUTDOOR_GEN2"].values()),
+        )
 
     @property
     def ledvance_lights(self) -> typing.Sequence[SHCLight]:
         if "LEDVANCE_LIGHT" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCLight], list(self._devices_by_model["LEDVANCE_LIGHT"].values()))
+        return cast(
+            typing.Sequence[SHCLight],
+            list(self._devices_by_model["LEDVANCE_LIGHT"].values()),
+        )
 
     @property
     def hue_lights(self) -> typing.Sequence[SHCLight]:
         if "HUE_LIGHT" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCLight], list(self._devices_by_model["HUE_LIGHT"].values()))
+        return cast(
+            typing.Sequence[SHCLight],
+            list(self._devices_by_model["HUE_LIGHT"].values()),
+        )
 
     @property
     def water_leakage_detectors(self) -> typing.Sequence[SHCWaterLeakageSensor]:
         if "WLS" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCWaterLeakageSensor], list(self._devices_by_model["WLS"].values()))
+        return cast(
+            typing.Sequence[SHCWaterLeakageSensor],
+            list(self._devices_by_model["WLS"].values()),
+        )
 
     @property
     def presence_simulation_system(
@@ -355,16 +389,25 @@ class SHCDeviceHelper:
     def heating_circuits(self) -> typing.Sequence[SHCHeatingCircuit]:
         if "HEATING_CIRCUIT" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCHeatingCircuit], list(self._devices_by_model["HEATING_CIRCUIT"].values()))
+        return cast(
+            typing.Sequence[SHCHeatingCircuit],
+            list(self._devices_by_model["HEATING_CIRCUIT"].values()),
+        )
 
     @property
     def micromodule_dimmers(self) -> typing.Sequence[SHCMicromoduleDimmer]:
         if "MICROMODULE_DIMMER" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCMicromoduleDimmer], list(self._devices_by_model["MICROMODULE_DIMMER"].values()))
+        return cast(
+            typing.Sequence[SHCMicromoduleDimmer],
+            list(self._devices_by_model["MICROMODULE_DIMMER"].values()),
+        )
 
     @property
     def outdoor_sirens(self) -> typing.Sequence[SHCOutdoorSiren]:
         if "OUTDOOR_SIREN" not in SUPPORTED_MODELS:
             return []
-        return cast(typing.Sequence[SHCOutdoorSiren], list(self._devices_by_model["OUTDOOR_SIREN"].values()))
+        return cast(
+            typing.Sequence[SHCOutdoorSiren],
+            list(self._devices_by_model["OUTDOOR_SIREN"].values()),
+        )

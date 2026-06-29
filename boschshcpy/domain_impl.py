@@ -4,7 +4,6 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Any
 
-from .api import SHCAPI
 
 
 class SHCIntrusionSystem:
@@ -33,9 +32,13 @@ class SHCIntrusionSystem:
         PARTIAL_PROTECTION = 1
         CUSTOM_PROTECTION = 2
 
-    def __init__(self, api: Any, raw_domain_state: dict[str, Any], root_device_id: str | None) -> None:
+    def __init__(
+        self, api: Any, raw_domain_state: dict[str, Any], root_device_id: str | None
+    ) -> None:
         self._api = api
-        self._raw_system_availability: dict[str, Any] = raw_domain_state["systemAvailability"]
+        self._raw_system_availability: dict[str, Any] = raw_domain_state[
+            "systemAvailability"
+        ]
         self._raw_arming_state: dict[str, Any] = raw_domain_state["armingState"]
         self._raw_alarm_state: dict[str, Any] = raw_domain_state["alarmState"]
         self._raw_active_configuration_profile: dict[str, Any] = raw_domain_state[

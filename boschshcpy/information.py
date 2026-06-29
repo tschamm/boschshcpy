@@ -85,7 +85,9 @@ class SHCInformation:
         UPDATE_SUCCESS = "UPDATE_SUCCESS"
         UPDATE_FAILED = "UPDATE_FAILED"
 
-    def __init__(self, api: Any, authenticate: bool = True, zeroconf: Any = None) -> None:
+    def __init__(
+        self, api: Any, authenticate: bool = True, zeroconf: Any = None
+    ) -> None:
         self._api = api
         self._unique_id: str | None = None
         self._name: str | None = None

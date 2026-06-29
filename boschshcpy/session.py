@@ -77,7 +77,9 @@ class SHCSession:
         self.reset_connection_listener: Callable[[], None] | None = None
 
         self._scenario_callbacks: dict[str, Callable[..., Any]] = {}
-        self._userdefinedstate_callbacks: dict[str, list[Callable[[], None]]] = defaultdict(list)
+        self._userdefinedstate_callbacks: dict[str, list[Callable[[], None]]] = (
+            defaultdict(list)
+        )
 
     def _enumerate_all(self) -> None:
         self.authenticate()
@@ -90,7 +92,9 @@ class SHCSession:
         self._initialize_domains()
         self._initialize_emma()
 
-    def _add_device(self, raw_device: dict[str, Any], update_services: bool = False) -> SHCDevice | None:
+    def _add_device(
+        self, raw_device: dict[str, Any], update_services: bool = False
+    ) -> SHCDevice | None:
         device_id = raw_device["id"]
 
         if update_services:
@@ -158,7 +162,9 @@ class SHCSession:
         for raw_state in raw_states:
             userdefinedstate_id = raw_state["id"]
             userdefinedstate = SHCUserDefinedState(
-                api=self._api, info=cast(SHCInformation, self.information), raw_state=raw_state
+                api=self._api,
+                info=cast(SHCInformation, self.information),
+                raw_state=raw_state,
             )
             self._userdefinedstates_by_id[userdefinedstate_id] = userdefinedstate
 
@@ -296,7 +302,9 @@ class SHCSession:
                 )
             else:
                 userdefinedstate = SHCUserDefinedState(
-                    api=self._api, info=cast(SHCInformation, self.information), raw_state=raw_result
+                    api=self._api,
+                    info=cast(SHCInformation, self.information),
+                    raw_state=raw_result,
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
                 for instance, callback in list(self._subscribers):
@@ -372,7 +380,9 @@ class SHCSession:
     def subscribe(self, callback_tuple: Any) -> None:
         self._subscribers.append(callback_tuple)
 
-    def subscribe_scenario_callback(self, scenario_id: str, callback: Callable[..., Any]) -> None:
+    def subscribe_scenario_callback(
+        self, scenario_id: str, callback: Callable[..., Any]
+    ) -> None:
         self._scenario_callbacks[scenario_id] = callback
 
     def unsubscribe_scenario_callback(self, scenario_id: str) -> None:

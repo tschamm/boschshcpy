@@ -17,7 +17,11 @@ logger = logging.getLogger("boschshcpy")
 
 class HostNameIgnoringAdapter(HTTPAdapter):  # type: ignore[misc]
     def init_poolmanager(
-        self, connections: int, maxsize: int, block: bool = False, **connection_pool_kw: Any
+        self,
+        connections: int,
+        maxsize: int,
+        block: bool = False,
+        **connection_pool_kw: Any,
     ) -> None:
         self.poolmanager = PoolManager(
             num_pools=connections, maxsize=maxsize, block=block, assert_hostname=False
@@ -79,7 +83,9 @@ class SHCAPI:
     def controller_ip(self) -> str:
         return self._controller_ip
 
-    def _session_request(self, method: str, api_url: str, **kwargs: Any) -> requests.Response:
+    def _session_request(
+        self, method: str, api_url: str, **kwargs: Any
+    ) -> requests.Response:
         """Issue a request, retrying once on a bare connection drop.
 
         #281: the SHC silently closes idle keep-alive connections. The next
@@ -239,7 +245,9 @@ class SHCAPI:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}"
         return self._get_api_result_or_fail(api_url, expected_type="DeviceServiceData")
 
-    def put_device_service_state(self, device_id: str, service_id: str, state_update: Any) -> None:
+    def put_device_service_state(
+        self, device_id: str, service_id: str, state_update: Any
+    ) -> None:
         api_url = f"{self._api_root}/devices/{device_id}/services/{service_id}/state"
         self._put_api_or_fail(api_url, state_update)
 

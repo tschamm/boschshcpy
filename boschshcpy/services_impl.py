@@ -1865,9 +1865,7 @@ class SwitchConfiguration(SHCDeviceService):
     def supported_output_modes(self) -> list[Any]:
         return list(self.state.get("supportedOutputModes", []))
 
-    async def async_set_switchType(
-        self, value: SwitchConfiguration.SwitchType
-    ) -> None:
+    async def async_set_switchType(self, value: SwitchConfiguration.SwitchType) -> None:
         await self.async_put_state_element("switchType", value.value)
 
     async def async_set_swapInputs(self, value: bool) -> None:
@@ -1881,9 +1879,7 @@ class SwitchConfiguration(SHCDeviceService):
     ) -> None:
         await self.async_put_state_element("actuatorType", value.value)
 
-    async def async_set_outputMode(
-        self, value: SwitchConfiguration.OutputMode
-    ) -> None:
+    async def async_set_outputMode(self, value: SwitchConfiguration.OutputMode) -> None:
         await self.async_put_state_element("outputMode", value.value)
 
     def summary(self) -> None:

@@ -80,9 +80,7 @@ class SHCDeviceService:
         """Async counterpart to put_state_element — awaits the async API."""
         await self.async_put_state({key: value})
 
-    def post_operation(
-        self, operation: str, data: dict[str, Any] | None = None
-    ) -> Any:
+    def post_operation(self, operation: str, data: dict[str, Any] | None = None) -> Any:
         """POST a service operation (e.g. triggerTestAlarm) — sync."""
         return self._api.post_device_service_operation(
             self.device_id.replace("#", "%23"), self.id, operation, data
