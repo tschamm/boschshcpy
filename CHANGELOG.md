@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.1
+
+**No breaking API changes.** Fully backward-compatible with 0.4.0.
+
+### Fixed
+
+- **Twinguard temperature truncated to whole degrees** (#352): `AirQualityLevelService.temperature`
+  cast the reading with `int()`, discarding the decimal Bosch sends
+  (OpenAPI `AirQualityLevelServiceStates.temperature` = `number`). The sensor
+  reported stepwise integer jumps and appeared to flat-line. It now returns the
+  full `float`; `SHCTwinguard.temperature` return type changed `int` → `float`.
+
 ## 0.4.0
 
 **No breaking API changes.** Fully backward-compatible with 0.3.x.

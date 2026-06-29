@@ -2516,7 +2516,7 @@ class SHCTwinguard(SHCBatteryDevice):
         return self._airqualitylevel_service.combinedRating
 
     @property
-    def temperature(self) -> int:
+    def temperature(self) -> float:
         return self._airqualitylevel_service.temperature
 
     @property

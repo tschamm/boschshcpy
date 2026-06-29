@@ -1469,6 +1469,14 @@ def test_air_quality_combined_rating_bad():
 def test_air_quality_temperature():
     svc = _make_svc(AirQualityLevelService, {**_AQ_BASE, "temperature": 21})
     assert svc.temperature == 21
+    assert isinstance(svc.temperature, float)
+
+
+def test_air_quality_temperature_keeps_decimals():
+    # Bosch sends one decimal; int() previously truncated 21.7 -> 21 (#352).
+    svc = _make_svc(AirQualityLevelService, {**_AQ_BASE, "temperature": 21.7})
+    assert svc.temperature == 21.7
+    assert isinstance(svc.temperature, float)
 
 
 def test_air_quality_temperature_rating():

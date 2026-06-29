@@ -1410,8 +1410,11 @@ class AirQualityLevelService(SHCDeviceService):
         return str(self.state.get("description", ""))
 
     @property
-    def temperature(self) -> int:
-        return int(self.state["temperature"])
+    def temperature(self) -> float:
+        # Bosch reports temperature as a JSON number with one decimal
+        # (OpenAPI: AirQualityLevelServiceStates.temperature = number).
+        # int() truncated it to whole degrees -> stepwise jumps (#352).
+        return float(self.state["temperature"])
 
     @property
     def temperatureRating(self) -> RatingState:

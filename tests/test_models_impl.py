@@ -1395,6 +1395,13 @@ class TestSHCTwinguard:
     def test_temperature(self):
         d = self._make(temp=24)
         assert d.temperature == 24
+        assert isinstance(d.temperature, float)
+
+    def test_temperature_keeps_decimals(self):
+        # Twinguard temperature must not be truncated to whole degrees (#352).
+        d = self._make(temp=23.4)
+        assert d.temperature == 23.4
+        assert isinstance(d.temperature, float)
 
     def test_temperature_rating(self):
         from boschshcpy.services_impl import AirQualityLevelService
