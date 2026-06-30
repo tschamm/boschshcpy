@@ -270,6 +270,19 @@ class TestUrlAndHeaders:
             "https://192.0.2.1:8444/smarthome/devices/dev-1/services/TemperatureLevel/state"
         )
 
+    def test_put_device_url_and_body(self, cert_and_key_paths: tuple[str, str]) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.put = MagicMock(return_value=resp)
+
+        body = {"@type": "device", "id": "dev-1", "profile": "OUTDOOR"}
+        asyncio.run(api.put_device("dev-1", body))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/devices/dev-1"
+        sent = api._session.put.call_args[1]["data"]
+        assert '"profile": "OUTDOOR"' in sent
+
     def test_long_polling_subscribe_url(self, cert_and_key_paths: tuple[str, str]) -> None:
         api = _make_api(cert_and_key_paths)
         resp = _make_mock_response(

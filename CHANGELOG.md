@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.3
+
+**No breaking API changes.** Fully backward-compatible with 0.4.x.
+
+### Added
+
+- **Write support for the device installation profile** (groundwork for
+  boschshc-hass #353). New `SHCDevice.set_profile()` / `async_set_profile()`
+  change the device-level installation `profile` (e.g. `GENERIC` ↔ `OUTDOOR`
+  on the Motion Detector II [+M]). The value is validated against the device's
+  advertised `supportedProfiles` before writing. Backed by a new
+  `SHCAPI.put_device()` / `SHCAPIAsync.put_device()` (full-body
+  `PUT /devices/{deviceId}`). The profile is a device-level field, not a
+  service; the write path is undocumented in the local OpenAPI (GET-only) and
+  is APK-derived ground-truth.
+
 ## 0.4.2
 
 **No breaking API changes.** Fully backward-compatible with 0.4.x.

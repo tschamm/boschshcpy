@@ -323,6 +323,16 @@ class SHCAPIAsync:
         api_url = f"{self._api_root}/devices/{device_id}"
         return await self._get_api_result_or_fail(api_url, expected_type="device")
 
+    async def put_device(self, device_id: str, device_data: Any) -> Any:
+        """Update a Device resource (full-body PUT).
+
+        Used to write device-level fields such as the installation ``profile``.
+        The SHC expects the full Device body (GET the device, mutate, PUT back).
+        Undocumented in the local OpenAPI (GET-only); APK ground-truth.
+        """
+        api_url = f"{self._api_root}/devices/{device_id}"
+        return await self._put_api_or_fail(api_url, device_data)
+
     async def get_services(self) -> Any:
         api_url = f"{self._api_root}/services"
         return await self._get_api_result_or_fail(

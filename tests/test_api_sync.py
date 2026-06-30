@@ -381,6 +381,17 @@ class TestGetEndpoints:
         with pytest.raises(SHCSessionError):
             api.get_device("hdm:ZigBee:abc")
 
+    # put_device ----------------------------------------------------------------
+    def test_put_device_url_and_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        body = {"@type": "device", "id": "hdm:ZigBee:abc", "profile": "OUTDOOR"}
+        api.put_device("hdm:ZigBee:abc", body)
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/devices/hdm:ZigBee:abc"
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert '"profile": "OUTDOOR"' in sent
+
     # get_services --------------------------------------------------------------
     def test_get_services_url(self):
         payload = [{"@type": "DeviceServiceData"}]

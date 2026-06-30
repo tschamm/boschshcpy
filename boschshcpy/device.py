@@ -80,6 +80,38 @@ class SHCDevice:
     def supported_profiles(self) -> list[Any]:
         return list(self._raw_device.get("supportedProfiles", []))
 
+    def _profile_put_body(self, profile: str) -> dict[str, Any]:
+        """Validate ``profile`` and build the full Device body to PUT.
+
+        The installation profile is a device-level field (not a service). The
+        SHC requires the complete Device resource on PUT, so we fetch the
+        current body and swap only ``profile``. Raises SHCException when the
+        device advertises supportedProfiles and ``profile`` is not among them.
+        """
+        supported = self.supported_profiles
+        if supported and profile not in supported:
+            raise SHCException(
+                f"Profile '{profile}' not in supportedProfiles {supported} "
+                f"for device {self.id}"
+            )
+        return {**self._raw_device, "profile": profile}
+
+    def set_profile(self, profile: str) -> None:
+        """Set the installation profile (sync; e.g. GENERIC / OUTDOOR)."""
+        body = self._profile_put_body(profile)
+        response = self._api.put_device(self.id, body)
+        # Prefer the server's canonical object (it may normalize fields); fall
+        # back to our request body when the SHC answers with an empty 2xx.
+        self.update_raw_information(response if response else body)
+
+    async def async_set_profile(self, profile: str) -> None:
+        """Set the installation profile (async; e.g. GENERIC / OUTDOOR)."""
+        body = self._profile_put_body(profile)
+        response = await self._api.put_device(self.id, body)
+        # Prefer the server's canonical object (it may normalize fields); fall
+        # back to our request body when the SHC answers with an empty 2xx.
+        self.update_raw_information(response if response else body)
+
     @property
     def name(self) -> str:
         return str(self._raw_device["name"])
