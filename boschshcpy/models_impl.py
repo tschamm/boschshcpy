@@ -1018,7 +1018,7 @@ class SHCMicromoduleRelay(
             )
 
     @property
-    def impulse_length(self) -> int | None:
+    def impulse_length(self) -> float | None:
         if self._impulseswitch_service is None:
             return None
         return self._impulseswitch_service.impulse_length

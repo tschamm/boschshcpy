@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.4.5
+
+**No breaking API changes.** Hotfix for 0.4.4.
+
+### Fixed
+
+- **mypy CI failure**: `SHCImpulseSwitch.impulse_length` (models_impl.py)
+  still declared `-> int | None` after 0.4.4 changed the underlying
+  `ImpulseSwitchService.impulse_length` to return `float` — now `float |
+  None` for consistency. 0.4.4's remote Tests workflow failed on this
+  (mypy strict), though the PyPI package itself was unaffected (mypy is a
+  type-check gate, not a runtime error) — this release fixes CI green.
+  Also added a local `mypy` gate to `scripts/local-ci.sh` so this class of
+  gap is caught before tagging in the future.
+
 ## 0.4.4
 
 **No breaking API changes.** Fully backward-compatible with 0.4.x. Two rounds
