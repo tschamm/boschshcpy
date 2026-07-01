@@ -280,6 +280,20 @@ class SHCAPI:
 
     @staticmethod
     def _check_jsonrpc_version(result: Any, method: str) -> None:
+        # A transient non-JSON-RPC-shaped 2xx (e.g. a proxy hiccup or the SHC
+        # mid-reboot) previously raised a bare IndexError/AttributeError here
+        # instead of a handled SHCSessionError — callers only catch
+        # JSONRPCError/SHCSessionError, so this could crash the polling
+        # thread's exception handling in an unexpected way.
+        if (
+            not isinstance(result, list)
+            or not result
+            or not isinstance(result[0], dict)
+        ):
+            raise SHCSessionError(
+                f"Malformed JSON-RPC response in {method}: expected a "
+                f"non-empty list of objects, got {result!r}"
+            )
         if result[0].get("jsonrpc") != "2.0":
             raise SHCSessionError(
                 f"Unexpected JSON-RPC version in {method} response: "

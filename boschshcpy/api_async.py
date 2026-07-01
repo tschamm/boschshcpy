@@ -154,6 +154,42 @@ class SHCAPIAsync:
     # Internal helpers
     # ------------------------------------------------------------------
 
+    async def _retry_once_on_connection_drop(self, api_url: str, attempt: Any) -> Any:
+        """Run attempt() once, retrying a single time on a bare connection drop.
+
+        #281 parity with the sync client (api.py:_session_request): the SHC
+        silently closes idle keep-alive connections, and aiohttp raises
+        ClientConnectionError on the next request reusing that dead pooled
+        connection before it reaches the controller. Because no response was
+        received, the command was not processed, so a single retry on a fresh
+        connection is safe (no risk of double-execution). Without this, the
+        async path (the one actually used by session_async.py / HA's
+        production long-poll session) hits the exact intermittent failure
+        #281 already fixed on the sync path.
+
+        ClientSSLError is a ClientConnectionError subclass but is
+        deliberately NOT retried — a cert/handshake failure won't be fixed by
+        trying again.
+        """
+        import aiohttp
+
+        try:
+            return await attempt()
+        except aiohttp.ClientSSLError as exc:
+            raise SHCConnectionError(f"API call returned SSLError: {exc}.") from exc
+        except aiohttp.ClientConnectionError as exc:
+            logger.debug(
+                "%s dropped (%s); retrying once on a fresh connection", api_url, exc
+            )
+            try:
+                return await attempt()
+            except aiohttp.ClientSSLError as exc2:
+                raise SHCConnectionError(
+                    f"API call returned SSLError: {exc2}."
+                ) from exc2
+            except aiohttp.ClientConnectionError as exc2:
+                raise SHCConnectionError(f"API connection error: {exc2}.") from exc2
+
     async def _get_api_result_or_fail(
         self,
         api_url: str,
@@ -169,7 +205,7 @@ class SHCAPIAsync:
         if extra_headers:
             headers.update(extra_headers)
 
-        try:
+        async def _attempt() -> Any:
             async with self._session.get(
                 api_url,
                 headers=headers,
@@ -200,10 +236,7 @@ class SHCAPIAsync:
                             )
                 return result
 
-        except aiohttp.ClientSSLError as exc:
-            raise SHCConnectionError(f"API call returned SSLError: {exc}.") from exc
-        except aiohttp.ClientConnectionError as exc:
-            raise SHCConnectionError(f"API connection error: {exc}.") from exc
+        return await self._retry_once_on_connection_drop(api_url, _attempt)
 
     async def _put_api_or_fail(
         self,
@@ -214,7 +247,7 @@ class SHCAPIAsync:
         """Async PUT — mirrors sync ``_put_api_or_fail``."""
         import aiohttp
 
-        try:
+        async def _attempt() -> Any:
             async with self._session.put(
                 api_url,
                 data=json.dumps(body),
@@ -227,10 +260,7 @@ class SHCAPIAsync:
                 content = await resp.read()
                 return json.loads(content) if content else {}
 
-        except aiohttp.ClientSSLError as exc:
-            raise SHCConnectionError(f"API call returned SSLError: {exc}.") from exc
-        except aiohttp.ClientConnectionError as exc:
-            raise SHCConnectionError(f"API connection error: {exc}.") from exc
+        return await self._retry_once_on_connection_drop(api_url, _attempt)
 
     async def _post_api_or_fail(
         self,
@@ -241,7 +271,7 @@ class SHCAPIAsync:
         """Async POST — mirrors sync ``_post_api_or_fail``."""
         import aiohttp
 
-        try:
+        async def _attempt() -> Any:
             async with self._session.post(
                 api_url,
                 data=json.dumps(body),
@@ -254,10 +284,7 @@ class SHCAPIAsync:
                 content = await resp.read()
                 return json.loads(content) if content else {}
 
-        except aiohttp.ClientSSLError as exc:
-            raise SHCConnectionError(f"API call returned SSLError: {exc}.") from exc
-        except aiohttp.ClientConnectionError as exc:
-            raise SHCConnectionError(f"API connection error: {exc}.") from exc
+        return await self._retry_once_on_connection_drop(api_url, _attempt)
 
     async def _process_nok_result(self, resp: Any) -> None:
         """Raise SHCSessionError for non-OK HTTP responses."""
@@ -379,6 +406,20 @@ class SHCAPIAsync:
 
     @staticmethod
     def _check_jsonrpc_version(result: list[Any], method: str) -> None:
+        # A transient non-JSON-RPC-shaped 2xx (proxy hiccup, SHC mid-reboot)
+        # previously raised a bare IndexError/AttributeError here instead of
+        # a handled SHCSessionError — this is the long-poll path HA actually
+        # runs, so an unguarded crash here isn't caught by the poll loop's
+        # JSONRPCError-specific resubscribe handling.
+        if (
+            not isinstance(result, list)
+            or not result
+            or not isinstance(result[0], dict)
+        ):
+            raise SHCSessionError(
+                f"Malformed JSON-RPC response in {method}: expected a "
+                f"non-empty list of objects, got {result!r}"
+            )
         if result[0].get("jsonrpc") != "2.0":
             raise SHCSessionError(
                 f"Unexpected JSON-RPC version in {method} response: "

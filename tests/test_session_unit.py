@@ -756,6 +756,62 @@ class TestPollingThreadLogic:
             target()
         mock_sleep.assert_any_call(15.0)
 
+    def test_polling_loop_finally_clears_thread_handle_but_not_poll_id(self):
+        """Regression: the thread's finally-block must clear _polling_thread
+        (so start_polling() can recover after a dead thread) but must NOT
+        also clear _poll_id — that field belongs to stop_polling()'s own
+        unconditional cleanup. If the closure clears it too, a normal
+        stop_polling() call would find _poll_id already None and skip
+        _maybe_unsubscribe() (guarded on "is not None"), silently leaking the
+        SHC-side long-poll subscription on every clean stop."""
+        s = _bare_session()
+        s._poll_id = "pid-123"
+
+        def fake_long_poll():
+            s._stop_polling_thread = True  # normal exit, not RuntimeError
+            return True
+
+        s._long_poll = fake_long_poll
+
+        target = self._capture_polling_closure(s)
+        s._stop_polling_thread = False
+        s._polling_thread = MagicMock()  # simulate "currently polling"
+        target()
+
+        assert s._polling_thread is None
+        assert s._poll_id == "pid-123"
+
+    def test_stop_polling_still_unsubscribes_after_normal_thread_exit(self):
+        """End-to-end regression for the same bug: after the polling closure
+        exits normally (poll_id left intact by the finally-block) and
+        stop_polling() runs its own cleanup, _maybe_unsubscribe() must
+        actually be invoked (not a no-op due to poll_id already being None)."""
+        s = _bare_session()
+        s._poll_id = "pid-456"
+        s._api.long_polling_unsubscribe = MagicMock()
+
+        def fake_long_poll():
+            s._stop_polling_thread = True
+            return True
+
+        s._long_poll = fake_long_poll
+        target = self._capture_polling_closure(s)
+        s._stop_polling_thread = False
+
+        # Run the thread body synchronously (as stop_polling() would await it
+        # via join() in the real threaded case) before calling stop_polling().
+        target()
+        # stop_polling() needs a "polling" thread handle to proceed; restore
+        # a stand-in whose join()/is_alive() behave like an already-finished
+        # thread (mirrors what join() would observe after the real thread
+        # exited synchronously above).
+        s._polling_thread = MagicMock()
+        s._polling_thread.is_alive.return_value = False
+
+        s.stop_polling()
+
+        s._api.long_polling_unsubscribe.assert_called_once_with("pid-456")
+
 
 # ---------------------------------------------------------------------------
 # _add_device

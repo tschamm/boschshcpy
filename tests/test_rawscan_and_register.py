@@ -300,6 +300,17 @@ class TestWriteTlsAsset:
         write_tls_asset(str(out_file), b"KEY DATA")
         assert out_file.exists()
 
+    def test_write_creates_file_with_owner_only_permissions(self, tmp_path):
+        """The private key must not be created world/group-readable under the
+        common 022 umask — os.open(..., 0o600) instead of the bare open()
+        builtin (which honors the process umask)."""
+        import stat
+
+        out_file = tmp_path / "key.pem"
+        write_tls_asset(str(out_file), b"KEY DATA")
+        mode = stat.S_IMODE(out_file.stat().st_mode)
+        assert mode == 0o600
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # rawscan.py tests
@@ -512,6 +523,57 @@ class TestRegisterClientMain:
         _, _ = self._run_main(None)
         out, _ = capsys.readouterr()
         assert "No valid token" in out
+
+    def test_main_does_not_print_cert_or_key_material(self, capsys):
+        """Fix: cert/key must not be printed to stdout — they'd end up in
+        terminal scrollback/shell history/CI logs. Files (0o600) are the
+        source of truth, not stdout."""
+        fake_cert = b"-----BEGIN CERTIFICATE-----\nSECRETCERTDATA\n-----END CERTIFICATE-----\n"
+        fake_key = b"-----BEGIN RSA PRIVATE KEY-----\nSECRETKEYDATA\n-----END RSA PRIVATE KEY-----\n"
+        result = {"token": "tok:host123", "cert": fake_cert, "key": fake_key}
+        self._run_main(result)
+        out, _ = capsys.readouterr()
+        assert "SECRETCERTDATA" not in out
+        assert "SECRETKEYDATA" not in out
+
+    def test_main_prompts_for_password_when_omitted(self):
+        """Fix: password must not be required as a CLI arg (visible in
+        `ps`/shell history) — prompt via getpass when -pw is omitted."""
+        argv = [
+            "register_client",
+            "--ip_address", "1.2.3.4",
+            "--name", "TestClient",
+            "--id", "test_client_id",
+        ]
+        fake_helper = MagicMock()
+        fake_helper.register.return_value = None
+
+        with patch.object(sys, "argv", argv), \
+             patch("boschshcpy.register_client.getpass.getpass", return_value="prompted-pw") as mock_getpass, \
+             patch("boschshcpy.register_client.SHCRegisterClient", return_value=fake_helper) as mock_client:
+            try:
+                reg_mod.main()
+            except SystemExit:
+                pass
+
+        mock_getpass.assert_called_once()
+        mock_client.assert_called_once_with("1.2.3.4", "prompted-pw")
+
+    def test_main_uses_cli_password_without_prompting(self):
+        """When -pw is given, getpass must not be invoked."""
+        fake_helper = MagicMock()
+        fake_helper.register.return_value = None
+
+        with patch.object(sys, "argv", _REG_ARGV), \
+             patch("boschshcpy.register_client.getpass.getpass") as mock_getpass, \
+             patch("boschshcpy.register_client.SHCRegisterClient", return_value=fake_helper) as mock_client:
+            try:
+                reg_mod.main()
+            except SystemExit:
+                pass
+
+        mock_getpass.assert_not_called()
+        mock_client.assert_called_once_with("1.2.3.4", "supersecret")
 
     def test_main_registration_error_is_printed(self, capsys):
         """SHCRegistrationError inside register() must be caught and printed."""

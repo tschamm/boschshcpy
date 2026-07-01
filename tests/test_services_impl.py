@@ -1179,6 +1179,13 @@ def test_impulse_last_absent():
     assert svc.instant_of_last_impulse is None
 
 
+def test_impulse_length_preserves_fraction():
+    """OpenAPI types impulseLength as "number" (tenths of a second) — a
+    fractional value must not be truncated by an int() cast."""
+    svc = _make_svc(ImpulseSwitchService, {"impulseState": False, "impulseLength": 12.5})
+    assert svc.impulse_length == 12.5
+
+
 # ===========================================================================
 # 22. ChildProtectionService
 # ===========================================================================

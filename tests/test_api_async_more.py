@@ -334,6 +334,42 @@ class TestPutApiErrors:
         with pytest.raises(SHCConnectionError, match="connection error"):
             asyncio.run(api._put_api_or_fail("https://192.0.2.1:8444/smarthome/x", {}))
 
+    def test_connection_drop_then_success_retries_once_and_returns_result(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        """Regression (#281 parity): a single dropped connection on the FIRST
+        attempt must be retried once on a fresh connection, not surfaced as
+        SHCConnectionError — matching the sync client's existing retry."""
+        import aiohttp
+
+        api = _make_api(cert_and_key_paths)
+        conn_err = aiohttp.ClientConnectionError("connection refused")
+        ok_resp = _make_mock_response(body={"ok": True})
+        api._session.put = MagicMock(side_effect=[conn_err, ok_resp])
+
+        result = asyncio.run(
+            api._put_api_or_fail("https://192.0.2.1:8444/smarthome/x", {"key": "v"})
+        )
+
+        assert result == {"ok": True}
+        assert api._session.put.call_count == 2
+
+    def test_connection_drop_twice_raises_shcconnectionerror(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        """Two consecutive drops (retry also fails) must still raise —
+        the retry is exactly once, not unbounded."""
+        import aiohttp
+
+        api = _make_api(cert_and_key_paths)
+        conn_err = aiohttp.ClientConnectionError("connection refused")
+        api._session.put = MagicMock(side_effect=[conn_err, conn_err])
+
+        with pytest.raises(SHCConnectionError, match="connection error"):
+            asyncio.run(api._put_api_or_fail("https://192.0.2.1:8444/smarthome/x", {}))
+
+        assert api._session.put.call_count == 2
+
     def test_put_ok_empty_body_returns_empty_dict(self, cert_and_key_paths: tuple[str, str]) -> None:
         """PUT 200 with empty body returns {} (line ~217)."""
         api = _make_api(cert_and_key_paths)
@@ -450,6 +486,23 @@ class TestCheckJsonrpcVersion:
         # Bad version → raise
         with pytest.raises(SHCSessionError, match="Unexpected JSON-RPC version"):
             SHCAPIAsync._check_jsonrpc_version([{"jsonrpc": "1.0"}], "RE/test")
+
+    def test_empty_list_response_raises_shcsessionerror_not_indexerror(self) -> None:
+        """Regression: a malformed/empty JSON-RPC response (e.g. a proxy
+        hiccup during an SHC reboot returning `[]`) must raise a handled
+        SHCSessionError, not a bare IndexError."""
+        with pytest.raises(SHCSessionError, match="Malformed JSON-RPC response"):
+            SHCAPIAsync._check_jsonrpc_version([], "RE/test")
+
+    def test_non_list_response_raises_shcsessionerror_not_attributeerror(self) -> None:
+        """Regression: a JSON object instead of a list must raise a handled
+        SHCSessionError, not a bare AttributeError from result[0].get(...)."""
+        with pytest.raises(SHCSessionError, match="Malformed JSON-RPC response"):
+            SHCAPIAsync._check_jsonrpc_version({"jsonrpc": "2.0"}, "RE/test")
+
+    def test_list_of_non_dict_response_raises_shcsessionerror(self) -> None:
+        with pytest.raises(SHCSessionError, match="Malformed JSON-RPC response"):
+            SHCAPIAsync._check_jsonrpc_version(["not-a-dict"], "RE/test")
 
 
 # ---------------------------------------------------------------------------

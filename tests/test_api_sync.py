@@ -622,6 +622,23 @@ class TestLongPollingSubscribe:
         with pytest.raises(SHCSessionError, match="JSON-RPC version"):
             api.long_polling_subscribe()
 
+    def test_subscribe_empty_list_response_raises_shcsessionerror(self):
+        """Regression: a malformed/empty JSON-RPC response (e.g. a proxy
+        hiccup during an SHC reboot returning `[]`) must raise a handled
+        SHCSessionError, not a bare IndexError."""
+        api = _make_api()
+        api._requests_session.post.return_value = _fake_response([])
+        with pytest.raises(SHCSessionError, match="Malformed JSON-RPC response"):
+            api.long_polling_subscribe()
+
+    def test_subscribe_non_list_response_raises_shcsessionerror(self):
+        """A JSON object instead of a list must raise a handled
+        SHCSessionError, not a bare AttributeError from result[0].get(...)."""
+        api = _make_api()
+        api._requests_session.post.return_value = _fake_response({"jsonrpc": "2.0"})
+        with pytest.raises(SHCSessionError, match="Malformed JSON-RPC response"):
+            api.long_polling_subscribe()
+
 
 class TestLongPollingPoll:
     def test_posts_to_rpc_root(self):

@@ -109,3 +109,59 @@ def test_subscribe_during_iteration_does_not_affect_current_pass():
     }
     svc.process_long_polling_poll_result(raw_result)
     assert late_calls == [], "Late-registered callback must not fire in the same pass"
+
+
+def _make_alarm_service(service_id: str, initial_value: str):
+    raw_svc = {
+        "id": service_id,
+        "deviceId": "dev-1",
+        "path": f"/devices/dev-1/services/{service_id}",
+        "state": {"@type": "alarmState", "value": initial_value},
+    }
+    api = MagicMock(name="SHCAPI")
+    return SHCDeviceService(api=api, raw_device_service=raw_svc)
+
+
+def _poll(svc, service_id, value):
+    svc.process_long_polling_poll_result(
+        {
+            "@type": "DeviceServiceData",
+            "id": service_id,
+            "deviceId": "dev-1",
+            "path": f"/devices/dev-1/services/{service_id}",
+            "state": {"@type": "alarmState", "value": value},
+        }
+    )
+
+
+def test_alarm_register_event_fires_on_value_change():
+    """Alarm/SurveillanceAlarm register_event callbacks must fire — they were
+    previously never dispatched (_process_events had no branch for them)."""
+    for service_id in ("Alarm", "SurveillanceAlarm"):
+        svc = _make_alarm_service(service_id, "IDLE_OFF")
+        calls = []
+        svc.register_event("dev-1", lambda: calls.append(1))
+
+        _poll(svc, service_id, "PRIMARY_ALARM")
+        assert calls == [1], f"{service_id} did not fire"
+
+
+def test_alarm_register_event_suppresses_replayed_unchanged_value():
+    """A (re)subscribe/restart re-delivering the same current value must not
+    be dispatched as a fresh event."""
+    for service_id in ("Alarm", "SurveillanceAlarm"):
+        svc = _make_alarm_service(service_id, "IDLE_OFF")
+        calls = []
+        svc.register_event("dev-1", lambda: calls.append(1))
+
+        # Same value as construction snapshot -> replay, must be suppressed
+        _poll(svc, service_id, "IDLE_OFF")
+        assert calls == [], f"{service_id} replayed an unchanged value"
+
+        # Real transition still fires
+        _poll(svc, service_id, "PRIMARY_ALARM")
+        assert calls == [1], f"{service_id} did not fire on a real transition"
+
+        # Repeating the new value again must not re-fire
+        _poll(svc, service_id, "PRIMARY_ALARM")
+        assert calls == [1], f"{service_id} re-fired an unchanged value"

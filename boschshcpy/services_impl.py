@@ -797,8 +797,9 @@ class ImpulseSwitchService(SHCDeviceService):
         return bool(self.state["impulseState"])
 
     @property
-    def impulse_length(self) -> int:
-        return int(self.state["impulseLength"])
+    def impulse_length(self) -> float:
+        # OpenAPI types this "number" (tenths of a second) — int() truncated.
+        return float(self.state["impulseLength"])
 
     @property
     def instant_of_last_impulse(self) -> str | None:
@@ -2021,20 +2022,21 @@ class OutdoorSirenService(SHCDeviceService):
         return self.state.get("outdoorSirenConfiguration", {}) or {}
 
     @property
-    def alarm_duration(self) -> int:
-        return int(self._config.get("alarmDuration", 0))
+    def alarm_duration(self) -> float:
+        # OpenAPI types this "number" (seconds) — int() truncated decimals.
+        return float(self._config.get("alarmDuration", 0))
 
     @property
-    def flash_duration(self) -> int:
-        return int(self._config.get("flashDuration", 0))
+    def flash_duration(self) -> float:
+        return float(self._config.get("flashDuration", 0))
 
     @property
-    def alarm_delay(self) -> int:
-        return int(self._config.get("alarmDelay", 0))
+    def alarm_delay(self) -> float:
+        return float(self._config.get("alarmDelay", 0))
 
     @property
-    def flash_delay(self) -> int:
-        return int(self._config.get("flashDelay", 0))
+    def flash_delay(self) -> float:
+        return float(self._config.get("flashDelay", 0))
 
     @property
     def sound_level(self) -> OutdoorSirenService.SoundLevel:
@@ -2059,11 +2061,11 @@ class OutdoorSirenService(SHCDeviceService):
     async def async_set_configuration(
         self,
         *,
-        alarm_duration: int | None = None,
-        flash_duration: int | None = None,
+        alarm_duration: float | None = None,
+        flash_duration: float | None = None,
         sound_level: OutdoorSirenService.SoundLevel | None = None,
-        alarm_delay: int | None = None,
-        flash_delay: int | None = None,
+        alarm_delay: float | None = None,
+        flash_delay: float | None = None,
     ) -> None:
         """Async write: update one or more configuration fields.
 
@@ -2155,8 +2157,9 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
         return bool(self.state.get("primaryPowerSupplyOutage", False))
 
     @property
-    def solar_charging_current(self) -> int:
-        return int(self.state.get("solarChargingCurrent", 0))
+    def solar_charging_current(self) -> float:
+        # OpenAPI types this "number" (mA reading) — int() truncated decimals.
+        return float(self.state.get("solarChargingCurrent", 0))
 
     @property
     def configured_power_supply(
@@ -2345,15 +2348,20 @@ class DimmerConfigurationService(SHCDeviceService):
 
         Sent as a whole sub-object (both bounds), filling the unchanged bound
         from the current state so a partial write never drops one side.
+
+        Raises ValueError if the resulting range would be inverted (min >=
+        max) — min_brightness and max_brightness are independent HA number
+        entities, so editing one without cross-checking the other's cached
+        value could otherwise silently send an invalid range to the SHC.
         """
-        rng = {
-            "minBrightness": self.min_brightness
-            if min_brightness is None
-            else int(min_brightness),
-            "maxBrightness": self.max_brightness
-            if max_brightness is None
-            else int(max_brightness),
-        }
+        new_min = self.min_brightness if min_brightness is None else int(min_brightness)
+        new_max = self.max_brightness if max_brightness is None else int(max_brightness)
+        if new_min >= new_max:
+            raise ValueError(
+                f"Invalid brightness range: minBrightness ({new_min}) must be "
+                f"less than maxBrightness ({new_max})"
+            )
+        rng = {"minBrightness": new_min, "maxBrightness": new_max}
         await self.async_put_state_element("brightnessRange", rng)
 
     async def async_preview_max_brightness(self) -> None:

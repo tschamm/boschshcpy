@@ -9,6 +9,8 @@ calls carry the correct field/value — including the Bosch *_REQUESTED quirk.
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -99,6 +101,43 @@ class TestOutdoorSirenService:
         # untouched fields preserved
         assert cfg["flashDuration"] == 5
 
+    def test_duration_delay_preserve_fraction(self):
+        """OpenAPI types all 4 duration/delay fields as "number" (seconds) —
+        int() previously truncated a fractional value on read."""
+        s = self._svc(outdoorSirenConfiguration={
+            "alarmDuration": 3.5,
+            "flashDuration": 5.2,
+            "soundLevel": "MEDIUM",
+            "alarmDelay": 0.5,
+            "flashDelay": 10.1,
+        })
+        assert s.alarm_duration == 3.5
+        assert s.flash_duration == 5.2
+        assert s.alarm_delay == 0.5
+        assert s.flash_delay == 10.1
+
+    def test_config_put_round_trip_does_not_truncate_untouched_fraction(self):
+        """A fractional value the user configured via the Bosch app (e.g.
+        alarmDelay=0.5s) must survive a PUT that changes an unrelated field
+        (e.g. sound_level) — _merged_config() reads the current (float) props
+        back into the body for every unchanged field."""
+        from boschshcpy.services_impl import OutdoorSirenService
+        s = self._svc(api=AsyncMock(), outdoorSirenConfiguration={
+            "alarmDuration": 3.5,
+            "flashDuration": 5.2,
+            "soundLevel": "MEDIUM",
+            "alarmDelay": 0.5,
+            "flashDelay": 10.1,
+        })
+        asyncio.run(
+            s.async_set_configuration(sound_level=OutdoorSirenService.SoundLevel.HIGH)
+        )
+        cfg = s._api.put_device_service_state.call_args.args[2]["outdoorSirenConfiguration"]
+        assert cfg["alarmDelay"] == 0.5
+        assert cfg["flashDelay"] == 10.1
+        assert cfg["alarmDuration"] == 3.5
+        assert cfg["flashDuration"] == 5.2
+
     def test_trigger_test_alarm_posts_operation(self):
         from boschshcpy.services_impl import OutdoorSirenService
         api = AsyncMock()
@@ -142,6 +181,12 @@ class TestOutdoorSirenPowerSupplyService:
         from boschshcpy.services_impl import OutdoorSirenPowerSupplyService as P
         s = self._svc(mainPowerSupply="WEIRD")
         assert s.main_power_supply == P.MainPowerSupply.UNKNOWN
+
+    def test_solar_charging_current_preserves_fraction(self):
+        """OpenAPI types solarChargingCurrent as "number" (mA) — int()
+        previously truncated a fractional value."""
+        s = self._svc(solarChargingCurrent=12.7)
+        assert s.solar_charging_current == 12.7
 
 
 class TestSHCOutdoorSirenDevice:
@@ -412,6 +457,43 @@ class TestDimmerConfigurationService:
             "DimmerConfigurationService",
             {"@type": "testState", "brightnessRange": {"minBrightness": 5, "maxBrightness": 80}},
         )
+
+    def test_async_set_brightness_range_inverted_min_raises_value_error(self):
+        """Regression: min_brightness and max_brightness are independent HA
+        number entities — setting min past the cached max (or vice versa)
+        must be rejected with a clear ValueError, not silently PUT as an
+        inverted range."""
+        api = MagicMock()
+        api.put_device_service_state = AsyncMock()
+        svc = self._svc(
+            api=api,
+            brightnessRange={"minBrightness": 5, "maxBrightness": 90},
+        )
+        with pytest.raises(ValueError, match="Invalid brightness range"):
+            asyncio.run(svc.async_set_brightness_range(min_brightness=95))
+        api.put_device_service_state.assert_not_awaited()
+
+    def test_async_set_brightness_range_inverted_max_raises_value_error(self):
+        api = MagicMock()
+        api.put_device_service_state = AsyncMock()
+        svc = self._svc(
+            api=api,
+            brightnessRange={"minBrightness": 5, "maxBrightness": 90},
+        )
+        with pytest.raises(ValueError, match="Invalid brightness range"):
+            asyncio.run(svc.async_set_brightness_range(max_brightness=2))
+        api.put_device_service_state.assert_not_awaited()
+
+    def test_async_set_brightness_range_equal_bounds_raises_value_error(self):
+        api = MagicMock()
+        api.put_device_service_state = AsyncMock()
+        svc = self._svc(
+            api=api,
+            brightnessRange={"minBrightness": 5, "maxBrightness": 90},
+        )
+        with pytest.raises(ValueError, match="Invalid brightness range"):
+            asyncio.run(svc.async_set_brightness_range(min_brightness=90))
+        api.put_device_service_state.assert_not_awaited()
 
     def test_registered_in_service_mapping(self):
         from boschshcpy.services_impl import SERVICE_MAPPING, DimmerConfigurationService

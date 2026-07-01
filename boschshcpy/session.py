@@ -324,28 +324,45 @@ class SHCSession:
         if self._polling_thread is None:
 
             def polling_thread_main() -> None:
-                while not self._stop_polling_thread:
-                    try:
-                        if not self._long_poll():
-                            logger.debug("_long_poll returned False. Waiting 1 second.")
-                            time.sleep(1.0)
-                    except RuntimeError as err:
-                        self._stop_polling_thread = True
-                        logger.debug(
-                            "Stopping polling thread after expected runtime error."
-                        )
-                        logger.debug(f"Error description: {err}. {err.args}")
-                        logger.debug("Attempting unsubscribe...")
+                try:
+                    while not self._stop_polling_thread:
                         try:
-                            self._maybe_unsubscribe()
-                        except Exception as ex:
-                            logger.debug(f"Unsubscribe not successful: {ex}")
+                            if not self._long_poll():
+                                logger.debug(
+                                    "_long_poll returned False. Waiting 1 second."
+                                )
+                                time.sleep(1.0)
+                        except RuntimeError as err:
+                            self._stop_polling_thread = True
+                            logger.debug(
+                                "Stopping polling thread after expected runtime error."
+                            )
+                            logger.debug(f"Error description: {err}. {err.args}")
+                            logger.debug("Attempting unsubscribe...")
+                            try:
+                                self._maybe_unsubscribe()
+                            except Exception as ex:
+                                logger.debug(f"Unsubscribe not successful: {ex}")
 
-                    except Exception as ex:
-                        logger.error(
-                            f"Error in polling thread: {ex}. Waiting 15 seconds."
-                        )
-                        time.sleep(15.0)
+                        except Exception as ex:
+                            logger.error(
+                                f"Error in polling thread: {ex}. Waiting 15 seconds."
+                            )
+                            time.sleep(15.0)
+                finally:
+                    # Ensure the handle is cleared however the thread exits, so a
+                    # dead thread (e.g. after the RuntimeError path above) doesn't
+                    # permanently block start_polling() with "Already polling!".
+                    # Deliberately NOT touching self._poll_id here: on a normal
+                    # stop_polling() exit this `finally` runs (inside this thread)
+                    # before join() returns, so clearing _poll_id here would make
+                    # stop_polling()'s own _maybe_unsubscribe() a no-op (it's
+                    # guarded on _poll_id is not None) — leaking the SHC-side
+                    # long-poll subscription on every clean stop. _poll_id is
+                    # already reset by the RuntimeError branch's own
+                    # _maybe_unsubscribe() above when that path is taken, and by
+                    # stop_polling() itself on the normal path.
+                    self._polling_thread = None
 
             self._polling_thread = threading.Thread(
                 target=polling_thread_main, name="SHCPollingThread", daemon=True
@@ -356,15 +373,20 @@ class SHCSession:
             raise SHCSessionError("Already polling!")
 
     def stop_polling(self) -> None:
-        if self._polling_thread is not None:
+        # Capture a local reference: the thread's own finally-block can clear
+        # self._polling_thread concurrently (e.g. after a RuntimeError), which
+        # would otherwise turn the .join()/.is_alive() calls below into an
+        # AttributeError on None.
+        polling_thread = self._polling_thread
+        if polling_thread is not None:
             logger.debug("Unsubscribing from long poll")
             self._stop_polling_thread = True
             # The polling thread may be blocked inside a long-poll HTTP call
             # (timeout = long_poll_timeout + 5). Bound the join so an in-flight
             # poll can't wedge HA shutdown for the full timeout; the daemon
             # thread is reaped by the interpreter if it outlives the join.
-            self._polling_thread.join(timeout=self._long_poll_timeout + 10)
-            if self._polling_thread.is_alive():
+            polling_thread.join(timeout=self._long_poll_timeout + 10)
+            if polling_thread.is_alive():
                 logger.warning(
                     "Long-poll thread did not stop within %ss; it will be "
                     "reaped on interpreter exit",

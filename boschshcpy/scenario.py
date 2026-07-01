@@ -16,11 +16,13 @@ class SHCScenario:
 
     @property
     def icon_id(self) -> str:
-        return str(self._raw_scenario["iconId"])
+        # Not in the OpenAPI "required" list — same pattern as room.py's
+        # icon_id fix.
+        return str(self._raw_scenario.get("iconId", ""))
 
     @property
     def name(self) -> str:
-        return str(self._raw_scenario["name"])
+        return str(self._raw_scenario.get("name", ""))
 
     def trigger(self) -> Any:
         return self._api._post_api_or_fail(

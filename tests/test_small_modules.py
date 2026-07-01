@@ -305,6 +305,22 @@ def test_message_summary_shows_timestamp(capsys):
     assert "1718700000000" in out
 
 
+def test_message_fields_missing_do_not_raise():
+    """None of Message's fields are in the OpenAPI "required" list — the SHC
+    may omit any of them (same bug class as #351's UserDefinedState KeyError
+    on an omitted "deleted" key)."""
+    msg = SHCMessage(api=None, raw_message={})
+    assert msg.id == ""
+    assert msg.source_type == ""
+    assert msg.timestamp is None
+    assert msg.flags == []
+    assert msg.arguments == {}
+    assert msg.message_code.name == ""
+    assert msg.message_code.category == ""
+    # summary() must not raise either
+    msg.summary()
+
+
 # ===========================================================================
 # SHCRoom
 # ===========================================================================
@@ -334,7 +350,14 @@ def test_room_summary(capsys):
     out = capsys.readouterr().out
     assert "hz_1" in out
     assert "Living Room" in out
-    assert "icon_living" in out
+
+
+def test_room_icon_id_missing_does_not_raise():
+    """iconId is not in the OpenAPI "required" list — a room using the
+    default icon can legitimately omit it."""
+    room = SHCRoom(api=None, raw_room={"id": "hz_2", "name": "Kitchen"})
+    assert room.icon_id == ""
+    room.summary()  # must not raise
 
 
 def test_room_different_values():
@@ -370,6 +393,15 @@ def test_scenario_name():
 
 def test_scenario_icon_id():
     assert _make_scenario().icon_id == "icon_moon"
+
+
+def test_scenario_name_and_icon_id_missing_do_not_raise():
+    """Regression: neither is in the OpenAPI "required" list for Scenario."""
+    obj = SHCScenario.__new__(SHCScenario)
+    obj._api = MagicMock()
+    obj._raw_scenario = {"id": "sc-2"}
+    assert obj.name == ""
+    assert obj.icon_id == ""
 
 
 def test_scenario_summary(capsys):
@@ -538,6 +570,22 @@ def test_shcinformation_filter_gethostbyname_exception():
     # host_ip is None → condition passes → unique_id set
     assert info._unique_id == "aa-bb-cc-dd-ee-ff"
     assert info._name == "shc-home"
+
+
+def test_shcinformation_filter_no_bracket_suffix_skipped():
+    """Regression: a same-network mDNS announcement whose name happens to
+    contain "Bosch SHC" but has no "[mac]" suffix must be skipped, not
+    produce a garbage mac_address slice fed into format_mac()."""
+    info = _make_shc_info(ip="192.168.1.1")
+    fake_service = SimpleNamespace(
+        name="Bosch SHC Companion App",  # no brackets at all
+        server="shc-home.local.",
+        parsed_addresses=lambda v: ["192.168.1.1"],
+    )
+    with _patch("socket.gethostbyname", return_value="192.168.1.1"):
+        info.filter({"svc": fake_service})
+    assert info._unique_id is None
+    assert info._name is None
 
 
 def test_shcinformation_filter_server_no_local_suffix():

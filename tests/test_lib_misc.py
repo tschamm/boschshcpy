@@ -110,6 +110,19 @@ def test_localized_information_property():
     assert emma.localizedInformation == "750 W"
 
 
+def test_emma_fields_missing_from_live_update_do_not_raise():
+    """Regression: update_emma_data() sets _raw_result directly from a live
+    "link" poll payload — version/localizedTitles/localizedInformation are
+    undocumented fields (EMMA isn't in the OpenAPI ground-truth), so a
+    partial payload must not KeyError."""
+    emma = SHCEmma(api=None, shc_info=_shc_info_mock(), raw_result=_full_raw())
+    emma.update_emma_data({})  # nothing present
+    assert emma.version == ""
+    assert emma.localizedTitles == ""
+    assert emma.localizedInformation == ""
+    assert emma.value is None
+
+
 # --- localizedSubtitles fallback: both spelling variants ---
 
 def test_localized_subtitles_lowercase_t():
@@ -337,6 +350,14 @@ def test_jsonrpc_error_raise_and_catch():
     assert exc_info.value.message == "boom"
 
 
+def test_jsonrpc_error_args_preserved():
+    """Regression: super().__init__() was called with no args, so .args was
+    always empty even though __str__ shows the message — repr()/.args and any
+    logging code reading them directly lost the message."""
+    err = JSONRPCError(code=-32001, message="stale poll id")
+    assert err.args == (-32001, "stale poll id")
+
+
 # --- SHCException ---
 
 def test_shcexception_message_property():
@@ -357,6 +378,13 @@ def test_shcexception_raise_and_catch():
     with pytest.raises(SHCException) as exc_info:
         raise SHCException("test error")
     assert exc_info.value.message == "test error"
+
+
+def test_shcexception_args_preserved():
+    """Regression: super().__init__() was called with no args, so .args was
+    always empty even though __str__ shows the message."""
+    exc = SHCException("something broke")
+    assert exc.args == ("something broke",)
 
 
 # --- SHCConnectionError ---

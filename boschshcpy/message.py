@@ -17,35 +17,38 @@ class SHCMessage:
 
         @property
         def name(self) -> str:
-            return str(self._message_code["name"])
+            return str(self._message_code.get("name", ""))
 
         @property
         def category(self) -> str:
-            return str(self._message_code["category"])
+            return str(self._message_code.get("category", ""))
 
     @property
     def id(self) -> str:
-        return str(self._raw_message["id"])
+        return str(self._raw_message.get("id", ""))
 
     @property
     def message_code(self) -> MessageCode:
-        return self.MessageCode(self._raw_message["messageCode"])
+        # None of Message's fields are in the OpenAPI "required" list — the
+        # SHC is free to omit any of them (same class of bug as #351's
+        # UserDefinedState KeyError on an omitted "deleted" key).
+        return self.MessageCode(self._raw_message.get("messageCode", {}))
 
     @property
     def source_type(self) -> str:
-        return str(self._raw_message["sourceType"])
+        return str(self._raw_message.get("sourceType", ""))
 
     @property
     def timestamp(self) -> Any:
-        return self._raw_message["timestamp"]
+        return self._raw_message.get("timestamp")
 
     @property
     def flags(self) -> Any:
-        return self._raw_message["flags"]
+        return self._raw_message.get("flags", [])
 
     @property
     def arguments(self) -> Any:
-        return self._raw_message["arguments"]
+        return self._raw_message.get("arguments", {})
 
     def summary(self) -> None:
         print(f"Message      : {self.id}")

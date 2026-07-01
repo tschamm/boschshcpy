@@ -417,8 +417,12 @@ def test_domain_build_ids_model_mapping():
 # Consumer (alarm_control_panel.py) impact analysis:
 #   arming_state unknown  → default SYSTEM_DISARMED → panel shows DISARMED (safe)
 #   alarm_state unknown   → default ALARM_OFF       → no false trigger (safe)
-#   profile unknown       → default FULL_PROTECTION → ARMED_AWAY sub-state (safe,
-#                           no worse than showing wrong sub-mode when already ARMED)
+#   profile unknown       → Profile.UNKNOWN → alarm_control_panel's three
+#                           FULL/PARTIAL/CUSTOM checks all miss → state is
+#                           None (HA shows "unknown"), rather than the
+#                           previous fallback to FULL_PROTECTION, which
+#                           actively misreported which profile is armed
+#                           (security-relevant, not just "safe default").
 #
 # alarm_state_incidents: spec marks "incidents" optional → KeyError fixed to .get([]).
 # ===========================================================================
@@ -437,18 +441,21 @@ def test_ids_unknown_alarm_state_returns_alarm_off():
     assert svc.alarm_state == SHCIntrusionSystem.AlarmState.ALARM_OFF
 
 
-def test_ids_unknown_profile_returns_full_protection():
-    """Regression: ValueError on Profile(int('99')) → safe FULL_PROTECTION."""
+def test_ids_unknown_profile_returns_unknown_not_full_protection():
+    """Regression: ValueError on Profile(int('99')) must not be silently
+    mis-reported as FULL_PROTECTION (a custom IDS profile beyond the 3
+    built-ins) — must be Profile.UNKNOWN instead."""
     svc = _make_ids()
     svc._raw_active_configuration_profile = {"profileId": "99"}
-    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.FULL_PROTECTION
+    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.UNKNOWN
 
 
-def test_ids_non_int_profile_returns_full_protection():
-    """Regression: ValueError on Profile(int('custom')) → safe FULL_PROTECTION."""
+def test_ids_non_int_profile_returns_unknown_not_full_protection():
+    """Regression: ValueError on Profile(int('custom')) → Profile.UNKNOWN,
+    not a mis-reported FULL_PROTECTION."""
     svc = _make_ids()
     svc._raw_active_configuration_profile = {"profileId": "custom"}
-    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.FULL_PROTECTION
+    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.UNKNOWN
 
 
 def test_ids_alarm_state_incidents_key_absent_no_keyerror():
@@ -466,3 +473,66 @@ def test_ids_summary(capsys):
     assert "System Availability" in out
     assert "Arming State" in out
     assert "Alarm State" in out
+
+
+# ===========================================================================
+# Missing top-level keys — none of SystemStateData's sub-objects are in the
+# OpenAPI "required" list, so the SHC may omit any of them. __init__ and
+# short_poll are both on the hot poll path (not just startup) — an unguarded
+# KeyError here would repeatedly break live polling.
+# ===========================================================================
+
+def test_ids_construction_with_all_keys_missing_does_not_raise():
+    svc = SHCIntrusionSystem(api=MagicMock(), raw_domain_state={}, root_device_id="r1")
+    assert svc.system_availability is False
+    assert svc.arming_state == SHCIntrusionSystem.ArmingState.SYSTEM_DISARMED
+    assert svc.remaining_time_until_armed == 0
+    assert svc.alarm_state == SHCIntrusionSystem.AlarmState.ALARM_OFF
+    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.UNKNOWN
+    assert svc.security_gaps == []
+    svc.summary()  # must not raise
+
+
+def test_ids_system_availability_missing_available_key():
+    svc = _make_ids()
+    svc._raw_system_availability = {}  # SHC omitted "available"
+    assert svc.system_availability is False
+
+
+def test_ids_arming_state_missing_state_key_returns_disarmed():
+    """Regression: arming_state only caught ValueError, not KeyError, on a
+    missing 'state' key — same bug class as #351."""
+    svc = _make_ids()
+    svc._raw_arming_state = {}  # SHC omitted "state"
+    assert svc.arming_state == SHCIntrusionSystem.ArmingState.SYSTEM_DISARMED
+
+
+def test_ids_remaining_time_missing_key_defaults_zero():
+    svc = _make_ids(arming_state="SYSTEM_ARMING")
+    svc._raw_arming_state = {"state": "SYSTEM_ARMING"}  # no remainingTimeUntilArmed
+    assert svc.remaining_time_until_armed == 0
+
+
+def test_ids_active_configuration_profile_missing_key_returns_unknown():
+    svc = _make_ids()
+    svc._raw_active_configuration_profile = {}  # no profileId
+    assert svc.active_configuration_profile == SHCIntrusionSystem.Profile.UNKNOWN
+
+
+def test_ids_short_poll_tolerates_missing_keys():
+    """Regression: short_poll runs periodically — an unguarded KeyError here
+    would repeatedly break live polling, not just fail once at startup."""
+    api = MagicMock()
+    api.get_domain_intrusion_detection.return_value = {}  # SHC omitted everything
+    svc = _make_ids(api=api)
+    svc.short_poll()  # must not raise
+    assert svc.system_availability is False
+    assert svc.arming_state == SHCIntrusionSystem.ArmingState.SYSTEM_DISARMED
+    assert svc.security_gaps == []
+
+
+def test_ids_process_long_polling_poll_result_missing_type_key():
+    """process_long_polling_poll_result must not KeyError on a raw_result
+    missing '@type' (defensive against a malformed poll event)."""
+    svc = _make_ids()
+    svc.process_long_polling_poll_result({})  # no '@type' — must not raise

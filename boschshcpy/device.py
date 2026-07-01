@@ -48,15 +48,19 @@ class SHCDevice:
 
     @property
     def root_device_id(self) -> str:
-        return str(self._raw_device["rootDeviceId"])
+        return str(self._raw_device.get("rootDeviceId", ""))
 
     @property
     def id(self) -> str:
+        # Deliberately still a direct index: id is used as the dict key
+        # throughout device_helper.py/session.py — if the SHC omits it the
+        # device can't be indexed/used at all, so failing loudly here is
+        # more useful than limping on with an empty id.
         return str(self._raw_device["id"])
 
     @property
     def manufacturer(self) -> str:
-        return str(self._raw_device["manufacturer"])
+        return str(self._raw_device.get("manufacturer", ""))
 
     @property
     def room_id(self) -> str | None:
@@ -64,7 +68,7 @@ class SHCDevice:
 
     @property
     def device_model(self) -> str:
-        return str(self._raw_device["deviceModel"])
+        return str(self._raw_device.get("deviceModel", ""))
 
     @property
     def serial(self) -> str | None:
@@ -114,11 +118,14 @@ class SHCDevice:
 
     @property
     def name(self) -> str:
-        return str(self._raw_device["name"])
+        # Not in the OpenAPI "required" list for Device — .get() to match the
+        # existing roomId/serial/profile pattern above rather than crash on a
+        # display-only field.
+        return str(self._raw_device.get("name", ""))
 
     @property
     def status(self) -> str:
-        return str(self._raw_device["status"])
+        return str(self._raw_device.get("status", ""))
 
     @property
     def deleted(self) -> bool:

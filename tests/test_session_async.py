@@ -709,6 +709,33 @@ class TestProcessPollResult:
         assert "hdm:D3" not in s._devices_by_id
         assert "hdm:D3" not in s._services_by_device_id
 
+    def test_device_new_subscriber_mutating_list_does_not_raise(self):
+        """Regression: _subscribers must be snapshotted (list(...)) before
+        iterating, matching sync session.py — a callback that subscribes a
+        new instance (e.g. HA platform setup registering further callbacks
+        during dynamic entity creation) must not raise
+        'list changed size during iteration'."""
+        async def run():
+            s = _bare_session()
+            new_dev = _fake_device("hdm:NEW2")
+
+            async def fake_add(raw_device):
+                s._devices_by_id["hdm:NEW2"] = new_dev
+                return new_dev
+
+            s._async_add_new_device = fake_add
+
+            def mutating_cb(_dev):
+                s._subscribers.append((object, MagicMock()))
+
+            s._subscribers.append((object, mutating_cb))
+
+            raw = {"@type": "device", "id": "hdm:NEW2"}
+            # Must not raise RuntimeError: list changed size during iteration
+            await s._process_long_polling_poll_result(raw)
+
+        asyncio.run(run())
+
     def test_device_new_calls_async_add_new_device(self):
         async def run():
             s = _bare_session()

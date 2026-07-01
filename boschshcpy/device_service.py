@@ -27,6 +27,12 @@ class SHCDeviceService:
         self._last_event_timestamp: Any = self._raw_state.get(
             "eventTimestamp"
         ) or self._raw_state.get("latestMotionDetected")
+        # Alarm/SurveillanceAlarm carry no timestamp, only a current "value"
+        # enum (e.g. IDLE_OFF/ALARM_ON) — seed from the construction snapshot
+        # and fire register_event callbacks only on an actual value change,
+        # so a (re)subscribe/restart re-delivery of the unchanged current
+        # value isn't dispatched as a fresh event.
+        self._last_event_value: Any = self._raw_state.get("value")
 
     @property
     def id(self) -> str:
@@ -190,6 +196,19 @@ class SHCDeviceService:
         self._last_event_timestamp = timestamp
         return False
 
+    def _is_replayed_value(self, value: Any) -> bool:
+        """True if this Alarm/SurveillanceAlarm value must be suppressed.
+
+        These services carry no event timestamp, only a current "value" enum
+        (e.g. IDLE_OFF/ALARM_ON), so a genuine event is an edge (value change)
+        rather than a fresh timestamp. Fires only when the value differs from
+        the last seen one, mirroring the entity-level _last_fired_* guards.
+        """
+        if value == self._last_event_value:
+            return True
+        self._last_event_value = value
+        return False
+
     def _process_events(self, raw_result: dict[str, Any]) -> None:
         if raw_result["id"] == "Keypad":
             state = raw_result.get("state", {})
@@ -201,6 +220,12 @@ class SHCDeviceService:
         if raw_result["id"] == "LatestMotion":
             state = raw_result.get("state", {})
             if self._is_replayed_event(state.get("latestMotionDetected")):
+                return
+            if raw_result["deviceId"] in self._event_callbacks:
+                self._event_callbacks[raw_result["deviceId"]]()
+        if raw_result["id"] in ("Alarm", "SurveillanceAlarm"):
+            state = raw_result.get("state", {})
+            if self._is_replayed_value(state.get("value")):
                 return
             if raw_result["deviceId"] in self._event_callbacks:
                 self._event_callbacks[raw_result["deviceId"]]()

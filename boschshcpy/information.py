@@ -176,9 +176,16 @@ class SHCInformation:
                     host_ip in info.parsed_addresses(IPVersion.V4Only)
                     or host_ip is None
                 ):
-                    mac_address = info.name[
-                        info.name.find("[") + 1 : info.name.find("]")
-                    ]
+                    # A same-network mDNS announcement whose name happens to
+                    # contain "Bosch SHC" but no "[mac]" suffix must not
+                    # silently produce a garbage/empty slice fed into
+                    # format_mac() below (find() returns -1 for either
+                    # missing bracket).
+                    bracket_start = info.name.find("[")
+                    bracket_end = info.name.find("]")
+                    if bracket_start == -1 or bracket_end <= bracket_start:
+                        continue
+                    mac_address = info.name[bracket_start + 1 : bracket_end]
                     if info.server is not None:
                         server_pos = info.server.find(".local.")
                         if server_pos > -1:

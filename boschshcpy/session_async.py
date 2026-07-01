@@ -530,7 +530,7 @@ class SHCSessionAsync:
                 logger.debug("Async session: found new device with id %s", device_id)
                 new_device = await self._async_add_new_device(raw_result)
                 if new_device is not None:
-                    for instance, callback in self._subscribers:
+                    for instance, callback in list(self._subscribers):
                         if isinstance(new_device, instance):
                             callback(new_device)
             return
@@ -555,7 +555,7 @@ class SHCSessionAsync:
                     raw_state=raw_result,
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
-                for instance, callback in self._subscribers:
+                for instance, callback in list(self._subscribers):
                     if isinstance(userdefinedstate, instance):
                         callback(userdefinedstate)
             if state_id in self._userdefinedstate_callbacks:

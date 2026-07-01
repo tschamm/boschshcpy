@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import getpass
 import json
 import logging
 import os.path
@@ -109,8 +110,14 @@ class SHCRegisterClient:
 
 
 def write_tls_asset(filename: str, asset: bytes) -> None:
-    """Write the tls assets to disk."""
-    with open(filename, "w", encoding="utf8") as file_handle:
+    """Write the tls assets to disk.
+
+    Uses os.open with mode 0o600 rather than the bare open() builtin: the
+    latter creates the file with the process umask (world-readable under the
+    common 022 umask), exposing the client private key to any local user.
+    """
+    fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf8") as file_handle:
         file_handle.write(asset.decode("utf-8"))
 
 
@@ -123,7 +130,9 @@ def main() -> None:
     parser.add_argument(
         "-pw",
         "--password",
-        help="system password which was set-up initially in the SHC setup process.",
+        help="system password which was set-up initially in the SHC setup process. "
+        "If omitted, you will be prompted (avoids the password showing up in "
+        "shell history / process listings).",
     )
     parser.add_argument(
         "-n",
@@ -144,9 +153,10 @@ def main() -> None:
         sys.exit()
 
     args = parser.parse_args()
+    password = args.password or getpass.getpass("System password: ")
 
     # Create a BoschSHC client with the specified ACCESS_CERT and ACCESS_KEY.
-    helper = SHCRegisterClient(args.ip_address, args.password)
+    helper = SHCRegisterClient(args.ip_address, password)
     result = None
     try:
         result = helper.register(args.id, args.name)
@@ -155,8 +165,10 @@ def main() -> None:
 
     if result is not None:
         print("successful registered new device with token {}".format(result["token"]))
-        print(f"Cert: {result['cert']}")
-        print(f"Key: {result['key']}")
+        # Deliberately NOT printing the cert/key material: it ends up in
+        # terminal scrollback / shell history / captured CI logs. The files
+        # written below (0o600) are the source of truth.
+        print("Cert and key written to disk (not printed — see paths below).")
 
         hostname = result["token"].split(":", 1)[1]
         print(

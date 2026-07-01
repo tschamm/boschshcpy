@@ -117,6 +117,17 @@ class TestSHCDeviceProperties:
         dev = _make_device(_raw_device(status="AVAILABLE"))
         assert dev.status == "AVAILABLE"
 
+    def test_name_manufacturer_devicemodel_status_missing_do_not_raise(self):
+        """Regression: none of these are in the OpenAPI "required" list for
+        Device — missing must return "" rather than KeyError."""
+        raw = {"id": "dev-x", "deviceServiceIds": []}
+        dev = _make_device(raw)
+        assert dev.name == ""
+        assert dev.manufacturer == ""
+        assert dev.device_model == ""
+        assert dev.status == ""
+        assert dev.root_device_id == ""
+
     def test_room_id_present(self):
         raw = _raw_device()
         raw["roomId"] = "room-42"

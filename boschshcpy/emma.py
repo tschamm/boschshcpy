@@ -53,11 +53,11 @@ class SHCEmma(SHCDevice):
 
     @property
     def version(self) -> str:
-        return str(self._raw_result["version"])
+        return str(self._raw_result.get("version", ""))
 
     @property
     def localizedTitles(self) -> str:
-        return str(self._raw_result["localizedTitles"]["en"])
+        return str((self._raw_result.get("localizedTitles") or {}).get("en", ""))
 
     @property
     def localizedSubtitles(self) -> str:
@@ -72,7 +72,7 @@ class SHCEmma(SHCDevice):
 
     @property
     def localizedInformation(self) -> str:
-        return str(self._raw_result["localizedInformation"]["en"])
+        return str((self._raw_result.get("localizedInformation") or {}).get("en", ""))
 
     @property
     def value(self) -> float | None:
