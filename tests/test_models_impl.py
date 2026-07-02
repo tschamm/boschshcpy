@@ -1459,12 +1459,15 @@ class TestSHCTwinguard:
     def test_purity(self):
         d = self._make(purity=1000)
         assert d.purity == 1000
-        assert isinstance(d.purity, float)
+        assert isinstance(d.purity, int)
 
-    def test_purity_keeps_decimals(self):
-        d = self._make(purity=812.5)
-        assert d.purity == 812.5
-        assert isinstance(d.purity, float)
+    def test_purity_stays_int(self):
+        # APK's AirQualityLevelState model declares purity as
+        # java.lang.Integer (unlike temperature/humidity, which are Float);
+        # the OpenAPI "number" type over-generalizes this distinction.
+        d = self._make(purity=812.7)
+        assert d.purity == 812
+        assert isinstance(d.purity, int)
 
     def test_purity_rating_bad(self):
         from boschshcpy.services_impl import AirQualityLevelService

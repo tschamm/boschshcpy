@@ -1447,9 +1447,16 @@ class AirQualityLevelService(SHCDeviceService):
             return self.RatingState.UNKNOWN
 
     @property
-    def purity(self) -> float:
-        # OpenAPI AirQualityLevelServiceStates.purity = number; int() truncated it.
-        return float(self.state["purity"])
+    def purity(self) -> int:
+        # OpenAPI AirQualityLevelServiceStates.purity = number (like
+        # temperature/humidity), but the decompiled Android app's
+        # AirQualityLevelState model class declares temperature/humidity as
+        # java.lang.Float and purity as java.lang.Integer specifically -- a
+        # deliberate per-field distinction the generic OpenAPI "number" type
+        # doesn't capture. The 0.8.3 follow-up (#352) over-generalized the
+        # temperature float-fix to purity too; reverted back to int() here.
+        # Do NOT re-float this without new APK/API evidence.
+        return int(self.state["purity"])
 
     @property
     def purityRating(self) -> RatingState:
