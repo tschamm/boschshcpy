@@ -442,6 +442,29 @@ def test_bypass_unknown():
     assert svc.value == BypassService.State.UNKNOWN
 
 
+def test_bypass_configuration_read_props():
+    """rawscan-database.md SWD2/SWD2_PLUS: bypassState carries a nested
+    configuration{enabled, timeout, infinite} block, not just top-level
+    state — this was previously never read at all."""
+    svc = _make_svc(
+        BypassService,
+        {
+            "state": "BYPASS_INACTIVE",
+            "configuration": {"enabled": True, "timeout": 5, "infinite": False},
+        },
+    )
+    assert svc.configuration_enabled is True
+    assert svc.timeout == 5
+    assert svc.infinite is False
+
+
+def test_bypass_configuration_missing_defaults():
+    svc = _make_svc(BypassService, {"state": "BYPASS_INACTIVE"})
+    assert svc.configuration_enabled is False
+    assert svc.timeout == 0
+    assert svc.infinite is False
+
+
 # ===========================================================================
 # ShutterControlService
 # ===========================================================================
