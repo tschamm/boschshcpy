@@ -1658,7 +1658,7 @@ class CommunicationQualityService(SHCDeviceService):
     class State(Enum):
         BAD = "BAD"
         GOOD = "GOOD"
-        MEDIUM = "MEDIUM"
+        NOT_SUPPORTED = "NOT_SUPPORTED"
         NORMAL = "NORMAL"
         UNKNOWN = "UNKNOWN"
         FETCHING = "FETCHING"

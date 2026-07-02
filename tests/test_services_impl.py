@@ -1099,9 +1099,29 @@ def test_comm_quality_good():
     assert svc.value == CommunicationQualityService.State.GOOD
 
 
-def test_comm_quality_medium():
-    svc = _make_svc(CommunicationQualityService, {"quality": "MEDIUM"})
-    assert svc.value == CommunicationQualityService.State.MEDIUM
+def test_comm_quality_not_supported():
+    svc = _make_svc(CommunicationQualityService, {"quality": "NOT_SUPPORTED"})
+    assert svc.value == CommunicationQualityService.State.NOT_SUPPORTED
+
+
+def test_comm_quality_state_matches_apk_enum():
+    # CommunicationQualityState$Quality (APK) has exactly these 6 values;
+    # regression guard for the invented "MEDIUM" / missing "NOT_SUPPORTED" bug.
+    assert {m.value for m in CommunicationQualityService.State} == {
+        "BAD",
+        "FETCHING",
+        "GOOD",
+        "NORMAL",
+        "NOT_SUPPORTED",
+        "UNKNOWN",
+    }
+
+
+def test_comm_quality_genuinely_unrecognized_value_falls_back_to_unknown():
+    # A truly unmapped value (not in the APK enum at all) should still
+    # degrade gracefully to UNKNOWN instead of raising.
+    svc = _make_svc(CommunicationQualityService, {"quality": "SOMETHING_NEW"})
+    assert svc.value == CommunicationQualityService.State.UNKNOWN
 
 
 def test_comm_quality_normal():
