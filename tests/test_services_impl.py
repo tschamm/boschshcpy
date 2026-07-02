@@ -944,6 +944,35 @@ def test_smoke_failed():
     assert svc.value == SmokeDetectorCheckService.State.SMOKE_TEST_FAILED
 
 
+def test_smoke_communication_test_sent():
+    svc = _make_svc(SmokeDetectorCheckService, {"value": "COMMUNICATION_TEST_SENT"})
+    assert svc.value == SmokeDetectorCheckService.State.COMMUNICATION_TEST_SENT
+
+
+def test_smoke_communication_test_ok():
+    svc = _make_svc(SmokeDetectorCheckService, {"value": "COMMUNICATION_TEST_OK"})
+    assert svc.value == SmokeDetectorCheckService.State.COMMUNICATION_TEST_OK
+
+
+def test_smoke_communication_test_requested():
+    svc = _make_svc(
+        SmokeDetectorCheckService, {"value": "COMMUNICATION_TEST_REQUESTED"}
+    )
+    assert svc.value == SmokeDetectorCheckService.State.COMMUNICATION_TEST_REQUESTED
+
+
+def test_smoke_unknown_value_falls_back_to_none():
+    # Defense-in-depth: any future unmodeled value must not raise, mirroring
+    # the AlarmService.value try/except pattern.
+    svc = _make_svc(SmokeDetectorCheckService, {"value": "SOME_FUTURE_VALUE"})
+    assert svc.value == SmokeDetectorCheckService.State.NONE
+
+
+def test_smoke_missing_value_falls_back_to_none():
+    svc = _make_svc(SmokeDetectorCheckService, {})
+    assert svc.value == SmokeDetectorCheckService.State.NONE
+
+
 # ===========================================================================
 # 13. AlarmService
 # ===========================================================================
