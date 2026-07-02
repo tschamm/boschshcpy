@@ -2280,10 +2280,10 @@ class TestCommunicationQuality:
         svc = self._make_cq_svc("BAD")
         assert svc.value == CommunicationQualityService.State.BAD
 
-    def test_quality_medium(self):
+    def test_quality_not_supported(self):
         from boschshcpy.services_impl import CommunicationQualityService
-        svc = self._make_cq_svc("MEDIUM")
-        assert svc.value == CommunicationQualityService.State.MEDIUM
+        svc = self._make_cq_svc("NOT_SUPPORTED")
+        assert svc.value == CommunicationQualityService.State.NOT_SUPPORTED
 
     def test_quality_normal(self):
         from boschshcpy.services_impl import CommunicationQualityService
