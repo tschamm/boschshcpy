@@ -442,6 +442,29 @@ class TestSHCLightControlSwitchConfigBindings:
         asyncio.run(obj.async_set_actuator_type(SwitchConfiguration.ActuatorType.UNKNOWN))
         asyncio.run(obj.async_set_output_mode(SwitchConfiguration.OutputMode.UNKNOWN))
 
+    # supports_swap_outputs — capability flag, distinct from the swap_outputs
+    # value itself (same read-only-capability-vs-actual-value split pattern as
+    # DetectionTest's detectionState vs detectionStateRequest). Must be
+    # forwarded from the service so boschshc-hass can gate the "Swap Outputs"
+    # entity on real device support instead of always creating it.
+    def test_supports_swap_outputs_true_passthrough(self):
+        obj = self._make_light_control(sc_state={"supportsSwapOutputs": True})
+        assert obj.supports_swap_outputs is True
+
+    def test_supports_swap_outputs_false_passthrough(self):
+        obj = self._make_light_control(sc_state={"supportsSwapOutputs": False})
+        assert obj.supports_swap_outputs is False
+
+    def test_supports_swap_outputs_missing_returns_none(self):
+        obj = self._make_light_control(sc_state={})
+        assert obj.supports_swap_outputs is None
+
+    def test_supports_swap_outputs_absent_service_returns_none(self):
+        from boschshcpy.models_impl import SHCLightControl
+        obj = SHCLightControl.__new__(SHCLightControl)
+        obj._switch_config_service = None
+        assert obj.supports_swap_outputs is None
+
 
 # ---------------------------------------------------------------------------
 # SHCMicromoduleRelay — SwitchConfiguration bindings
@@ -559,3 +582,25 @@ class TestSHCMicromoduleRelaySwitchConfigBindings:
         asyncio.run(obj.async_set_swap_outputs(False))
         asyncio.run(obj.async_set_actuator_type(SwitchConfiguration.ActuatorType.UNKNOWN))
         asyncio.run(obj.async_set_output_mode(SwitchConfiguration.OutputMode.UNKNOWN))
+
+    # supports_swap_outputs — capability flag, distinct from the swap_outputs
+    # value itself. Must be forwarded from the service so boschshc-hass can
+    # gate the "Swap Outputs" entity on real device support instead of always
+    # creating it (see SHCLightControl tests above for the same pattern).
+    def test_supports_swap_outputs_true_passthrough(self):
+        obj = self._make_relay(sc_state={"supportsSwapOutputs": True})
+        assert obj.supports_swap_outputs is True
+
+    def test_supports_swap_outputs_false_passthrough(self):
+        obj = self._make_relay(sc_state={"supportsSwapOutputs": False})
+        assert obj.supports_swap_outputs is False
+
+    def test_supports_swap_outputs_missing_returns_none(self):
+        obj = self._make_relay(sc_state={})
+        assert obj.supports_swap_outputs is None
+
+    def test_supports_swap_outputs_absent_service_returns_none(self):
+        from boschshcpy.models_impl import SHCMicromoduleRelay
+        obj = SHCMicromoduleRelay.__new__(SHCMicromoduleRelay)
+        obj._switch_config_service = None
+        assert obj.supports_swap_outputs is None
