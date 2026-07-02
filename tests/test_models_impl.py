@@ -1288,6 +1288,30 @@ class TestSHCMotionDetector2:
         d = self._make()
         assert d.binaryswitch is True
 
+    def test_supports_light_true_when_both_services_present(self):
+        d = self._make()
+        assert d.supports_light is True
+
+    def test_base_variant_no_light_services_does_not_raise(self):
+        """Regression: a base MD2 (without the [+M] light hardware) has
+        neither BinarySwitch nor MultiLevelSwitch — every read/write must
+        degrade gracefully instead of AttributeError on the None service.
+        Not profile-related: a GENERIC-profile MD2 [+M] still has both
+        services (rawscan-confirmed, hass#356)."""
+        d = self._make()
+        d._multi_level_switch_service = None
+        d._binaryswitch_service = None
+
+        assert d.supports_light is False
+        assert d.multi_level_switch == 0
+        assert d.binaryswitch is False
+        d.multi_level_switch = 50  # setter must not raise
+        d.binaryswitch = True  # setter must not raise
+
+        import asyncio
+        asyncio.run(d.async_set_multi_level_switch(50))  # must not raise
+        asyncio.run(d.async_set_binaryswitch(True))  # must not raise
+
     def test_detection_state_stopped(self):
         from boschshcpy.services_impl import DetectionTestService
         d = self._make()

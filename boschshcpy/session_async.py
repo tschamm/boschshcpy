@@ -380,6 +380,23 @@ class SHCSessionAsync:
         - Other exceptions: log + asyncio.sleep(15) + continue
         - asyncio.CancelledError: cleanup + re-raise (structured concurrency)
         """
+        try:
+            await self._poll_loop_body()
+        finally:
+            # Mirrors session.py's polling_thread_main finally: clear the
+            # task handle however this coroutine exits (normal stop, an
+            # uncaught exception escaping the while loop below, or a
+            # CancelledError not already handled by stop_polling), so a dead
+            # task doesn't permanently block start_polling() with
+            # "Already polling!" — the exact bug fixed on the sync side in
+            # 0.4.4. Deliberately NOT touching self._poll_id here, same
+            # reasoning as the sync fix: stop_polling() handles poll_id
+            # cleanup itself after awaiting this task.
+            self._poll_task = None
+
+    async def _poll_loop_body(self) -> None:
+        """The actual long-poll while-loop, split out so _poll_loop() can
+        wrap it in a finally that always clears self._poll_task."""
         while not self._stop_polling:
             try:
                 resubscribed = False

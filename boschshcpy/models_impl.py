@@ -2195,10 +2195,12 @@ class SHCMotionDetector2(SHCBatteryDevice):
         raw_device_services: list[dict[str, Any]],
     ) -> None:
         super().__init__(api, raw_device, raw_device_services)
-        self._multi_level_switch_service: MultiLevelSwitchService = self.device_service(  # type: ignore[assignment]
-            "MultiLevelSwitch"
+        self._multi_level_switch_service: MultiLevelSwitchService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "MultiLevelSwitch"
+            )
         )
-        self._binaryswitch_service: BinarySwitchService = self.device_service(  # type: ignore[assignment]
+        self._binaryswitch_service: BinarySwitchService | None = self.device_service(  # type: ignore[assignment]
             "BinarySwitch"
         )
         self._detectiontest_service: DetectionTestService | None = self.device_service(  # type: ignore[assignment]
@@ -2255,27 +2257,57 @@ class SHCMotionDetector2(SHCBatteryDevice):
         return self._multi_level_sensor_service.illuminance
 
     @property
+    def supports_light(self) -> bool:
+        """Whether this MD2 has the [+M] indicator-light services.
+
+        BinarySwitch/MultiLevelSwitch presence depends on the physical
+        [+M] hardware variant, NOT on the installation profile — a
+        GENERIC-profile MD2 [+M] still reports both services (rawscan-
+        confirmed, hass#356: same device, profile GENERIC, both services
+        present on 2026-05-05 and 2026-06-23). A base MD2 without the
+        [+M] light module has neither service. Without this guard, every
+        property/setter below would raise AttributeError on a None
+        service for the (common) non-[+M] case.
+        """
+        return (
+            self._multi_level_switch_service is not None
+            and self._binaryswitch_service is not None
+        )
+
+    @property
     def multi_level_switch(self) -> int:
+        if self._multi_level_switch_service is None:
+            return 0
         return self._multi_level_switch_service.value
 
     @multi_level_switch.setter
     def multi_level_switch(self, value: int) -> None:
+        if self._multi_level_switch_service is None:
+            return
         self._multi_level_switch_service.put_state_element("level", value)
 
     async def async_set_multi_level_switch(self, value: int) -> None:
         """Async write: set indicator light brightness level (0-100)."""
+        if self._multi_level_switch_service is None:
+            return
         await self._multi_level_switch_service.async_put_state_element("level", value)
 
     @property
     def binaryswitch(self) -> bool:
+        if self._binaryswitch_service is None:
+            return False
         return self._binaryswitch_service.value
 
     @binaryswitch.setter
     def binaryswitch(self, value: bool) -> None:
+        if self._binaryswitch_service is None:
+            return
         self._binaryswitch_service.put_state_element("on", bool(value))
 
     async def async_set_binaryswitch(self, value: bool) -> None:
         """Async write: turn indicator light on/off via BinarySwitch service."""
+        if self._binaryswitch_service is None:
+            return
         await self._binaryswitch_service.async_put_state_element("on", bool(value))
 
     @property

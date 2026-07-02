@@ -549,6 +549,47 @@ class TestPollLoop:
 
         asyncio.run(run())
 
+    def test_poll_loop_clears_poll_task_on_cancellation(self):
+        """Regression: _poll_loop() must clear self._poll_task in a finally
+        however it exits — mirrors the sync session.py fix (0.4.4) for a
+        permanent 'Already polling!' lockout after the task dies. Without
+        this, self._poll_task stays set to a dead/cancelled Task object and
+        a fresh start_polling() call would raise forever."""
+        api = _fake_api()
+        api.long_polling_poll.side_effect = asyncio.CancelledError
+
+        async def run():
+            s = _bare_session(api)
+            s._poll_id = "pid-cancel"
+            s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
+            with pytest.raises(asyncio.CancelledError):
+                await s._poll_task
+            return s
+
+        s = asyncio.run(run())
+        assert s._poll_task is None
+
+    def test_poll_loop_clears_poll_task_on_normal_exit(self):
+        """Normal exit (self._stop_polling set to True) must also clear
+        self._poll_task, not just the cancellation/exception paths."""
+        api = _fake_api()
+
+        async def run():
+            s = _bare_session(api)
+            s._poll_id = "pid-normal"
+
+            async def poll_once_then_stop(*_args, **_kwargs):
+                s._stop_polling = True
+                return []
+
+            api.long_polling_poll.side_effect = poll_once_then_stop
+            s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
+            await s._poll_task
+            return s
+
+        s = asyncio.run(run())
+        assert s._poll_task is None
+
     def test_poll_loop_scenario_triggered_calls_callback(self):
         """scenarioTriggered events must invoke registered callbacks."""
         api = _fake_api()
