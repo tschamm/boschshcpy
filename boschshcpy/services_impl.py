@@ -1703,9 +1703,7 @@ class CommunicationQualityService(SHCDeviceService):
 
     def request_quality_test(self) -> None:
         """Trigger a fresh communication-quality measurement (write-only)."""
-        self.put_state_element(
-            "requestState", self.RequestState.REQUEST.value
-        )
+        self.put_state_element("requestState", self.RequestState.REQUEST.value)
 
     async def async_request_quality_test(self) -> None:
         """Async counterpart to request_quality_test."""
@@ -2044,8 +2042,7 @@ class WallThermostatConfiguration(SHCDeviceService):
         print(f"    heaterType               : {self.heater_type}")
         print(f"    supportedHeaterTypes     : {self.supported_heater_types}")
         print(
-            "    decalcificationProtEnabled: "
-            f"{self.decalcification_protection_enabled}"
+            f"    decalcificationProtEnabled: {self.decalcification_protection_enabled}"
         )
 
 
