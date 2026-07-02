@@ -677,14 +677,18 @@ def test_vibration_sensitivity_very_low():
 def test_valve_position():
     svc = _make_svc(ValveTappetService, {"position": 42, "value": "VALVE_ADAPTION_SUCCESSFUL"})
     assert svc.position == 42
-    assert isinstance(svc.position, float)
+    assert isinstance(svc.position, int)
 
 
-def test_valve_position_keeps_decimals():
-    # Thermostat II types position as number; int() previously truncated it.
-    svc = _make_svc(ValveTappetService, {"position": 42.5, "value": "VALVE_ADAPTION_SUCCESSFUL"})
-    assert svc.position == 42.5
-    assert isinstance(svc.position, float)
+def test_valve_position_is_int_per_apk_model():
+    # OpenAPI types Thermostat-II position as generic "number", but the
+    # Bosch APK's own ValveTappetState client model declares this field as
+    # Integer (unlike sibling TemperatureOffsetState/TemperatureLevelState,
+    # which use Double) — so position must stay int, matching the app's
+    # ground-truth model rather than the loose OpenAPI typing.
+    svc = _make_svc(ValveTappetService, {"position": 42, "value": "VALVE_ADAPTION_SUCCESSFUL"})
+    assert svc.position == 42
+    assert isinstance(svc.position, int)
 
 
 def test_valve_state_successful():

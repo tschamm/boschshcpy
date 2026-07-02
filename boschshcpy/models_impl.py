@@ -1543,7 +1543,7 @@ class SHCThermostat(
         )  # type: ignore[assignment]
 
     @property
-    def position(self) -> float:
+    def position(self) -> int:
         return self._valvetappet_service.position
 
     @property

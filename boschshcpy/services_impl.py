@@ -417,10 +417,16 @@ class ValveTappetService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
 
     @property
-    def position(self) -> float:
-        # Thermostat II reports the valve tappet position as a JSON number
-        # (OpenAPI Thermostat-II position = number); int() truncated it.
-        return float(self.state.get("position", 0.0))
+    def position(self) -> int:
+        # NOTE: OpenAPI (Thermostat-II-local-openapi-v3.yml) types this field
+        # as generic "number", which previously motivated switching this to
+        # float (0.8.3). However, the Bosch APK's own ValveTappetState client
+        # model declares this field as Integer (unlike sibling
+        # TemperatureOffsetState/TemperatureLevelState, which use Double for
+        # their numeric fields) — i.e. the app's ground-truth model never
+        # expects a fractional valve position. Reverted to int() to match the
+        # APK; re-verify against a live rawscan before floating this again.
+        return int(self.state.get("position", 0))
 
     @property
     def value(self) -> State:

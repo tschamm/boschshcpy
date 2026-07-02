@@ -834,12 +834,15 @@ class TestSHCThermostat:
     def test_position(self):
         d = self._make(position=75)
         assert d.position == 75
-        assert isinstance(d.position, float)
+        assert isinstance(d.position, int)
 
-    def test_position_keeps_decimals(self):
-        d = self._make(position=42.5)
-        assert d.position == 42.5
-        assert isinstance(d.position, float)
+    def test_position_is_int_per_apk_model(self):
+        # APK's ValveTappetState client model types position as Integer
+        # (not Double, unlike TemperatureOffsetState/TemperatureLevelState),
+        # so this must stay int despite OpenAPI's loose "number" typing.
+        d = self._make(position=42)
+        assert d.position == 42
+        assert isinstance(d.position, int)
 
     def test_valvestate_adaption_successful(self):
         from boschshcpy.services_impl import ValveTappetService
