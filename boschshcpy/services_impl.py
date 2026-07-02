@@ -1860,10 +1860,31 @@ class WallThermostatConfiguration(SHCDeviceService):
     ) -> None:
         await self.async_put_state_element("heaterType", value.value)
 
+    @property
+    def supported_heater_types(self) -> list[Any]:
+        # Per-device capability list (analogous to
+        # ThermostatSupportedControlModeService.supported_control_modes) —
+        # e.g. RTH2_230 = [VOLT_FREE_HEATING, FLOOR_HEATING], BWTH gen1/gen2
+        # advertise a wider set incl. CONVECTOR_ACTIVE/CONVECTOR_PASSIVE.
+        # Confirmed via rawscans (hass#274, hass#330).
+        return list(self.state.get("supportedHeaterTypes", []))
+
+    @property
+    def decalcification_protection_enabled(self) -> bool | None:
+        # Only present on newer firmware (confirmed hass#330 rawscan on
+        # RTH2_230). Absent on older firmware, hence Optional.
+        raw = self.state.get("decalcificationProtectionEnabled")
+        return bool(raw) if raw is not None else None
+
     def summary(self) -> None:
         super().summary()
         print(f"    valveType                : {self.valve_type}")
         print(f"    heaterType               : {self.heater_type}")
+        print(f"    supportedHeaterTypes     : {self.supported_heater_types}")
+        print(
+            "    decalcificationProtEnabled: "
+            f"{self.decalcification_protection_enabled}"
+        )
 
 
 class SwitchConfiguration(SHCDeviceService):
