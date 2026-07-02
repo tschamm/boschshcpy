@@ -1,5 +1,80 @@
 # Changelog
 
+## 0.4.6
+
+**No breaking config changes.** One behavior-relevant note: two numeric
+fields revert from `float` back to `int` (see Fixed) — this corrects a
+prior release, not a new change.
+
+hass#356 turned out not to be an installation-profile issue as originally
+guessed; finding the real cause led to a full audit of `boschshcpy`
+against a decompiled copy of the official Bosch Android app (ground truth
+for fields/enums/write-paths the public OpenAPI spec doesn't cover or gets
+wrong), run as independent parallel finders per device domain, each
+finding adversarially re-verified against primary sources before a fix was
+applied — 3 findings were rejected at verification (a misread internal
+app-UI-diff field, a decompiler-artifact-based naming guess, and an
+unverified TLS assumption) and never touched the code.
+
+### Fixed
+
+- **`SHCMotionDetector2.supports_light` was never actually implemented**
+  (hass#356). The 0.9.2 `boschshc-hass` CHANGELOG claimed this shipped
+  paired with this lib's 0.4.5 — it didn't; confirmed absent from this
+  repo's full history and from GitHub code search. Since `boschshc-hass`
+  reads it via `getattr(light, "supports_light", False)`, the missing
+  attribute silently defaulted to "unsupported" for every Motion Detector
+  II `[+M]` since 0.9.2, regardless of installation profile (the profile
+  was never actually the gating factor — every rawscan of the reporter's
+  device, in `GENERIC` profile, shows both `BinarySwitch` and
+  `MultiLevelSwitch` present). Added `supports_light` plus None-safe
+  getters/setters (sync + async) so a genuine base Motion Detector II
+  (no `[+M]` light hardware) degrades gracefully instead of raising.
+- **`CommunicationQualityService.State` had an invented `MEDIUM` member
+  that does not exist in the real API**, and was missing the real
+  `NOT_SUPPORTED` value the Bosch app's own `Quality` enum defines.
+  Replaced `MEDIUM` with `NOT_SUPPORTED`.
+- **`ValveTappetService.position` / `SHCThermostat.position`** reverted
+  from `float` back to `int` — the Bosch app's own `ValveTappetState`
+  model declares this field `Integer`, unlike sibling
+  `TemperatureLevelState`/`TemperatureOffsetState`, which really are
+  `Float`. The OpenAPI spec's generic `number` typing over-generalized
+  this in a prior release.
+- **`AirQualityLevelService.purity` / `SHCTwinguard.purity`** reverted
+  from `float` back to `int` for the same reason — the app's
+  `AirQualityLevelState` declares `purity` as `Integer` while
+  `temperature`/`humidity` on the same service really are `Float`.
+- **`SmokeDetectorCheckService.State`** was missing 3 real firmware
+  states (`COMMUNICATION_TEST_SENT`/`COMMUNICATION_TEST_OK`/
+  `COMMUNICATION_TEST_REQUESTED`) that SD/SD2 devices can report; added,
+  with the same graceful-fallback-to-`NONE` guard already used elsewhere.
+
+### Added
+
+- **`WallThermostatConfiguration.supported_heater_types` /
+  `.decalcification_protection_enabled`** — previously unmapped fields
+  confirmed on real RTH2_230/BWTH hardware (rawscan database).
+- **`WallThermostatConfiguration.HeaterType.VOLT_FREE_HEATING`** — a real
+  heater type seen on hardware (rawscan-confirmed) that was missing from
+  the enum, silently collapsing to `UNKNOWN`.
+- **Bypass configuration (timed/infinite auto-expiry)** for
+  `BypassService`/`SHCShutterContact2` — new `configuration_enabled`/
+  `timeout`/`infinite` read properties plus `set_bypass_configuration`/
+  `async_set_bypass_configuration()` writers, mirroring
+  `OutdoorSirenService`'s merge-then-PUT pattern so unrelated config
+  fields aren't clobbered.
+- **`SHCLightControl`/`SHCMicromoduleRelay.supports_swap_outputs`** —
+  forwards the underlying switch-configuration capability flag, needed
+  before a "Swap Outputs" control can be safely offered.
+- **`CommunicationQualityService`/`._CommunicationQuality.request_communication_quality_test()`
+  (sync + async)** — new write path to trigger a fresh communication
+  quality test on demand, available to every device composing the shared
+  `_CommunicationQuality` mixin.
+- **`DetectionTestService.motion_sensitivity`** — the Motion Detector
+  II's `DetectionTest` service also reports its own `motionSensitivity`
+  reading (shares the `PirSensorConfiguration` enum vocabulary); now
+  exposed instead of silently dropped.
+
 ## 0.4.5
 
 **No breaking API changes.** Hotfix for 0.4.4.
