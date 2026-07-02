@@ -1820,6 +1820,7 @@ class WallThermostatConfiguration(SHCDeviceService):
         RADIATOR = "RADIATOR"
         CONVECTOR_PASSIVE = "CONVECTOR_PASSIVE"
         CONVECTOR_ACTIVE = "CONVECTOR_ACTIVE"
+        VOLT_FREE_HEATING = "VOLT_FREE_HEATING"
         UNKNOWN = "UNKNOWN"
 
     @property
