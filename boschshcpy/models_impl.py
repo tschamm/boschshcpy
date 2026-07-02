@@ -1329,6 +1329,45 @@ class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
             "state", "BYPASS_ACTIVE" if state else "BYPASS_INACTIVE"
         )
 
+    @property
+    def bypass_configuration_enabled(self) -> bool:
+        """Whether timed/infinite bypass configuration is enabled."""
+        return self._bypass_service.configuration_enabled
+
+    @property
+    def bypass_timeout(self) -> int:
+        """Bypass auto-expiry timeout in seconds (ignored if infinite)."""
+        return self._bypass_service.timeout
+
+    @property
+    def bypass_infinite(self) -> bool:
+        """Whether an active bypass never expires."""
+        return self._bypass_service.infinite
+
+    def set_bypass_configuration(
+        self,
+        *,
+        enabled: bool | None = None,
+        timeout: int | None = None,
+        infinite: bool | None = None,
+    ) -> None:
+        """Write: update the bypass timeout/infinite configuration."""
+        self._bypass_service.set_bypass_configuration(
+            enabled=enabled, timeout=timeout, infinite=infinite
+        )
+
+    async def async_set_bypass_configuration(
+        self,
+        *,
+        enabled: bool | None = None,
+        timeout: int | None = None,
+        infinite: bool | None = None,
+    ) -> None:
+        """Async write: update the bypass timeout/infinite configuration."""
+        await self._bypass_service.async_set_bypass_configuration(
+            enabled=enabled, timeout=timeout, infinite=infinite
+        )
+
 
 class SHCShutterContact2Plus(SHCShutterContact2):
     def __init__(

@@ -542,6 +542,99 @@ class TestShutterContactBypassAsync:
 
 
 # ---------------------------------------------------------------------------
+# BypassService / SHCShutterContact2 — async_set_bypass_configuration
+#
+# rawscan-database.md (SWD2/SWD2_PLUS, hass#245/#78): bypassState carries a
+# nested configuration{enabled, timeout, infinite} block (timed/auto-expiring
+# bypass) that was previously never read or written at all.
+# ---------------------------------------------------------------------------
+
+class TestBypassConfigurationAsync:
+    def _fake_bypass_service(self, state, api):
+        # _fake_async_service() always builds a bare SHCDeviceService (it
+        # ignores its cls arg), which lacks BypassService's config-specific
+        # properties/methods — build the real subclass instance here.
+        from boschshcpy.services_impl import BypassService
+        svc = BypassService.__new__(BypassService)
+        svc._api = api
+        svc._raw_device_service = {
+            "id": "Bypass",
+            "deviceId": "device-1",
+            "path": "/devices/device-1/services/Bypass",
+            "state": state,
+        }
+        svc._raw_state = state
+        svc._last_update = None
+        svc._callbacks = {}
+        svc._event_callbacks = {}
+        return svc
+
+    def _make(self):
+        from boschshcpy.models_impl import SHCShutterContact2
+        api = _make_async_api()
+        state = {
+            "@type": "BypassState",
+            "state": "BYPASS_INACTIVE",
+            "configuration": {"enabled": True, "timeout": 5, "infinite": False},
+        }
+        svc = self._fake_bypass_service(state, api)
+        obj = SHCShutterContact2.__new__(SHCShutterContact2)
+        _inject(obj, api, _bypass_service=svc)
+        obj._raw_device = _fake_raw_device(model="SWD2")
+        return obj, svc, api
+
+    def test_service_config_put_merges_full_block(self):
+        # Changing only timeout must still PUT the whole configuration block
+        # (mirrors OutdoorSirenService._merged_config — Bosch requires it).
+        # Only the `configuration` key is sent, matching the existing
+        # single-key PUT pattern (async_set_bypass sends only `state`).
+        obj, svc, api = self._make()
+        asyncio.run(svc.async_set_bypass_configuration(timeout=30))
+        api.put_device_service_state.assert_awaited_once_with(
+            "device-1",
+            "Bypass",
+            {
+                "@type": "BypassState",
+                "configuration": {"enabled": True, "timeout": 30, "infinite": False},
+            },
+        )
+
+    def test_service_config_put_override_multiple(self):
+        obj, svc, api = self._make()
+        asyncio.run(svc.async_set_bypass_configuration(enabled=False, infinite=True))
+        body = api.put_device_service_state.call_args.args[2]
+        cfg = body["configuration"]
+        assert cfg == {"enabled": False, "timeout": 5, "infinite": True}
+
+    def test_service_config_put_skipped_when_unknown(self):
+        """No configuration block yet (e.g. partial state push) -> skip the
+        write rather than PUT a block of zeros that wipes user settings."""
+        api = _make_async_api()
+        state = {"@type": "BypassState", "state": "BYPASS_INACTIVE"}
+        svc = self._fake_bypass_service(state, api)
+        asyncio.run(svc.async_set_bypass_configuration(timeout=10))
+        api.put_device_service_state.assert_not_awaited()
+
+    def test_model_delegates_to_service(self):
+        obj, svc, api = self._make()
+        asyncio.run(obj.async_set_bypass_configuration(timeout=60, infinite=False))
+        api.put_device_service_state.assert_awaited_once_with(
+            "device-1",
+            "Bypass",
+            {
+                "@type": "BypassState",
+                "configuration": {"enabled": True, "timeout": 60, "infinite": False},
+            },
+        )
+
+    def test_model_read_props_delegate_to_service(self):
+        obj, svc, api = self._make()
+        assert obj.bypass_configuration_enabled is True
+        assert obj.bypass_timeout == 5
+        assert obj.bypass_infinite is False
+
+
+# ---------------------------------------------------------------------------
 # SHCShutterContact2Plus — async_set_vibration_enabled, async_set_sensitivity
 # ---------------------------------------------------------------------------
 

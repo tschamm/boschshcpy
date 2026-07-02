@@ -340,6 +340,15 @@ class ShutterContactService(SHCDeviceService):
 
 
 class BypassService(SHCDeviceService):
+    """Door/window contact alarm bypass (SWD2/SWD2_PLUS/SWD2_DUAL).
+
+    Alongside the top-level `state` (BYPASS_ACTIVE/BYPASS_INACTIVE), Bosch's
+    bypassState carries a nested `configuration` block (`enabled`, `timeout`
+    seconds, `infinite`) that lets the bypass auto-expire after N seconds
+    instead of staying active forever. See knowledge-base/rawscan-database.md
+    (SWD2/SWD2_PLUS rawscans) for the confirmed shape.
+    """
+
     class State(Enum):
         BYPASS_INACTIVE = "BYPASS_INACTIVE"
         BYPASS_ACTIVE = "BYPASS_ACTIVE"
@@ -352,9 +361,96 @@ class BypassService(SHCDeviceService):
         except (KeyError, ValueError):
             return self.State.UNKNOWN
 
+    @property
+    def _config(self) -> dict[str, Any]:
+        return self.state.get("configuration", {}) or {}
+
+    @property
+    def configuration_enabled(self) -> bool:
+        return bool(self._config.get("enabled", False))
+
+    @property
+    def timeout(self) -> int:
+        return int(self._config.get("timeout", 0))
+
+    @property
+    def infinite(self) -> bool:
+        return bool(self._config.get("infinite", False))
+
+    def _merged_configuration(self, **overrides: Any) -> dict[str, Any]:
+        # Mirrors OutdoorSirenService: the PUT requires the whole
+        # configuration block, so unchanged fields are filled from the
+        # current state.
+        cfg: dict[str, Any] = {
+            "enabled": self.configuration_enabled,
+            "timeout": self.timeout,
+            "infinite": self.infinite,
+        }
+        cfg.update(overrides)
+        return cfg
+
+    def set_bypass_configuration(
+        self,
+        *,
+        enabled: bool | None = None,
+        timeout: int | None = None,
+        infinite: bool | None = None,
+    ) -> None:
+        """Write: update one or more configuration fields."""
+        if not self._config:
+            logger.warning(
+                "Bypass %s: configuration not yet known, skipping write to "
+                "avoid resetting bypass settings",
+                self.device_id,
+            )
+            return
+        overrides: dict[str, Any] = {}
+        if enabled is not None:
+            overrides["enabled"] = enabled
+        if timeout is not None:
+            overrides["timeout"] = timeout
+        if infinite is not None:
+            overrides["infinite"] = infinite
+        self.put_state_element("configuration", self._merged_configuration(**overrides))
+
+    async def async_set_bypass_configuration(
+        self,
+        *,
+        enabled: bool | None = None,
+        timeout: int | None = None,
+        infinite: bool | None = None,
+    ) -> None:
+        """Async write: update one or more configuration fields.
+
+        Bosch requires the whole configuration block on every PUT, so
+        unchanged fields are filled from the current state. If the current
+        state has no configuration block yet, skip the write rather than PUT
+        a block of zeros that would wipe the user's settings.
+        """
+        if not self._config:
+            logger.warning(
+                "Bypass %s: configuration not yet known, skipping write to "
+                "avoid resetting bypass settings",
+                self.device_id,
+            )
+            return
+        overrides: dict[str, Any] = {}
+        if enabled is not None:
+            overrides["enabled"] = enabled
+        if timeout is not None:
+            overrides["timeout"] = timeout
+        if infinite is not None:
+            overrides["infinite"] = infinite
+        await self.async_put_state_element(
+            "configuration", self._merged_configuration(**overrides)
+        )
+
     def summary(self) -> None:
         super().summary()
         print(f"    State                    : {self.value}")
+        print(f"    configuration.enabled    : {self.configuration_enabled}")
+        print(f"    configuration.timeout    : {self.timeout}")
+        print(f"    configuration.infinite   : {self.infinite}")
 
 
 class VibrationSensorService(SHCDeviceService):
