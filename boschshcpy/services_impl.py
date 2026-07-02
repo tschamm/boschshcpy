@@ -695,10 +695,19 @@ class SmokeDetectorCheckService(SHCDeviceService):
         SMOKE_TEST_OK = "SMOKE_TEST_OK"
         SMOKE_TEST_REQUESTED = "SMOKE_TEST_REQUESTED"
         SMOKE_TEST_FAILED = "SMOKE_TEST_FAILED"
+        # SmokeDetectorCheckState$1.java (APK switch-map) treats these
+        # COMMUNICATION_TEST_* values as live transition states on the same
+        # tier as the SMOKE_TEST_* values above, not dead/legacy states.
+        COMMUNICATION_TEST_SENT = "COMMUNICATION_TEST_SENT"
+        COMMUNICATION_TEST_OK = "COMMUNICATION_TEST_OK"
+        COMMUNICATION_TEST_REQUESTED = "COMMUNICATION_TEST_REQUESTED"
 
     @property
     def value(self) -> State:
-        return self.State(self.state["value"])
+        try:
+            return self.State(self.state["value"])
+        except (KeyError, ValueError):
+            return self.State.NONE
 
     def summary(self) -> None:
         super().summary()
