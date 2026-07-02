@@ -83,6 +83,55 @@ class TestDetectionTestService:
             "detectionStateRequest", "DETECTION_STATE_STOP"
         )
 
+    # -----------------------------------------------------------------
+    # motion_sensitivity: DetectionTestState's own motionSensitivity field
+    # (APK: getMotionSensorSensitivity(), distinct from
+    # PirSensorConfigurationService's field of the same name) — never observed
+    # in a real rawscan yet, but the model class carries it so the property
+    # must not silently drop it if/when a controller does report it.
+    # -----------------------------------------------------------------
+
+    def test_motion_sensitivity_getter(self):
+        from boschshcpy.services_impl import (
+            DetectionTestService,
+            PirSensorConfigurationService,
+        )
+        svc = self._svc(
+            detectionState="DETECTION_TEST_STOPPED", motionSensitivity="HIGH"
+        )
+        assert (
+            svc.motion_sensitivity
+            == PirSensorConfigurationService.MotionSensitivity.HIGH
+        )
+
+    def test_motion_sensitivity_missing_returns_unknown(self):
+        from boschshcpy.services_impl import (
+            DetectionTestService,
+            PirSensorConfigurationService,
+        )
+        svc = _make_svc(
+            DetectionTestService,
+            {"detectionState": "DETECTION_TEST_STOPPED"},
+            atype="detectionTestState",
+        )
+        assert (
+            svc.motion_sensitivity
+            == PirSensorConfigurationService.MotionSensitivity.UNKNOWN
+        )
+
+    def test_motion_sensitivity_bad_value_returns_unknown(self):
+        from boschshcpy.services_impl import (
+            DetectionTestService,
+            PirSensorConfigurationService,
+        )
+        svc = self._svc(
+            detectionState="DETECTION_TEST_STOPPED", motionSensitivity="WAT"
+        )
+        assert (
+            svc.motion_sensitivity
+            == PirSensorConfigurationService.MotionSensitivity.UNKNOWN
+        )
+
 
 # ---------------------------------------------------------------------------
 # LatestTamperService
