@@ -975,6 +975,12 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_outputMode(value)
 
+    @property
+    def supports_swap_outputs(self) -> bool | None:
+        if self._switch_config_service is None:
+            return None
+        return self._switch_config_service.supports_swap_outputs
+
 
 class SHCMicromoduleRelay(
     _CommunicationQuality, _ChildProtection, _PowerSwitch, _PowerSwitchProgram
@@ -1122,6 +1128,12 @@ class SHCMicromoduleRelay(
     ) -> None:
         if self._switch_config_service is not None:
             await self._switch_config_service.async_set_outputMode(value)
+
+    @property
+    def supports_swap_outputs(self) -> bool | None:
+        if self._switch_config_service is None:
+            return None
+        return self._switch_config_service.supports_swap_outputs
 
     @property
     def supports_switch_configuration(self) -> bool:
