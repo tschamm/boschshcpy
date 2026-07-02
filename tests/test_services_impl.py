@@ -1139,6 +1139,33 @@ def test_comm_quality_fetching():
     assert svc.value == CommunicationQualityService.State.FETCHING
 
 
+def test_comm_quality_request_quality_test_writes_request_state():
+    # APK: CommunicationQualityState.requestState (RequestState enum, only
+    # value REQUEST) is a write-only trigger field, separate from the
+    # read-only "quality" state — same split as DetectionTest/WalkTest.
+    svc = _make_svc(CommunicationQualityService, {"quality": "BAD"})
+    svc.request_quality_test()
+    svc._api.put_device_service_state.assert_called_once_with(
+        "test-device",
+        "CommunicationQualityService",
+        {"@type": "testType", "requestState": "REQUEST"},
+    )
+
+
+def test_comm_quality_async_request_quality_test_writes_request_state():
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    svc = _make_svc(CommunicationQualityService, {"quality": "BAD"})
+    svc._api.put_device_service_state = AsyncMock()
+    asyncio.run(svc.async_request_quality_test())
+    svc._api.put_device_service_state.assert_called_once_with(
+        "test-device",
+        "CommunicationQualityService",
+        {"@type": "testType", "requestState": "REQUEST"},
+    )
+
+
 # ===========================================================================
 # 17. WaterLeakageSensorService
 # ===========================================================================
