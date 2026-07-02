@@ -903,6 +903,24 @@ class DetectionTestService(SHCDeviceService):
         except ValueError:
             return self.DetectionState.DETECTION_TEST_UNKNOWN
 
+    @property
+    def motion_sensitivity(self) -> PirSensorConfigurationService.MotionSensitivity:
+        # APK's DetectionTestState model also carries a motionSensitivity field
+        # (getMotionSensorSensitivity(), enum HIGH/MIDDLE/LOW/UNKNOWN) alongside
+        # detectionState/detectionStateRequest. Distinct from — and observed
+        # separately from — PirSensorConfigurationService's own motionSensitivity
+        # field (which is the one actually wired to SHCMotionDetector2 today);
+        # reuse its enum vocabulary here since both fields share the same values.
+        # NOTE: no real-device rawscan has ever shown this key inside the
+        # DetectionTest state (only detectionState observed so far); treat as
+        # documented-but-unconfirmed-live until a fresh capture proves it out.
+        try:
+            return PirSensorConfigurationService.MotionSensitivity(
+                self.state["motionSensitivity"]
+            )
+        except (KeyError, ValueError):
+            return PirSensorConfigurationService.MotionSensitivity.UNKNOWN
+
     def set_detection_state_request(
         self, value: DetectionTestService.DetectionStateRequest
     ) -> None:
@@ -922,6 +940,7 @@ class DetectionTestService(SHCDeviceService):
     def summary(self) -> None:
         super().summary()
         print(f"    detectionState           : {self.detection_state}")
+        print(f"    motionSensitivity        : {self.motion_sensitivity}")
 
 
 class LatestTamperService(SHCDeviceService):
