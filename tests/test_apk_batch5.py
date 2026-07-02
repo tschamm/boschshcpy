@@ -482,6 +482,17 @@ class TestWallThermostatConfiguration:
         svc = self._svc(heaterType="CONVECTOR_ACTIVE")
         assert svc.heater_type == WallThermostatConfiguration.HeaterType.CONVECTOR_ACTIVE
 
+    def test_heater_type_volt_free_heating(self):
+        # APK's official HeaterType enum for RTH2_230/BWTH has 6 values incl.
+        # VOLT_FREE_HEATING; a real device recorded in
+        # knowledge-base/rawscan-database.md reports
+        # "supportedHeaterTypes": ["VOLT_FREE_HEATING", "FLOOR_HEATING"].
+        # Before this fix, the enum lacked this member so heater_type
+        # silently fell back to UNKNOWN, discarding the real value.
+        from boschshcpy.services_impl import WallThermostatConfiguration
+        svc = self._svc(heaterType="VOLT_FREE_HEATING")
+        assert svc.heater_type == WallThermostatConfiguration.HeaterType.VOLT_FREE_HEATING
+
     def test_heater_type_unknown_explicit(self):
         from boschshcpy.services_impl import WallThermostatConfiguration
         svc = self._svc(heaterType="UNKNOWN")
