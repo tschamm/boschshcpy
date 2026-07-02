@@ -117,6 +117,14 @@ class _CommunicationQuality(SHCDevice):
     def communicationquality(self) -> CommunicationQualityService.State:
         return self._communicationquality_service.value
 
+    def request_communication_quality_test(self) -> None:
+        """Trigger a fresh communication-quality measurement (write-only)."""
+        self._communicationquality_service.request_quality_test()
+
+    async def async_request_communication_quality_test(self) -> None:
+        """Async counterpart to request_communication_quality_test."""
+        await self._communicationquality_service.async_request_quality_test()
+
 
 class _PowerMeter(SHCDevice):
     def __init__(

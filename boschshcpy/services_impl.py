@@ -1545,12 +1545,36 @@ class CommunicationQualityService(SHCDeviceService):
         UNKNOWN = "UNKNOWN"
         FETCHING = "FETCHING"
 
+    # PUT request value (requestState accepted by the controller). Write-only
+    # trigger field, separate from the read-only "quality" state — same
+    # read-field/write-field split as DetectionTest.detectionState/
+    # detectionStateRequest and WalkTest.walkState/walkStateRequest. APK
+    # capability dump: CommunicationQualityState.requestState is a
+    # RequestState enum with the single value REQUEST, used by
+    # ConfiguredMultiswitchNavigation.openCommunicationQualityTest to kick
+    # off a fresh communication-quality measurement via the
+    # MultiswitchCommunicationTestStartPage wizard.
+    class RequestState(Enum):
+        REQUEST = "REQUEST"
+
     @property
     def value(self) -> State:
         try:
             return self.State(self.state["quality"])
         except (KeyError, ValueError):
             return self.State.UNKNOWN
+
+    def request_quality_test(self) -> None:
+        """Trigger a fresh communication-quality measurement (write-only)."""
+        self.put_state_element(
+            "requestState", self.RequestState.REQUEST.value
+        )
+
+    async def async_request_quality_test(self) -> None:
+        """Async counterpart to request_quality_test."""
+        await self.async_put_state_element(
+            "requestState", self.RequestState.REQUEST.value
+        )
 
     def summary(self) -> None:
         super().summary()

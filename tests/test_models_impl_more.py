@@ -820,6 +820,48 @@ class TestThermostatChildLockSetter:
         assert any(c[2].get("childLock") == "OFF" for c in calls)
 
 
+class TestCommunicationQualityRequestTest:
+    """_CommunicationQuality.request_communication_quality_test/async_ (mixin-level
+    delegation to CommunicationQualityService.request_quality_test), via
+    SHCSmartPlugCompact. APK: requestState is a write-only trigger, distinct
+    from the read-only "quality" state exercised by test_communicationquality.
+    """
+
+    def _make(self):
+        from boschshcpy.models_impl import SHCSmartPlugCompact
+        from boschshcpy.services_impl import CommunicationQualityService
+
+        api, calls = _mock_api()
+        cq = _fake_svc(CommunicationQualityService, "CommunicationQuality",
+                       {"@type": "cq", "quality": "BAD"}, api=api)
+
+        obj = SHCSmartPlugCompact.__new__(SHCSmartPlugCompact)
+        obj._raw_device = _fake_raw_device(model="PLUG_COMPACT")
+        obj._callbacks = {}
+        obj._api = api
+        obj._communicationquality_service = cq
+        return obj, calls
+
+    def test_request_communication_quality_test_sends_request_state(self):
+        obj, calls = self._make()
+        obj.request_communication_quality_test()
+        assert any(c[2].get("requestState") == "REQUEST" for c in calls)
+
+    def test_async_request_communication_quality_test_sends_request_state(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        obj, calls = self._make()
+        svc = obj._communicationquality_service
+        svc.async_put_state_element = AsyncMock(
+            side_effect=lambda key, value: calls.append(
+                (svc.device_id, svc.id, {key: value})
+            )
+        )
+        asyncio.run(obj.async_request_communication_quality_test())
+        assert any(c[2].get("requestState") == "REQUEST" for c in calls)
+
+
 class TestPowerSwitchSetter:
     """_PowerSwitch.switchstate setter (line 108-111)."""
 
