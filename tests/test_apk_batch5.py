@@ -547,6 +547,51 @@ class TestWallThermostatConfiguration:
         assert "WallThermostatConfiguration" in SERVICE_MAPPING
         assert SERVICE_MAPPING["WallThermostatConfiguration"] is WallThermostatConfiguration
 
+    # -- supported_heater_types (APK field, rawscan-confirmed hass#274/#330) --
+
+    def test_supported_heater_types_rth2_230(self):
+        # rawscan (hass#330): RTH2_230's supported set is smaller than BWTH's.
+        svc = self._svc(supportedHeaterTypes=["VOLT_FREE_HEATING", "FLOOR_HEATING"])
+        assert svc.supported_heater_types == ["VOLT_FREE_HEATING", "FLOOR_HEATING"]
+
+    def test_supported_heater_types_bwth_wider_set(self):
+        # rawscan (hass#274): BWTH advertises a wider set than RTH2_230.
+        svc = self._svc(
+            supportedHeaterTypes=[
+                "CONVECTOR_ACTIVE",
+                "RADIATOR",
+                "CONVECTOR_PASSIVE",
+                "FLOOR_HEATING",
+                "FLOOR_HEATING_LOW_ENERGY",
+            ]
+        )
+        assert svc.supported_heater_types == [
+            "CONVECTOR_ACTIVE",
+            "RADIATOR",
+            "CONVECTOR_PASSIVE",
+            "FLOOR_HEATING",
+            "FLOOR_HEATING_LOW_ENERGY",
+        ]
+
+    def test_supported_heater_types_missing_returns_empty_list(self):
+        svc = self._svc()
+        assert svc.supported_heater_types == []
+
+    # -- decalcification_protection_enabled (APK field, rawscan-confirmed hass#330) --
+
+    def test_decalcification_protection_enabled_true(self):
+        svc = self._svc(decalcificationProtectionEnabled=True)
+        assert svc.decalcification_protection_enabled is True
+
+    def test_decalcification_protection_enabled_false(self):
+        svc = self._svc(decalcificationProtectionEnabled=False)
+        assert svc.decalcification_protection_enabled is False
+
+    def test_decalcification_protection_enabled_missing_returns_none(self):
+        # Absent on older firmware (confirmed via rawscan-database.md).
+        svc = self._svc()
+        assert svc.decalcification_protection_enabled is None
+
 
 # ---------------------------------------------------------------------------
 # Model mappings
