@@ -1520,13 +1520,18 @@ def test_air_quality_humidity_rating():
 def test_air_quality_purity():
     svc = _make_svc(AirQualityLevelService, {**_AQ_BASE, "purity": 1200})
     assert svc.purity == 1200
-    assert isinstance(svc.purity, float)
+    assert isinstance(svc.purity, int)
 
 
-def test_air_quality_purity_keeps_decimals():
-    svc = _make_svc(AirQualityLevelService, {**_AQ_BASE, "purity": 812.5})
-    assert svc.purity == 812.5
-    assert isinstance(svc.purity, float)
+def test_air_quality_purity_stays_int():
+    # Unlike temperature/humidity, the decompiled Android app's
+    # AirQualityLevelState model declares purity as java.lang.Integer, not
+    # Float -- the OpenAPI schema's generic "number" type for all three
+    # fields over-generalizes this. A 0.8.3 follow-up (#352) mistakenly
+    # floated purity too; this asserts it stays int()-truncated.
+    svc = _make_svc(AirQualityLevelService, {**_AQ_BASE, "purity": 812.7})
+    assert svc.purity == 812
+    assert isinstance(svc.purity, int)
 
 
 def test_air_quality_purity_rating():
