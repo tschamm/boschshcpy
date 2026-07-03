@@ -13,3 +13,4 @@ __pycache__
 .env
 *.pem
 *.json
+!.github/matchers/*.json
