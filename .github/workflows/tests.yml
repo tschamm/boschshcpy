@@ -40,10 +40,14 @@ jobs:
         # Matches the ruff settings used in boschshc-hass and local-ci.sh so
         # both repos stay in sync. F401 ignored: __init__.py has intentional
         # re-export imports that ruff would otherwise flag.
+        # github format surfaces violations as inline PR annotations.
         run: |
           pip install ruff
-          ruff check --select=E,W,F --ignore=E501,F401 boschshcpy
+          ruff check --output-format=github --select=E,W,F --ignore=E501,F401 boschshcpy
       - name: Lint — ruff format (gate)
         run: ruff format --check boschshcpy
       - name: Type check
-        run: mypy boschshcpy/
+        run: |
+          echo "::add-matcher::.github/matchers/mypy.json"
+          mypy boschshcpy/
+          echo "::remove-matcher owner=mypy::"
