@@ -1146,7 +1146,11 @@ class PirSensorConfigurationService(SHCDeviceService):
 class OccupancyDetectionService(SHCDeviceService):
     @property
     def isOccupied(self) -> bool:
-        return bool(self.state["isOccupied"])
+        # Spec marks isOccupied as required, but other "required" boolean
+        # state fields (e.g. UserDefinedState's deleted/state, hass#351) have
+        # been observed omitted in practice on partial poll snapshots -- use
+        # the same defensive .get() convention as sibling boolean properties.
+        return bool(self.state.get("isOccupied", False))
 
     @property
     def lastOccupancyChangeTime(self) -> str:

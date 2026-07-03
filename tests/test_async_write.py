@@ -674,6 +674,19 @@ class TestVibrationSensorAsync:
             {"@type": "VibrationSensorServiceState", "sensitivity": "HIGH"},
         )
 
+    def test_async_set_enabled_is_alias_for_vibration_enabled(self):
+        """boschshc-hass's generic switch platform derives the async writer
+        name from the read property (``enabled``) -> ``async_set_enabled``;
+        without this alias, toggling the switch silently no-ops (AttributeError,
+        swallowed by the platform's guard)."""
+        obj, api = self._make()
+        asyncio.run(obj.async_set_enabled(True))
+        api.put_device_service_state.assert_awaited_once_with(
+            "device-1",
+            "VibrationSensor",
+            {"@type": "VibrationSensorServiceState", "enabled": True},
+        )
+
 
 # ---------------------------------------------------------------------------
 # SHCCamera360 — async_set_privacymode, async_set_cameranotification
@@ -1258,6 +1271,15 @@ class TestLightAsync:
         obj, api = self._make(has_color_hsb=False, has_color_temp=False)
         asyncio.run(obj.async_set_rgb(0x00FF00))
         api.put_device_service_state.assert_not_awaited()
+
+    def test_async_set_hs_color_packs_to_rgb(self):
+        obj, api = self._make()
+        asyncio.run(obj.async_set_hs_color((120.0, 100.0)))
+        api.put_device_service_state.assert_awaited_once_with(
+            "device-1",
+            "HSBColorActuator",
+            {"@type": "HSBColorActuatorState", "rgb": 0x00FF00},
+        )
 
 
 # ---------------------------------------------------------------------------

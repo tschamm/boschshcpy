@@ -1525,6 +1525,14 @@ def test_occupancy_is_occupied_false():
     assert svc.isOccupied is False
 
 
+def test_occupancy_is_occupied_defaults_false_when_key_absent():
+    """Defensive: a partial poll snapshot omitting isOccupied must not raise
+    KeyError, matching the .get() convention used by sibling boolean state
+    properties elsewhere in this module."""
+    svc = _make_svc(OccupancyDetectionService, {})
+    assert svc.isOccupied is False
+
+
 def test_occupancy_last_change_time_present():
     svc = _make_svc(OccupancyDetectionService, {
         "isOccupied": True,

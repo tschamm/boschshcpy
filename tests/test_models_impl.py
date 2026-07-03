@@ -1688,6 +1688,31 @@ class TestSHCLight:
         d = self._make(has_hsb=True)
         assert d.supports_color_hsb is True
 
+    def test_hs_color_pure_red(self):
+        d = self._make(rgb=0xFF0000)
+        assert d.hs_color == (0.0, 100.0)
+
+    def test_hs_color_pure_green(self):
+        d = self._make(rgb=0x00FF00)
+        assert d.hs_color == (120.0, 100.0)
+
+    def test_hs_color_none_when_rgb_zero(self):
+        d = self._make(rgb=0)
+        assert d.hs_color is None
+
+    def test_hs_color_none_without_hsb_service(self):
+        d = self._make(has_hsb=False)
+        assert d.hs_color is None
+
+    def test_hs_color_setter_packs_to_rgb(self):
+        from unittest.mock import MagicMock
+        d = self._make(rgb=0)
+        d._hsbcoloractuator_service.put_state_element = MagicMock()
+        d.hs_color = (240.0, 100.0)
+        d._hsbcoloractuator_service.put_state_element.assert_called_once_with(
+            "rgb", 0x0000FF
+        )
+
     def test_supports_color_hsb_false(self):
         d = self._make(has_hsb=False)
         assert d.supports_color_hsb is False

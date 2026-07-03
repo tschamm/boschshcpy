@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import colorsys
 from enum import Enum, Flag, auto
 from typing import Any
 
@@ -989,6 +990,10 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
             return None
         return self._switch_config_service.supports_swap_outputs
 
+    @property
+    def supports_switch_configuration(self) -> bool:
+        return self._switch_config_service is not None
+
 
 class SHCMicromoduleRelay(
     _CommunicationQuality, _ChildProtection, _PowerSwitch, _PowerSwitchProgram
@@ -1416,6 +1421,15 @@ class SHCShutterContact2Plus(SHCShutterContact2):
     async def async_set_vibration_enabled(self, state: bool) -> None:
         """Async write: enable/disable vibration sensor."""
         await self._vibrationsensor_service.async_put_state_element("enabled", state)
+
+    async def async_set_enabled(self, state: bool) -> None:
+        """Alias for async_set_vibration_enabled.
+
+        boschshc-hass's generic switch platform derives the write method name
+        from the read property (``enabled`` -> ``async_set_enabled``); without
+        this alias toggling the vibration-sensor switch silently no-ops.
+        """
+        await self.async_set_vibration_enabled(state)
 
     @property
     def sensitivity(self) -> VibrationSensorService.SensitivityState:
@@ -2480,6 +2494,19 @@ class SHCMotionDetector2(SHCBatteryDevice):
         await self._latesttamper_service.async_reset_tampered_state()
 
     @property
+    def supports_tamper_reset(self) -> bool:
+        """Whether this MD2's LatestTamper service is actually present.
+
+        reset_tampered_state/async_reset_tampered_state exist unconditionally
+        on this class (hasattr(device, "reset_tampered_state") in hass's
+        button.py is therefore always True and never actually gates on the
+        service), while _latesttamper_service itself is fetched via
+        device_service() and force-typed non-Optional — this property is the
+        real presence check hass should gate button creation on instead.
+        """
+        return self._latesttamper_service is not None
+
+    @property
     def walk_state(self) -> WalkTestService.WalkState | None:
         if self._walktest_service is None:
             return None
@@ -2862,6 +2889,37 @@ class SHCLight(SHCDevice):
         """Async write: set RGB color via HSBColorActuator service."""
         if self._hsbcoloractuator_service is not None:
             await self._hsbcoloractuator_service.async_put_state_element("rgb", state)
+
+    @property
+    def hs_color(self) -> tuple[float, float] | None:
+        """Return the current color as (hue 0-360, saturation 0-100).
+
+        None when unsupported or the packed RGB value is unset (0 = never
+        configured, distinct from "black").
+        """
+        rgb_int = self.rgb
+        if not rgb_int:
+            return None
+        red = (rgb_int >> 16) & 0xFF
+        green = (rgb_int >> 8) & 0xFF
+        blue = rgb_int & 0xFF
+        hue, saturation, _value = colorsys.rgb_to_hsv(
+            red / 255.0, green / 255.0, blue / 255.0
+        )
+        return round(hue * 360, 3), round(saturation * 100, 3)
+
+    @hs_color.setter
+    def hs_color(self, value: tuple[float, float]) -> None:
+        self.rgb = self._pack_rgb_from_hs(*value)
+
+    async def async_set_hs_color(self, value: tuple[float, float]) -> None:
+        """Async write: set color via (hue 0-360, saturation 0-100)."""
+        await self.async_set_rgb(self._pack_rgb_from_hs(*value))
+
+    @staticmethod
+    def _pack_rgb_from_hs(hue: float, saturation: float) -> int:
+        red, green, blue = colorsys.hsv_to_rgb(hue / 360, saturation / 100, 1.0)
+        return (round(red * 255) << 16) | (round(green * 255) << 8) | round(blue * 255)
 
     @property
     def min_color_temperature(self) -> int:

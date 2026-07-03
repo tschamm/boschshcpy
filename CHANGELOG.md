@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.4.7
+
+**No breaking changes.** Bugfixes plus one additive property.
+
+Found while auditing `boschshc-hass`'s platform files against this
+library's actual class hierarchy (5-round bug hunt) and while addressing
+review feedback on the open home-assistant/core `bosch_shc` PRs.
+
+### Fixed
+
+- **`SHCShutterContact2Plus`**: added `async_set_enabled` as an alias for
+  `async_set_vibration_enabled`. `boschshc-hass`'s generic switch platform
+  derives the async writer method name from the read property name
+  (`enabled` -> `async_set_enabled`), but only the vibration-specific name
+  existed — toggling the vibration-sensor switch silently no-op'd
+  (`AttributeError`, swallowed by the platform's guard).
+- **`SHCLightControl.supports_switch_configuration`** was missing
+  entirely, unlike sibling `SHCMicromoduleRelay` which already has it.
+  `boschshc-hass`'s switch platform gates `swap_inputs`/`swap_outputs`
+  entity creation on `getattr(device, "supports_switch_configuration",
+  False)`, so Light/Shutter Control II devices never got those switches
+  even with a real `SwitchConfiguration` service present. (The same gap
+  independently surfaced via Copilot's automated review on the open
+  home-assistant/core `select.py` PR.)
+- **`OccupancyDetectionService.isOccupied`** hardened from a direct
+  `self.state["isOccupied"]` index to `.get(..., False)`, matching every
+  sibling boolean state property — the OpenAPI spec marks the field
+  required, but this codebase has hit "required" fields missing in
+  practice before (hass#351).
+- **`SHCMotionDetector2.supports_tamper_reset`** added.
+  `reset_tampered_state`/`async_reset_tampered_state` are defined
+  unconditionally on this class, so `boschshc-hass`'s
+  `hasattr(device, "reset_tampered_state")` gate for the tamper-reset
+  button was always `True` and never actually detected a device missing
+  the `LatestTamper` service.
+
+### Added
+
+- **`SHCLight.hs_color`** (get/set, sync + async): returns/accepts color
+  as a `(hue 0-360, saturation 0-100)` tuple, packing/unpacking the
+  existing `rgb` int property internally via `colorsys` (no new
+  dependency; matches Home Assistant's own `color_RGB_to_hs`/
+  `color_hs_to_RGB` algorithm numerically). Added so the
+  home-assistant/core `bosch_shc` light platform can do RGB<->HS
+  conversion via the library instead of hand-rolled bit-shifting, per
+  reviewer feedback on that PR.
+
 ## 0.4.6
 
 **No breaking config changes.** One behavior-relevant note: two numeric

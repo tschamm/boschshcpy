@@ -87,6 +87,29 @@ class TestSHCLightControlKeypad:
 
 
 # ---------------------------------------------------------------------------
+# SHCLightControl.supports_switch_configuration
+#
+# Was missing entirely (unlike its sibling SHCMicromoduleRelay, which already
+# has it) -- boschshc-hass's switch platform gates swap_inputs/swap_outputs
+# entity creation on getattr(device, "supports_switch_configuration", False),
+# so MICROMODULE_LIGHT_CONTROL devices never got those switches even with a
+# real SwitchConfiguration service present.
+# ---------------------------------------------------------------------------
+
+class TestSHCLightControlSwitchConfigurationSupport:
+    def _obj(self, svc=None):
+        obj = SHCLightControl.__new__(SHCLightControl)
+        obj._switch_config_service = svc
+        return obj
+
+    def test_supports_switch_configuration_true(self):
+        assert self._obj(svc=object()).supports_switch_configuration is True
+
+    def test_supports_switch_configuration_false(self):
+        assert self._obj().supports_switch_configuration is False
+
+
+# ---------------------------------------------------------------------------
 # SHCSmokeDetector.supports_smoke_sensitivity
 # ---------------------------------------------------------------------------
 
@@ -281,6 +304,7 @@ class TestSHCMotionDetector2Supports:
         obj = SHCMotionDetector2.__new__(SHCMotionDetector2)
         obj._walktest_service = services.get("wt")
         obj._smart_sensitivity_control_service = services.get("ss")
+        obj._latesttamper_service = services.get("tamper")
         return obj
 
     def test_supports_walk_test_true(self):
@@ -294,6 +318,17 @@ class TestSHCMotionDetector2Supports:
 
     def test_supports_smart_sensitivity_false(self):
         assert self._obj().supports_smart_sensitivity is False
+
+    def test_supports_tamper_reset_true(self):
+        assert self._obj(tamper=object()).supports_tamper_reset is True
+
+    def test_supports_tamper_reset_false(self):
+        """reset_tampered_state()/async_reset_tampered_state() are defined
+        unconditionally on this class, so hass's button.py must gate MD2
+        tamper-reset button creation on this property instead of hasattr on
+        those methods, which would always be True regardless of whether the
+        LatestTamper service is actually present."""
+        assert self._obj().supports_tamper_reset is False
 
 
 # ---------------------------------------------------------------------------
