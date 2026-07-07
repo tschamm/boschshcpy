@@ -509,6 +509,60 @@ def test_shutter_level_absent_default():
     assert svc.level == 0.0
 
 
+def test_shutter_diagnostic_fields_absent_return_safe_defaults():
+    """hass#120 audit: ShutterControlState.java fields never read before —
+    absent must not crash."""
+    svc = _make_svc(ShutterControlService, {"operationState": "STOPPED"})
+    assert svc.end_position_supported is False
+    assert svc.end_position_auto_detect is False
+    assert svc.delay_compensation_supported is False
+    assert svc.delay_compensation_time is None
+    assert svc.automatic_delay_compensation is False
+    assert svc.reference_moving_time_top_to_bottom_ms is None
+    assert svc.reference_moving_time_bottom_to_top_ms is None
+
+
+def test_shutter_diagnostic_fields_read_correctly():
+    svc = _make_svc(
+        ShutterControlService,
+        {
+            "operationState": "STOPPED",
+            "endPositionSupported": True,
+            "endPositionAutoDetect": True,
+            "delayCompensationSupported": True,
+            "delayCompensationTime": 1.5,
+            "automaticDelayCompensation": True,
+            "referenceMovingTimes": {
+                "movingTimeTopToBottomInMillis": 18000,
+                "movingTimeBottomToTopInMillis": 19500,
+            },
+        },
+    )
+    assert svc.end_position_supported is True
+    assert svc.end_position_auto_detect is True
+    assert svc.delay_compensation_supported is True
+    assert svc.delay_compensation_time == 1.5
+    assert svc.automatic_delay_compensation is True
+    assert svc.reference_moving_time_top_to_bottom_ms == 18000
+    assert svc.reference_moving_time_bottom_to_top_ms == 19500
+
+
+def test_shutter_reset_calibration_and_open_posts_empty_array_operation():
+    """hass audit: the app calls executeOperation(RESET_CALIBRATION_AND_OPEN_
+    COMMAND, listener) with NO params (Java varargs elision == an explicit
+    empty array), so the wire body must be `[]`, matching the same
+    operation/{name} mechanism already fixed for Outdoor Siren/PowerMeter."""
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    svc = _make_svc(ShutterControlService, {"operationState": "STOPPED", "calibrated": False})
+    svc._api = AsyncMock()
+    asyncio.run(svc.async_reset_calibration_and_open())
+    call = svc._api.post_device_service_operation.call_args
+    assert call.args[2] == "resetCalibrationAndOpen"
+    assert call.args[3] == []
+
+
 # ===========================================================================
 # BlindsControlService
 # ===========================================================================
@@ -809,6 +863,24 @@ def test_energy_yield_absent_returns_none():
         PowerMeterService, {"powerConsumption": 1.0, "energyConsumption": 123.0}
     )
     assert svc.energyyield is None
+
+
+def test_reset_energy_summation_posts_empty_array_operation():
+    """hass#120 audit: the app calls executeOperation(RESET_COMMAND, listener)
+    with NO params array (Java varargs elision == an explicit empty array),
+    so the wire body must be `[]`, not `null` or an object."""
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    svc = _make_svc(
+        PowerMeterService, {"powerConsumption": 0.0, "energyConsumption": 100.0}
+    )
+    svc._api = AsyncMock()
+    asyncio.run(svc.async_reset_energy_summation())
+    call = svc._api.post_device_service_operation.call_args
+    # device_id, service_id, operation, data
+    assert call.args[2] == "resetEnergySummation"
+    assert call.args[3] == []
 
 
 # ===========================================================================
@@ -1241,6 +1313,37 @@ def test_presence_simulation_enabled_getter():
 def test_presence_simulation_disabled_getter():
     svc = _make_svc(PresenceSimulationConfigurationService, {"enabled": False})
     assert svc.enabled is False
+
+
+def test_presence_simulation_running_times_absent_return_none():
+    svc = _make_svc(PresenceSimulationConfigurationService, {"enabled": True})
+    assert svc.running_start_time is None
+    assert svc.running_end_time is None
+
+
+def test_presence_simulation_running_times_no_time_set_sentinel_returns_none():
+    """hass#120 audit: the app's NO_TIME_SET sentinel is the literal string
+    "-", meaning "not currently running" — must map to None, not be
+    surfaced as a literal "-" string."""
+    svc = _make_svc(
+        PresenceSimulationConfigurationService,
+        {"enabled": True, "runningStart": "-", "runningEnd": "-"},
+    )
+    assert svc.running_start_time is None
+    assert svc.running_end_time is None
+
+
+def test_presence_simulation_running_times_read_when_active():
+    svc = _make_svc(
+        PresenceSimulationConfigurationService,
+        {
+            "enabled": True,
+            "runningStart": "2026-07-07T18:00:00Z",
+            "runningEnd": "2026-07-07T23:00:00Z",
+        },
+    )
+    assert svc.running_start_time == "2026-07-07T18:00:00Z"
+    assert svc.running_end_time == "2026-07-07T23:00:00Z"
 
 
 def test_presence_simulation_setter():

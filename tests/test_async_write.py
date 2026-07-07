@@ -542,6 +542,66 @@ class TestShutterContactBypassAsync:
 
 
 # ---------------------------------------------------------------------------
+# SHCShutterContact2 — async_set_bypass_infinite / async_set_bypass_timeout
+# (hass#120 audit: fully modeled in the library, never wired into an HA
+# entity — these are the convenience wrappers matching SHCSwitch's generic
+# async_set_{on_key} write convention)
+# ---------------------------------------------------------------------------
+
+class TestShutterContactBypassInfiniteAndTimeoutAsync:
+    def _make(self, **config):
+        # _fake_async_service() always builds a bare SHCDeviceService (it
+        # ignores its cls arg), which lacks BypassService's config-specific
+        # methods — build the real subclass instance here, matching
+        # TestBypassConfigurationAsync._fake_bypass_service.
+        from boschshcpy.services_impl import BypassService
+        from boschshcpy.models_impl import SHCShutterContact2
+        api = _make_async_api()
+        state = {
+            "@type": "BypassState",
+            "state": "BYPASS_INACTIVE",
+            "configuration": {
+                "enabled": True,
+                "timeout": 30,
+                "infinite": False,
+                **config,
+            },
+        }
+        svc = BypassService.__new__(BypassService)
+        svc._api = api
+        svc._raw_device_service = {
+            "id": "Bypass",
+            "deviceId": "device-1",
+            "path": "/devices/device-1/services/Bypass",
+            "state": state,
+        }
+        svc._raw_state = state
+        svc._last_update = None
+        svc._callbacks = {}
+        svc._event_callbacks = {}
+        obj = SHCShutterContact2.__new__(SHCShutterContact2)
+        _inject(obj, api, _bypass_service=svc)
+        obj._raw_device = _fake_raw_device(model="SWD2")
+        return obj, api
+
+    def test_async_set_bypass_infinite_true_preserves_other_fields(self):
+        obj, api = self._make()
+        asyncio.run(obj.async_set_bypass_infinite(True))
+        body = api.put_device_service_state.call_args.args[2]["configuration"]
+        assert body["infinite"] is True
+        assert body["enabled"] is True
+        assert body["timeout"] == 30
+
+    def test_async_set_bypass_timeout_preserves_other_fields(self):
+        obj, api = self._make()
+        asyncio.run(obj.async_set_bypass_timeout(120))
+        body = api.put_device_service_state.call_args.args[2]["configuration"]
+        assert body["timeout"] == 120
+        assert body["enabled"] is True
+        assert body["infinite"] is False
+
+
+# ---------------------------------------------------------------------------
 # BypassService / SHCShutterContact2 — async_set_bypass_configuration
 #
 # rawscan-database.md (SWD2/SWD2_PLUS, hass#245/#78): bypassState carries a

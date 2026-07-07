@@ -86,14 +86,24 @@ class SHCDeviceService:
         """Async counterpart to put_state_element — awaits the async API."""
         await self.async_put_state({key: value})
 
-    def post_operation(self, operation: str, data: dict[str, Any] | None = None) -> Any:
-        """POST a service operation (e.g. triggerTestAlarm) — sync."""
+    def post_operation(
+        self, operation: str, data: dict[str, Any] | list[Any] | None = None
+    ) -> Any:
+        """POST a service operation (e.g. triggerTestAlarm) — sync.
+
+        The SHC's operation/{name} endpoints take a bare positional-args JSON
+        array for operations with parameters (confirmed via APK decompile of
+        the official app's `DeviceService.executeOperation(name, listener,
+        Object[] params)` -> Jackson `writeValueAsBytes(params)` with no
+        wrapping) — hence `list[Any]` alongside the legacy `dict[str, Any]`
+        shape some callers may still use for a no-param/object-shaped body.
+        """
         return self._api.post_device_service_operation(
             self.device_id.replace("#", "%23"), self.id, operation, data
         )
 
     async def async_post_operation(
-        self, operation: str, data: dict[str, Any] | None = None
+        self, operation: str, data: dict[str, Any] | list[Any] | None = None
     ) -> Any:
         """Async counterpart to post_operation — awaits the async API."""
         return await self._api.post_device_service_operation(

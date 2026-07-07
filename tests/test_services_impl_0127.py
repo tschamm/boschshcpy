@@ -432,6 +432,84 @@ class TestRoomClimateControlOptionalFields:
 
 
 # ===========================================================================
+# hass#120 audit: RoomClimateControlService schedule-override + next-change
+# ===========================================================================
+
+class TestRoomClimateControlScheduleOverrideAndNextChange:
+    """Confirmed via ClimateControlState.java — the app's "schedule override
+    active" indicator and "next change at HH:MM" label, neither previously
+    read anywhere in this library."""
+
+    def test_absent_fields_return_safe_defaults(self):
+        svc = _make_svc(RoomClimateControlService, {"operationMode": "MANUAL"})
+        assert svc.active_schedule_id is None
+        assert svc.setpoint_temperature_offset is None
+        assert svc.setpoint_temperature_offset_active is False
+        assert svc.setpoint_temperature_offset_active_value is None
+        assert svc.custom_duration_active is False
+        assert svc.custom_duration_active_since is None
+        assert svc.next_operation_mode is None
+        assert svc.next_setpoint_temperature is None
+        assert svc.next_setpoint_temperature_change is None
+
+    def test_schedule_override_fields_read_correctly(self):
+        svc = _make_svc(
+            RoomClimateControlService,
+            {
+                "operationMode": "AUTOMATIC",
+                "activeScheduleId": "schedule-1",
+                "setPointTemperatureOffset": 2.0,
+                "isSetPointTemperatureOffsetActive": True,
+                "setPointTemperatureOffsetActiveValue": 22.0,
+            },
+        )
+        assert svc.active_schedule_id == "schedule-1"
+        assert svc.setpoint_temperature_offset == 2.0
+        assert svc.setpoint_temperature_offset_active is True
+        assert svc.setpoint_temperature_offset_active_value == 22.0
+
+    def test_custom_duration_fields_read_correctly(self):
+        svc = _make_svc(
+            RoomClimateControlService,
+            {
+                "operationMode": "MANUAL",
+                "customDuration": {
+                    "customDurationActive": True,
+                    "customDurationActiveSince": "2026-07-07T12:00:00Z",
+                },
+            },
+        )
+        assert svc.custom_duration_active is True
+        assert svc.custom_duration_active_since == "2026-07-07T12:00:00Z"
+
+    def test_next_change_fields_read_correctly(self):
+        svc = _make_svc(
+            RoomClimateControlService,
+            {
+                "operationMode": "AUTOMATIC",
+                "nextChange": {
+                    "nextOperationMode": "MANUAL",
+                    "nextSetpointTemperature": 18.5,
+                    "nextSetPointTemperatureChange": "2026-07-07T22:00:00Z",
+                },
+            },
+        )
+        assert svc.next_operation_mode == RoomClimateControlService.OperationMode.MANUAL
+        assert svc.next_setpoint_temperature == 18.5
+        assert svc.next_setpoint_temperature_change == "2026-07-07T22:00:00Z"
+
+    def test_next_operation_mode_unknown_enum_returns_none(self):
+        svc = _make_svc(
+            RoomClimateControlService,
+            {
+                "operationMode": "AUTOMATIC",
+                "nextChange": {"nextOperationMode": "WEIRD"},
+            },
+        )
+        assert svc.next_operation_mode is None
+
+
+# ===========================================================================
 # Robustness: PowerSwitchService.powerofftime absent → 0
 # ===========================================================================
 
@@ -463,3 +541,43 @@ class TestHeatingCircuitOptionalFields:
     def test_on_absent_defaults_false(self):
         svc = _make_svc(HeatingCircuitService, self._HC_BASE)
         assert svc.on is False
+
+    def test_temperature_ranges_absent_return_none(self):
+        """hass#120 audit: before the SHC has reported a range yet, must not
+        crash — None lets callers fall back to a sane default."""
+        svc = _make_svc(HeatingCircuitService, self._HC_BASE)
+        assert svc.setpoint_temperature_range is None
+        assert svc.comfort_temperature_range is None
+        assert svc.eco_temperature_range is None
+
+    def test_temperature_ranges_read_from_device(self):
+        """hass#120 audit: the app reads real per-device ranges
+        (HeatingCircuitVerticalSliderFragment.setMinMax) instead of a fixed
+        constant — a floor-heating circuit commonly has a raised minimum."""
+        svc = _make_svc(
+            HeatingCircuitService,
+            {
+                **self._HC_BASE,
+                "setPointTemperatureRange": {
+                    "minTemperature": 10.0,
+                    "maxTemperature": 28.0,
+                },
+                "comfortTemperatureRange": {
+                    "minTemperature": 16.0,
+                    "maxTemperature": 24.0,
+                },
+                "ecoTemperatureRange": {"minTemperature": 5.0, "maxTemperature": 18.0},
+            },
+        )
+        assert svc.setpoint_temperature_range == (10.0, 28.0)
+        assert svc.comfort_temperature_range == (16.0, 24.0)
+        assert svc.eco_temperature_range == (5.0, 18.0)
+
+    def test_temperature_range_partial_data_returns_none(self):
+        """A range object missing one bound must not crash or silently
+        return a mismatched (None, value) pair."""
+        svc = _make_svc(
+            HeatingCircuitService,
+            {**self._HC_BASE, "setPointTemperatureRange": {"minTemperature": 10.0}},
+        )
+        assert svc.setpoint_temperature_range is None

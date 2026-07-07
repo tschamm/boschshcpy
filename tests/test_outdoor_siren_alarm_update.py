@@ -139,6 +139,12 @@ class TestOutdoorSirenService:
         assert cfg["flashDuration"] == 5.2
 
     def test_trigger_test_alarm_posts_operation(self):
+        """hass#120: the SHC expects a bare positional-args array, not a named
+        object — confirmed via APK decompile of the official app's
+        DeviceService.executeOperation(name, listener, Object[] params), which
+        Jackson-serializes the Object[] with no wrapping. The previous
+        {"soundLevel": "LOW"} shape (matching the OpenAPI spec) is rejected by
+        the real SHC with 422 JSON_MAPPING_FAILED."""
         from boschshcpy.services_impl import OutdoorSirenService
         api = AsyncMock()
         s = self._svc(api=api)
@@ -148,13 +154,13 @@ class TestOutdoorSirenService:
         call = api.post_device_service_operation.call_args
         # device_id, service_id, operation, data
         assert call.args[2] == "triggerTestAlarm"
-        assert call.args[3] == {"soundLevel": "LOW"}
+        assert call.args[3] == ["LOW"]
 
     def test_trigger_test_alarm_defaults_to_configured_level(self):
         s = self._svc(api=AsyncMock())
         asyncio.run(s.async_trigger_test_alarm())
         call = s._api.post_device_service_operation.call_args
-        assert call.args[3] == {"soundLevel": "MEDIUM"}
+        assert call.args[3] == ["MEDIUM"]
 
 
 class TestOutdoorSirenPowerSupplyService:
@@ -189,6 +195,74 @@ class TestOutdoorSirenPowerSupplyService:
         assert s.solar_charging_current == 12.7
 
 
+class TestLegacyAlarmConfigurationService:
+    """A wired legacy alarm system connected to an Outdoor Siren (#120).
+
+    Real, actively-used app feature ("Classic alarm system" screen) —
+    confirmed via APK decompile, not present on every siren (only once a
+    legacy alarm is actually connected).
+    """
+
+    def _svc(self, api=None, **state):
+        from boschshcpy.services_impl import LegacyAlarmConfigurationService
+        return _make_svc(LegacyAlarmConfigurationService, state, api=api)
+
+    def test_read_props(self):
+        from boschshcpy.services_impl import LegacyAlarmConfigurationService as L
+        s = self._svc(
+            profileToActivate="1",
+            triggerSmartAlarmSystemEnabled=True,
+            overrideDisarmedSmartAlarmSystemEnabled=False,
+        )
+        assert s.profile_to_activate == L.Profile.PARTIAL_PROTECTION
+        assert s.trigger_smart_alarm_system_enabled is True
+        assert s.override_disarmed_smart_alarm_system_enabled is False
+
+    def test_profile_labels_match_app_arming_modes(self):
+        """Profile values/labels confirmed via APK decompile (ProfileType.java
+        / AlarmProfileResourceProvider) — reused from the standard
+        intrusion-system arming modes, not siren-specific."""
+        from boschshcpy.services_impl import LegacyAlarmConfigurationService as L
+        assert L.Profile.FULL_PROTECTION.value == "0"
+        assert L.Profile.PARTIAL_PROTECTION.value == "1"
+        assert L.Profile.INDIVIDUAL.value == "2"
+
+    def test_unknown_profile_falls_back(self):
+        from boschshcpy.services_impl import LegacyAlarmConfigurationService as L
+        s = self._svc(profileToActivate="99")
+        assert s.profile_to_activate == L.Profile.FULL_PROTECTION
+
+    def test_set_configuration_merges_untouched_fields(self):
+        from boschshcpy.services_impl import LegacyAlarmConfigurationService as L
+        api = AsyncMock()
+        s = self._svc(
+            api=api,
+            profileToActivate="0",
+            triggerSmartAlarmSystemEnabled=False,
+            overrideDisarmedSmartAlarmSystemEnabled=True,
+        )
+        asyncio.run(
+            s.async_set_configuration(profile_to_activate=L.Profile.INDIVIDUAL)
+        )
+        body = api.put_device_service_state.call_args.args[2]
+        assert body["profileToActivate"] == "2"
+        # untouched fields preserved
+        assert body["triggerSmartAlarmSystemEnabled"] is False
+        assert body["overrideDisarmedSmartAlarmSystemEnabled"] is True
+
+    def test_set_configuration_skips_write_when_state_unknown(self):
+        """Empty/no state yet -> skip the write rather than PUT a block of
+        defaults that could reset the user's settings (mirrors
+        OutdoorSirenService.async_set_configuration's same guard)."""
+        from boschshcpy.services_impl import LegacyAlarmConfigurationService
+        s = LegacyAlarmConfigurationService.__new__(LegacyAlarmConfigurationService)
+        s._api = AsyncMock()
+        s._raw_device_service = {"id": "x", "deviceId": "d", "path": "/x", "state": {}}
+        s._raw_state = {}
+        asyncio.run(s.async_set_configuration(trigger_smart_alarm_system_enabled=True))
+        s._api.put_device_service_state.assert_not_called()
+
+
 class TestSHCOutdoorSirenDevice:
     def test_registered_in_model_mapping(self):
         from boschshcpy.models_impl import MODEL_MAPPING, SHCOutdoorSiren
@@ -201,9 +275,22 @@ class TestSHCOutdoorSirenDevice:
         dev = SHCOutdoorSiren.__new__(SHCOutdoorSiren)
         dev._siren_service = siren_svc
         dev._powersupply_service = None
+        dev._legacy_alarm_service = None
         assert dev.supports_power_supply is False
+        assert dev.supports_legacy_alarm_configuration is False
+        assert dev.legacy_alarm_configuration is None
         asyncio.run(dev.async_trigger_test_alarm())
         siren_svc.async_trigger_test_alarm.assert_awaited_once()
+
+    def test_device_exposes_legacy_alarm_service_when_present(self):
+        from boschshcpy.models_impl import SHCOutdoorSiren
+        legacy_svc = MagicMock()
+        dev = SHCOutdoorSiren.__new__(SHCOutdoorSiren)
+        dev._siren_service = MagicMock()
+        dev._powersupply_service = None
+        dev._legacy_alarm_service = legacy_svc
+        assert dev.supports_legacy_alarm_configuration is True
+        assert dev.legacy_alarm_configuration is legacy_svc
 
 
 # ---------------------------------------------------------------------------
@@ -313,22 +400,27 @@ class TestKeypadTriggerService:
         return _make_svc(KeypadTriggerService, state)
 
     def test_read_props(self):
+        """hass#120 audit: KeypadTriggerState.java confirms scenarioIdAssociations
+        is a Map<String, String> (key -> scenarioId), not a JSON array."""
         svc = self._svc(
             switchType="UNIVERSAL_SWITCH",
-            scenarioIdAssociations=[{"keyName": "LOWER_BUTTON", "scenarioId": "abc"}],
+            scenarioIdAssociations={"LOWER_BUTTON": "abc"},
             idsToTrigger=["abc"],
         )
         assert svc.switch_type == "UNIVERSAL_SWITCH"
-        assert svc.scenario_id_associations == [
-            {"keyName": "LOWER_BUTTON", "scenarioId": "abc"}
-        ]
+        assert svc.scenario_id_associations == {"LOWER_BUTTON": "abc"}
         assert svc.ids_to_trigger == ["abc"]
 
     def test_missing_fields_safe_defaults(self):
         svc = self._svc()
         assert svc.switch_type is None
-        assert svc.scenario_id_associations == []
+        assert svc.scenario_id_associations == {}
         assert svc.ids_to_trigger == []
+
+    def test_non_dict_value_falls_back_safely(self):
+        """A malformed/legacy list-shaped value must not crash — fall back to {}."""
+        svc = self._svc(scenarioIdAssociations=["not", "a", "map"])
+        assert svc.scenario_id_associations == {}
 
     def test_registered_in_service_mapping(self):
         from boschshcpy.services_impl import SERVICE_MAPPING, KeypadTriggerService

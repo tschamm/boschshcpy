@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.4.8
+
+**No breaking changes.** APK-decompile-verified fixes and additions across
+several device services (hass audit), bundled with the Outdoor Siren fix.
+
+**Fixes:**
+- `OutdoorSirenService.async_trigger_test_alarm` (hass#120): the SHC's
+  `operation/{name}` endpoints take a bare positional-args JSON array, not the
+  named object the official OpenAPI spec describes — confirmed by decompiling
+  the official Bosch Android app's request-building code
+  (`DeviceService.executeOperation` passes its `Object[]` params straight into
+  Jackson's serializer with no wrapping). The previous `{"soundLevel": "LOW"}`
+  body (matching the spec) is rejected by the real SHC with 422
+  `JSON_MAPPING_FAILED`; now sends `["LOW"]`/`["MEDIUM"]`/`["HIGH"]` instead.
+  Not yet confirmed against real Outdoor Siren hardware — no maintainer owns
+  one. If you have this device, please help verify and report back on
+  https://github.com/tschamm/boschshc-hass/issues/120.
+- `KeypadTriggerService.scenario_id_associations` returned `list(dict)` (just
+  the dict's keys) instead of the actual `dict[str, str]` mapping the app
+  reads — fixed to return the real mapping.
+- `BypassService`: corrected docstring/comments for `timeout` — the field is
+  in **minutes**, not seconds as previously assumed (confirmed via decompiled
+  layout XML; no OpenAPI spec exists for Bypass at all).
+
+**New read-only properties (additive, no breaking changes):**
+- `HeatingCircuitService`: `setpoint_temperature_range`,
+  `comfort_temperature_range`, `eco_temperature_range` — the app derives its
+  setpoint slider bounds from these instead of a hardcoded 5–30 °C range.
+- `RoomClimateControlService`: `active_schedule_id`,
+  `setpoint_temperature_offset` (+`_active`/`_active_value`),
+  `custom_duration_active` (+`_since`), `next_operation_mode`,
+  `next_setpoint_temperature` (+`_change`).
+- `PresenceSimulationConfigurationService`: `running_start_time`,
+  `running_end_time` (JSON keys `runningStart`/`runningEnd`; the app's `"-"`
+  sentinel for "not running" is normalized to `None`).
+- `ShutterControlService` / `SHCShutterControl`: `end_position_supported`,
+  `end_position_auto_detect`, `delay_compensation_supported`,
+  `delay_compensation_time`, `automatic_delay_compensation`,
+  `reference_moving_time_top_to_bottom_ms`,
+  `reference_moving_time_bottom_to_top_ms`; `calibrated` is now also exposed
+  at the model level (was service-only before).
+
+**New write operations (additive):**
+- `PowerMeterService.async_reset_energy_summation()` — resets a smart plug's
+  accumulated energy counter (`resetEnergySummation`, empty-array
+  `operation/{name}` call).
+- `ShutterControlService.async_reset_calibration_and_open()` /
+  `SHCShutterControl.async_reset_calibration_and_open()` — triggers a Shutter
+  Control II end-position (re)calibration run (`resetCalibrationAndOpen`,
+  empty-array `operation/{name}` call, confirmed genuinely reachable in the
+  app's UI, unlike some other declared-but-unused shutter operations).
+
 ## 0.4.7
 
 **No breaking changes.** Bugfixes plus one additive property.

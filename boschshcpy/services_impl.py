@@ -175,6 +175,65 @@ class RoomClimateControlService(SHCDeviceService):
     def has_demand(self) -> bool:
         return bool(self.state.get("hasDemand", False))
 
+    @property
+    def active_schedule_id(self) -> str | None:
+        return self.state.get("activeScheduleId")
+
+    @property
+    def setpoint_temperature_offset(self) -> float | None:
+        value = self.state.get("setPointTemperatureOffset")
+        return float(value) if value is not None else None
+
+    @property
+    def setpoint_temperature_offset_active(self) -> bool:
+        # hass#120 audit: ClimateControlState.java — the "manual override of
+        # the schedule is active" indicator (RoomClimateControlSetpointAndCurrent
+        # TemperatureFragment.showTemperatureOffsetActive / dashboard tile
+        # showOffsetApplied). Not read anywhere before this audit.
+        return bool(self.state.get("isSetPointTemperatureOffsetActive", False))
+
+    @property
+    def setpoint_temperature_offset_active_value(self) -> float | None:
+        value = self.state.get("setPointTemperatureOffsetActiveValue")
+        return float(value) if value is not None else None
+
+    @property
+    def custom_duration_active(self) -> bool:
+        # "Hold override for N hours" feature
+        # (RoomClimateControlCustomDurationFragment).
+        return bool(
+            (self.state.get("customDuration") or {}).get("customDurationActive", False)
+        )
+
+    @property
+    def custom_duration_active_since(self) -> str | None:
+        return (self.state.get("customDuration") or {}).get("customDurationActiveSince")
+
+    @property
+    def next_operation_mode(self) -> RoomClimateControlService.OperationMode | None:
+        raw = (self.state.get("nextChange") or {}).get("nextOperationMode")
+        if raw is None:
+            return None
+        try:
+            return self.OperationMode(raw)
+        except ValueError:
+            return None
+
+    @property
+    def next_setpoint_temperature(self) -> float | None:
+        value = (self.state.get("nextChange") or {}).get("nextSetpointTemperature")
+        return float(value) if value is not None else None
+
+    @property
+    def next_setpoint_temperature_change(self) -> str | None:
+        # hass#120 audit: the app's "until HH:MM -> X°" label
+        # (RoomClimateControlSetpointAndCurrentTemperatureFragment /
+        # UntilTimeTextProvider) reads this — the ISO timestamp of the next
+        # scheduled change. Exposed as a raw string, matching this library's
+        # existing convention for other ZonedDateTime fields (e.g.
+        # OccupancyDetectionService.last_occupancy_change_time).
+        return (self.state.get("nextChange") or {}).get("nextSetPointTemperatureChange")
+
     def summary(self) -> None:
         super().summary()
         print(f"    Operation Mode           : {self.operation_mode}")
@@ -190,6 +249,11 @@ class RoomClimateControlService(SHCDeviceService):
         print(f"    Supports Cooling         : {self.supports_cooling}")
         print(f"    Supports Boost Mode      : {self.supports_boost_mode}")
         print(f"    Show Setpoint Temperature: {self.show_setpoint_temperature}")
+        print(
+            f"    Schedule Override Active : {self.setpoint_temperature_offset_active}"
+        )
+        print(f"    Next Setpoint Temperature: {self.next_setpoint_temperature}")
+        print(f"    Next Change At           : {self.next_setpoint_temperature_change}")
 
 
 class ThermostatSupportedControlModeService(SHCDeviceService):
@@ -289,6 +353,35 @@ class HeatingCircuitService(SHCDeviceService):
         except ValueError:
             return self.HeatingType.UNKNOWN
 
+    def _temperature_range(self, key: str) -> tuple[float, float] | None:
+        # hass#120 audit: the app reads these per-device ranges to set its
+        # slider min/max (HeatingCircuitVerticalSliderFragment.setMinMax),
+        # rather than a fixed constant — a floor-heating circuit commonly
+        # reports a raised minimum. None if the SHC hasn't reported this yet.
+        raw = self.state.get(key)
+        if not raw:
+            return None
+        min_temp = raw.get("minTemperature")
+        max_temp = raw.get("maxTemperature")
+        if min_temp is None or max_temp is None:
+            return None
+        return (float(min_temp), float(max_temp))
+
+    @property
+    def setpoint_temperature_range(self) -> tuple[float, float] | None:
+        """(min, max) for the main setpoint slider, or None if not yet known."""
+        return self._temperature_range("setPointTemperatureRange")
+
+    @property
+    def comfort_temperature_range(self) -> tuple[float, float] | None:
+        """(min, max) for the comfort-level setpoint, or None if not yet known."""
+        return self._temperature_range("comfortTemperatureRange")
+
+    @property
+    def eco_temperature_range(self) -> tuple[float, float] | None:
+        """(min, max) for the eco-level setpoint, or None if not yet known."""
+        return self._temperature_range("ecoTemperatureRange")
+
     def summary(self) -> None:
         super().summary()
         print(f"    Operation Mode             : {self.operation_mode}")
@@ -304,6 +397,9 @@ class HeatingCircuitService(SHCDeviceService):
         print(f"    Energy Saving Feat Enabled : {self.energy_saving_feature_enabled}")
         print(f"    On                         : {self.on}")
         print(f"    Heating Type               : {self.heating_type}")
+        print(f"    Setpoint Temp Range        : {self.setpoint_temperature_range}")
+        print(f"    Comfort Temp Range         : {self.comfort_temperature_range}")
+        print(f"    Eco Temp Range             : {self.eco_temperature_range}")
 
 
 class SilentModeService(SHCDeviceService):
@@ -343,10 +439,17 @@ class BypassService(SHCDeviceService):
     """Door/window contact alarm bypass (SWD2/SWD2_PLUS/SWD2_DUAL).
 
     Alongside the top-level `state` (BYPASS_ACTIVE/BYPASS_INACTIVE), Bosch's
-    bypassState carries a nested `configuration` block (`enabled`, `timeout`
-    seconds, `infinite`) that lets the bypass auto-expire after N seconds
-    instead of staying active forever. See knowledge-base/rawscan-database.md
+    bypassState carries a nested `configuration` block (`enabled`, `timeout`,
+    `infinite`) that lets the bypass auto-expire after N minutes instead of
+    staying active forever. See knowledge-base/rawscan-database.md
     (SWD2/SWD2_PLUS rawscans) for the confirmed shape.
+
+    hass#120 audit: `timeout`'s unit was previously assumed to be seconds (no
+    OpenAPI spec exists for this service to confirm either way) — the
+    official app's own bypass_configuration.xml slider is
+    `app:quantityUnit="MINUTE"` (range 1-15) and BypassConfigurationActivity
+    passes the raw slider value straight through with no *60 conversion, so
+    the real unit is MINUTES.
     """
 
     class State(Enum):
@@ -572,6 +675,19 @@ class PowerMeterService(SHCDeviceService):
         value = self.state.get("energyYield")
         return None if value is None else float(value)
 
+    async def async_reset_energy_summation(self) -> None:
+        """Async: reset the accumulated energy counter (hass#120 audit).
+
+        Confirmed via APK decompile: the app's
+        PowerSwitchAndMeterInteractor.RESET_COMMAND = "resetEnergySummation",
+        called as `deviceService.executeOperation(RESET_COMMAND, listener)`
+        with NO params array — Java varargs elision means this is
+        equivalent to an explicit empty array, so the wire body is `[]`
+        (same operation/{name} mechanism already fixed for the Outdoor
+        Siren's triggerTestAlarm, hass#120).
+        """
+        await self.async_post_operation("resetEnergySummation", [])
+
     def summary(self) -> None:
         super().summary()
         print(f"    powerConsumption         : {self.powerconsumption}")
@@ -774,11 +890,79 @@ class ShutterControlService(SHCDeviceService):
         # Control II as a number. Coerce to float so position math works for both.
         return float(self.state.get("level", 0.0))
 
+    @property
+    def end_position_supported(self) -> bool:
+        # hass#120 audit: ShutterControlState.java — whether the device
+        # supports automatic end-position (fully open/closed) detection at
+        # all. Never read before this audit.
+        return bool(self.state.get("endPositionSupported", False))
+
+    @property
+    def end_position_auto_detect(self) -> bool:
+        """Whether automatic end-position detection is currently enabled."""
+        return bool(self.state.get("endPositionAutoDetect", False))
+
+    @property
+    def delay_compensation_supported(self) -> bool:
+        return bool(self.state.get("delayCompensationSupported", False))
+
+    @property
+    def delay_compensation_time(self) -> float | None:
+        value = self.state.get("delayCompensationTime")
+        return float(value) if value is not None else None
+
+    @property
+    def automatic_delay_compensation(self) -> bool:
+        return bool(self.state.get("automaticDelayCompensation", False))
+
+    @property
+    def reference_moving_time_top_to_bottom_ms(self) -> int | None:
+        # hass#120 audit: ReferenceMovingTimes.java — the motor's calibrated
+        # full-travel time, in milliseconds. None until the device has been
+        # through a successful calibration run.
+        raw = (self.state.get("referenceMovingTimes") or {}).get(
+            "movingTimeTopToBottomInMillis"
+        )
+        return int(raw) if raw is not None else None
+
+    @property
+    def reference_moving_time_bottom_to_top_ms(self) -> int | None:
+        raw = (self.state.get("referenceMovingTimes") or {}).get(
+            "movingTimeBottomToTopInMillis"
+        )
+        return int(raw) if raw is not None else None
+
+    async def async_reset_calibration_and_open(self) -> None:
+        """Async: trigger the shutter's end-position (re)calibration run.
+
+        Confirmed via APK decompile: the app's
+        ShutterControlInteractor.RESET_CALIBRATION_AND_OPEN_COMMAND =
+        "resetCalibrationAndOpen", called as
+        `deviceService.executeOperation(RESET_CALIBRATION_AND_OPEN_COMMAND,
+        listener)` with no params — same operation/{name} bare-array
+        mechanism as PowerMeterService.async_reset_energy_summation, so the
+        wire body is an empty array `[]`.
+        """
+        await self.async_post_operation("resetCalibrationAndOpen", [])
+
     def summary(self) -> None:
         super().summary()
         print(f"    operationState           : {self.operation_state}")
         print(f"    Level                    : {self.level}")
         print(f"    Calibrated               : {self.calibrated}")
+        print(f"    EndPositionSupported     : {self.end_position_supported}")
+        print(f"    EndPositionAutoDetect    : {self.end_position_auto_detect}")
+        print(f"    DelayCompensationSupport : {self.delay_compensation_supported}")
+        print(f"    DelayCompensationTime    : {self.delay_compensation_time}")
+        print(f"    AutomaticDelayComp       : {self.automatic_delay_compensation}")
+        print(
+            f"    RefMovingTime T2B (ms)   : "
+            f"{self.reference_moving_time_top_to_bottom_ms}"
+        )
+        print(
+            f"    RefMovingTime B2T (ms)   : "
+            f"{self.reference_moving_time_bottom_to_top_ms}"
+        )
 
 
 class BlindsControlService(SHCDeviceService):
@@ -1781,9 +1965,27 @@ class PresenceSimulationConfigurationService(SHCDeviceService):
     def enabled(self, value: bool) -> None:
         self.put_state_element("enabled", value)
 
+    @property
+    def running_start_time(self) -> str | None:
+        # hass#120 audit: PresenceSimulationConfigurationState.java confirms
+        # the wire keys are runningStart/runningEnd (not the Java field names
+        # runningStartTime/runningEndTime), and the app's own NO_TIME_SET
+        # sentinel is the literal string "-" — meaning "not currently
+        # running", not a real timestamp — so it must map to None like an
+        # absent value, not be surfaced verbatim.
+        raw = self.state.get("runningStart")
+        return None if raw is None or raw == "-" else str(raw)
+
+    @property
+    def running_end_time(self) -> str | None:
+        raw = self.state.get("runningEnd")
+        return None if raw is None or raw == "-" else str(raw)
+
     def summary(self) -> None:
         super().summary()
         print(f"    presenceSimulationConfigurationState  : {self.enabled}")
+        print(f"    runningStart                           : {self.running_start_time}")
+        print(f"    runningEnd                             : {self.running_end_time}")
 
 
 class DisplayConfiguration(SHCDeviceService):
@@ -2284,9 +2486,18 @@ class OutdoorSirenService(SHCDeviceService):
     async def async_trigger_test_alarm(
         self, sound_level: OutdoorSirenService.SoundLevel | None = None
     ) -> None:
-        """Async: fire a short test alarm (operation/triggerTestAlarm)."""
+        """Async: fire a short test alarm (operation/triggerTestAlarm).
+
+        hass#120: the OpenAPI spec says this operation takes a named object
+        body ({"soundLevel": "LOW"}), matching what we originally sent — but
+        the real SHC rejects that with 422 JSON_MAPPING_FAILED. Confirmed via
+        APK decompile (official app, DeviceService.executeOperation) that
+        every operation/{name} endpoint actually expects a bare positional
+        JSON array, not a named object — for this operation, a single-element
+        array holding the sound-level enum name.
+        """
         level = (sound_level or self.sound_level).value
-        await self.async_post_operation("triggerTestAlarm", {"soundLevel": level})
+        await self.async_post_operation("triggerTestAlarm", [level])
 
     def summary(self) -> None:
         super().summary()
@@ -2381,6 +2592,99 @@ class OutdoorSirenPowerSupplyService(SHCDeviceService):
         print(f"    solarChargingScore       : {self.solar_charging_score}")
 
 
+class LegacyAlarmConfigurationService(SHCDeviceService):
+    """A wired legacy alarm system connected to an Outdoor Siren (#120).
+
+    A real, actively-used app feature — the "Classic alarm system" / "Wired
+    alarm system" screen (confirmed via APK decompile,
+    `LegacyAlarmConfigurationState.java`) — that lets a wired legacy alarm
+    forward alarms into the Bosch intrusion-detection profiles. Not present on
+    every Outdoor Siren; only on devices with a legacy alarm actually
+    connected — callers must go through `SHCOutdoorSiren.legacy_alarm_configuration`
+    (`device_service()` returns None if absent), never assume this service
+    exists.
+
+    Profile labels are the app's standard intrusion-system arming-mode names
+    (`ProfileType.java` / `AlarmProfileResourceProvider`), reused here rather
+    than siren-specific.
+    """
+
+    class Profile(Enum):
+        FULL_PROTECTION = "0"
+        PARTIAL_PROTECTION = "1"
+        INDIVIDUAL = "2"
+
+    @property
+    def profile_to_activate(self) -> LegacyAlarmConfigurationService.Profile:
+        try:
+            return self.Profile(self.state.get("profileToActivate", "0"))
+        except ValueError:
+            return self.Profile.FULL_PROTECTION
+
+    @property
+    def trigger_smart_alarm_system_enabled(self) -> bool:
+        return bool(self.state.get("triggerSmartAlarmSystemEnabled", False))
+
+    @property
+    def override_disarmed_smart_alarm_system_enabled(self) -> bool:
+        return bool(self.state.get("overrideDisarmedSmartAlarmSystemEnabled", False))
+
+    def _merged_state(self, **overrides: Any) -> dict[str, Any]:
+        # Mirrors OutdoorSirenService._merged_config: the PUT requires the
+        # whole state object, so start from the current values and override
+        # only the changed field.
+        state: dict[str, Any] = {
+            "profileToActivate": self.profile_to_activate.value,
+            "triggerSmartAlarmSystemEnabled": self.trigger_smart_alarm_system_enabled,
+            "overrideDisarmedSmartAlarmSystemEnabled": (
+                self.override_disarmed_smart_alarm_system_enabled
+            ),
+        }
+        state.update(overrides)
+        return state
+
+    async def async_set_configuration(
+        self,
+        *,
+        profile_to_activate: LegacyAlarmConfigurationService.Profile | None = None,
+        trigger_smart_alarm_system_enabled: bool | None = None,
+        override_disarmed_smart_alarm_system_enabled: bool | None = None,
+    ) -> None:
+        """Async write: update one or more legacy-alarm configuration fields.
+
+        Skips the write (rather than PUT a block of defaults) if no state has
+        been read yet — same guard as OutdoorSirenService.async_set_configuration,
+        to avoid resetting the user's settings from a partial/empty snapshot.
+        """
+        if not self.state:
+            logger.warning(
+                "LegacyAlarmConfiguration %s: configuration not yet known, "
+                "skipping write to avoid resetting settings",
+                self.device_id,
+            )
+            return
+        overrides: dict[str, Any] = {}
+        if profile_to_activate is not None:
+            overrides["profileToActivate"] = profile_to_activate.value
+        if trigger_smart_alarm_system_enabled is not None:
+            overrides["triggerSmartAlarmSystemEnabled"] = (
+                trigger_smart_alarm_system_enabled
+            )
+        if override_disarmed_smart_alarm_system_enabled is not None:
+            overrides["overrideDisarmedSmartAlarmSystemEnabled"] = (
+                override_disarmed_smart_alarm_system_enabled
+            )
+        await self.async_put_state(self._merged_state(**overrides))
+
+    def summary(self) -> None:
+        super().summary()
+        print(f"    profileToActivate        : {self.profile_to_activate}")
+        print(
+            f"    triggerSmartAlarmSystemEnabled       : "
+            f"{self.trigger_smart_alarm_system_enabled}"
+        )
+
+
 class KeypadTriggerService(SHCDeviceService):
     """Universal Switch II button->scenario mapping (read-only).
 
@@ -2398,10 +2702,14 @@ class KeypadTriggerService(SHCDeviceService):
         return str(raw) if raw is not None else None
 
     @property
-    def scenario_id_associations(self) -> list[Any]:
-        # Each entry maps a key (keyName/keyState) to a scenarioId. Shape is not
-        # yet confirmed by a rawscan, so it is surfaced verbatim.
-        return list(self.state.get("scenarioIdAssociations", []) or [])
+    def scenario_id_associations(self) -> dict[str, str]:
+        # hass#120 audit: ground-truth KeypadTriggerState.java types this
+        # field as Map<String, String> (key -> scenarioId), NOT a JSON array
+        # as previously (unconfirmed) assumed. list(dict) would silently
+        # return only the keys and discard every scenarioId value — fixed to
+        # read it as the object it actually is.
+        raw = self.state.get("scenarioIdAssociations", {})
+        return dict(raw) if isinstance(raw, dict) else {}
 
     @property
     def ids_to_trigger(self) -> list[Any]:
@@ -2595,6 +2903,7 @@ SERVICE_MAPPING = {
     "LatestMotion": LatestMotionService,
     "LatestTamper": LatestTamperService,
     "LedBrightnessConfiguration": LedBrightnessConfigurationService,
+    "LegacyAlarmConfiguration": LegacyAlarmConfigurationService,
     "MultiLevelSensor": MultiLevelSensorService,
     "MultiLevelSwitch": MultiLevelSwitchService,
     "OccupancyDetection": OccupancyDetectionService,

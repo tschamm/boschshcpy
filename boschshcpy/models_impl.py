@@ -36,6 +36,7 @@ from .services_impl import (
     LatestMotionService,
     LatestTamperService,
     LedBrightnessConfigurationService,
+    LegacyAlarmConfigurationService,
     MultiLevelSensorService,
     MultiLevelSwitchService,
     OccupancyDetectionService,
@@ -157,6 +158,10 @@ class _PowerMeter(SHCDevice):
         # True only when the controller actually reports an energyYield field
         # (Smart Plug [+M] in Mini-PV mode) — gates the HA yield entities.
         return self._powermeter_service.energyyield is not None
+
+    async def async_reset_energy_summation(self) -> None:
+        """Async: reset the accumulated energy counter (hass#120 audit)."""
+        await self._powermeter_service.async_reset_energy_summation()
 
 
 class _ChildProtection(SHCDevice):
@@ -1186,6 +1191,44 @@ class SHCShutterControl(SHCDevice):
     def operation_state(self) -> ShutterControlService.State:
         return self._service.operation_state
 
+    @property
+    def calibrated(self) -> bool:
+        return self._service.calibrated
+
+    @property
+    def end_position_supported(self) -> bool:
+        """Whether the device supports automatic end-position detection at all."""
+        return self._service.end_position_supported
+
+    @property
+    def end_position_auto_detect(self) -> bool:
+        """Whether automatic end-position detection is currently enabled."""
+        return self._service.end_position_auto_detect
+
+    @property
+    def delay_compensation_supported(self) -> bool:
+        return self._service.delay_compensation_supported
+
+    @property
+    def delay_compensation_time(self) -> float | None:
+        return self._service.delay_compensation_time
+
+    @property
+    def automatic_delay_compensation(self) -> bool:
+        return self._service.automatic_delay_compensation
+
+    @property
+    def reference_moving_time_top_to_bottom_ms(self) -> int | None:
+        return self._service.reference_moving_time_top_to_bottom_ms
+
+    @property
+    def reference_moving_time_bottom_to_top_ms(self) -> int | None:
+        return self._service.reference_moving_time_bottom_to_top_ms
+
+    async def async_reset_calibration_and_open(self) -> None:
+        """Async write: trigger the shutter's end-position (re)calibration run."""
+        await self._service.async_reset_calibration_and_open()
+
 
 class SHCMicromoduleShutterControl(
     SHCShutterControl, _CommunicationQuality, _ChildProtection, _PowerMeter
@@ -1361,7 +1404,7 @@ class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
 
     @property
     def bypass_timeout(self) -> int:
-        """Bypass auto-expiry timeout in seconds (ignored if infinite)."""
+        """Bypass auto-expiry timeout in minutes (ignored if infinite; hass#120: confirmed via app slider quantityUnit="MINUTE", not seconds)."""
         return self._bypass_service.timeout
 
     @property
@@ -1392,6 +1435,19 @@ class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
         await self._bypass_service.async_set_bypass_configuration(
             enabled=enabled, timeout=timeout, infinite=infinite
         )
+
+    async def async_set_bypass_infinite(self, value: bool) -> None:
+        """Async write: set whether an active bypass never expires (hass#120).
+
+        Convenience wrapper matching the generic SHCSwitch write convention
+        (async_set_{on_key}) — was fully modeled in the library already but
+        never wired into an HA entity.
+        """
+        await self.async_set_bypass_configuration(infinite=value)
+
+    async def async_set_bypass_timeout(self, value: int) -> None:
+        """Async write: set the bypass auto-expiry timeout in minutes."""
+        await self.async_set_bypass_configuration(timeout=value)
 
 
 class SHCShutterContact2Plus(SHCShutterContact2):
@@ -1773,6 +1829,38 @@ class SHCClimateControl(_TemperatureLevel):
     def has_demand(self) -> bool:
         return self._roomclimatecontrol_service.has_demand
 
+    @property
+    def active_schedule_id(self) -> str | None:
+        return self._roomclimatecontrol_service.active_schedule_id
+
+    @property
+    def setpoint_temperature_offset_active(self) -> bool:
+        return self._roomclimatecontrol_service.setpoint_temperature_offset_active
+
+    @property
+    def setpoint_temperature_offset_active_value(self) -> float | None:
+        return self._roomclimatecontrol_service.setpoint_temperature_offset_active_value
+
+    @property
+    def custom_duration_active(self) -> bool:
+        return self._roomclimatecontrol_service.custom_duration_active
+
+    @property
+    def custom_duration_active_since(self) -> str | None:
+        return self._roomclimatecontrol_service.custom_duration_active_since
+
+    @property
+    def next_operation_mode(self) -> RoomClimateControlService.OperationMode | None:
+        return self._roomclimatecontrol_service.next_operation_mode
+
+    @property
+    def next_setpoint_temperature(self) -> float | None:
+        return self._roomclimatecontrol_service.next_setpoint_temperature
+
+    @property
+    def next_setpoint_temperature_change(self) -> str | None:
+        return self._roomclimatecontrol_service.next_setpoint_temperature_change
+
 
 class SHCHeatingCircuit(SHCDevice):
     def __init__(
@@ -1847,6 +1935,18 @@ class SHCHeatingCircuit(SHCDevice):
     @property
     def heating_type(self) -> HeatingCircuitService.HeatingType | None:
         return self._heating_circuit_service.heating_type
+
+    @property
+    def setpoint_temperature_range(self) -> tuple[float, float] | None:
+        return self._heating_circuit_service.setpoint_temperature_range
+
+    @property
+    def comfort_temperature_range(self) -> tuple[float, float] | None:
+        return self._heating_circuit_service.comfort_temperature_range
+
+    @property
+    def eco_temperature_range(self) -> tuple[float, float] | None:
+        return self._heating_circuit_service.eco_temperature_range
 
 
 class SHCWallThermostat(
@@ -2782,6 +2882,16 @@ class SHCPresenceSimulationSystem(SHCDevice):
             "enabled", value
         )
 
+    @property
+    def running_start_time(self) -> str | None:
+        """When the current simulation session started, or None if not running."""
+        return self._presencesimulationconfiguration_service.running_start_time
+
+    @property
+    def running_end_time(self) -> str | None:
+        """When the current simulation session will end, or None if not running."""
+        return self._presencesimulationconfiguration_service.running_end_time
+
 
 class SHCLight(SHCDevice):
     class Capabilities(Flag):
@@ -3057,6 +3167,11 @@ class SHCOutdoorSiren(SHCBatteryDevice):
                 "OutdoorSirenPowerSupply"
             )
         )
+        self._legacy_alarm_service: LegacyAlarmConfigurationService | None = (
+            self.device_service(  # type: ignore[assignment]
+                "LegacyAlarmConfiguration"
+            )
+        )
 
     @property
     def siren(self) -> OutdoorSirenService:
@@ -3069,6 +3184,15 @@ class SHCOutdoorSiren(SHCBatteryDevice):
     @property
     def supports_power_supply(self) -> bool:
         return self._powersupply_service is not None
+
+    @property
+    def legacy_alarm_configuration(self) -> LegacyAlarmConfigurationService | None:
+        """The wired legacy alarm config service, or None if not connected (#120)."""
+        return self._legacy_alarm_service
+
+    @property
+    def supports_legacy_alarm_configuration(self) -> bool:
+        return self._legacy_alarm_service is not None
 
     async def async_trigger_test_alarm(
         self, sound_level: OutdoorSirenService.SoundLevel | None = None

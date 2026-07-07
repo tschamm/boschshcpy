@@ -292,6 +292,19 @@ class TestSHCSmartPlug:
         d = self._make(energy=999.9)
         assert d.energyconsumption == 999.9
 
+    def test_reset_energy_summation_delegates_to_power_meter_service(self):
+        """hass#120 audit: fully modeled in boschshcpy, never wired into an
+        HA entity — this is the _PowerMeter mixin's delegation method."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        d = self._make()
+        d._powermeter_service._api = AsyncMock()
+        asyncio.run(d.async_reset_energy_summation())
+        call = d._powermeter_service._api.post_device_service_operation.call_args
+        assert call.args[2] == "resetEnergySummation"
+        assert call.args[3] == []
+
 
 # ---------------------------------------------------------------------------
 # SHCShutterContact
@@ -541,6 +554,34 @@ class TestSHCShutterControl:
     def test_level(self):
         d = self._make(level=0.75)
         assert d.level == 0.75
+
+    def test_calibrated_delegates_to_service(self):
+        """hass#120 audit: was on the service but never exposed at model level."""
+        d = self._make()
+        assert d.calibrated is True
+
+    def test_diagnostic_fields_delegate_to_service(self):
+        d = self._make()
+        assert d.end_position_supported is False
+        assert d.end_position_auto_detect is False
+        assert d.delay_compensation_supported is False
+        assert d.delay_compensation_time is None
+        assert d.automatic_delay_compensation is False
+        assert d.reference_moving_time_top_to_bottom_ms is None
+        assert d.reference_moving_time_bottom_to_top_ms is None
+
+    def test_reset_calibration_and_open_delegates_to_service(self):
+        """hass audit: resetCalibrationAndOpen — empty-array operation/{name}
+        call, confirmed genuinely called in reachable app code."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        d = self._make()
+        d._service._api = AsyncMock()
+        asyncio.run(d.async_reset_calibration_and_open())
+        call = d._service._api.post_device_service_operation.call_args
+        assert call.args[2] == "resetCalibrationAndOpen"
+        assert call.args[3] == []
 
     def test_operation_state_stopped(self):
         from boschshcpy.services_impl import ShutterControlService
@@ -1525,14 +1566,20 @@ class TestSHCSmokeDetectionSystem:
 # ---------------------------------------------------------------------------
 
 class TestSHCPresenceSimulationSystem:
-    def _make(self, enabled=True):
+    def _make(self, enabled=True, running_start=None, running_end=None):
         from boschshcpy.models_impl import SHCPresenceSimulationSystem
         from boschshcpy.services_impl import PresenceSimulationConfigurationService
+
+        state = {"@type": "x", "enabled": enabled}
+        if running_start is not None:
+            state["runningStart"] = running_start
+        if running_end is not None:
+            state["runningEnd"] = running_end
 
         svc = PresenceSimulationConfigurationService.__new__(PresenceSimulationConfigurationService)
         svc._api = None
         svc._raw_device_service = {"id": "PresenceSimulationConfiguration", "deviceId": "d1",
-                                    "path": "/x", "state": {"@type": "x", "enabled": enabled}}
+                                    "path": "/x", "state": state}
         svc._raw_state = svc._raw_device_service["state"]
         svc._last_update = None; svc._callbacks = {}; svc._event_callbacks = {}
 
@@ -1551,6 +1598,21 @@ class TestSHCPresenceSimulationSystem:
     def test_enabled_false(self):
         d = self._make(enabled=False)
         assert d.enabled is False
+
+    def test_running_times_absent_return_none(self):
+        d = self._make(enabled=False)
+        assert d.running_start_time is None
+        assert d.running_end_time is None
+
+    def test_running_times_delegate_to_service(self):
+        """hass#120 audit: fully modeled, never exposed to HA before."""
+        d = self._make(
+            enabled=True,
+            running_start="2026-07-07T18:00:00Z",
+            running_end="2026-07-07T23:00:00Z",
+        )
+        assert d.running_start_time == "2026-07-07T18:00:00Z"
+        assert d.running_end_time == "2026-07-07T23:00:00Z"
 
 
 # ---------------------------------------------------------------------------
