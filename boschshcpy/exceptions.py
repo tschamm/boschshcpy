@@ -36,8 +36,11 @@ class SHCException(Exception):
         return f"SHC Error (message: {self.message})"
 
 
-class SHCConnectionError(Exception):
+class SHCConnectionError(SHCException):
     """Error to indicate a connection problem."""
+
+    def __init__(self, message: str = "Connection error") -> None:
+        super().__init__(message)
 
 
 class SHCAuthenticationError(Exception):

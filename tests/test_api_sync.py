@@ -163,8 +163,21 @@ class TestGetApiResultOrFail:
         import requests as req_mod
         api = _make_api()
         api._requests_session.get.side_effect = req_mod.exceptions.SSLError("bad cert")
-        with pytest.raises(SHCConnectionError, match="SSLError"):
+        with pytest.raises(SHCConnectionError, match="bad cert"):
             api._get_api_result_or_fail(f"{_API_ROOT}/devices")
+
+    def test_timeout_raises_shcconnectionerror(self):
+        import requests as req_mod
+        api = _make_api()
+        api._requests_session.get.side_effect = req_mod.exceptions.Timeout("timed out")
+        with pytest.raises(SHCConnectionError, match="timed out"):
+            api._get_api_result_or_fail(f"{_API_ROOT}/devices")
+
+    def test_shcconnectionerror_is_shcexception(self):
+        """SHCConnectionError must also be an SHCException so callers that
+        catch SHCException alone still catch transport failures."""
+        from boschshcpy.exceptions import SHCException
+        assert issubclass(SHCConnectionError, SHCException)
 
     def test_expected_type_match_passes(self):
         api = _make_api()
@@ -238,6 +251,15 @@ class TestPutApiOrFail:
         with pytest.raises(SHCSessionError):
             api._put_api_or_fail(f"{_API_ROOT}/x", {})
 
+    def test_connection_error_raises_shcconnectionerror(self):
+        import requests as req_mod
+        api = _make_api()
+        api._requests_session.put.side_effect = req_mod.exceptions.ConnectionError(
+            "refused"
+        )
+        with pytest.raises(SHCConnectionError, match="refused"):
+            api._put_api_or_fail(f"{_API_ROOT}/x", {})
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # _post_api_or_fail
@@ -272,6 +294,15 @@ class TestPostApiOrFail:
         api = _make_api()
         api._requests_session.post.return_value = _fake_response(None, status_code=401)
         with pytest.raises(SHCSessionError):
+            api._post_api_or_fail(f"{_API_ROOT}/x", {})
+
+    def test_connection_error_raises_shcconnectionerror(self):
+        import requests as req_mod
+        api = _make_api()
+        api._requests_session.post.side_effect = req_mod.exceptions.ConnectionError(
+            "refused"
+        )
+        with pytest.raises(SHCConnectionError, match="refused"):
             api._post_api_or_fail(f"{_API_ROOT}/x", {})
 
 
@@ -817,10 +848,9 @@ class TestSessionRequestRetry:
         assert api._requests_session.post.call_count == 2
 
     def test_reraises_when_retry_also_fails(self):
-        import requests as req_mod
         api = _make_api()
         api._requests_session.get.side_effect = [self._conn_err(), self._conn_err()]
-        with pytest.raises(req_mod.exceptions.ConnectionError):
+        with pytest.raises(SHCConnectionError):
             api._get_api_result_or_fail(f"{_API_ROOT}/devices")
         assert api._requests_session.get.call_count == 2
 

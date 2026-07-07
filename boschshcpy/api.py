@@ -122,39 +122,39 @@ class SHCAPI:
             result = self._session_request(
                 "GET", api_url, headers=headers, timeout=timeout
             )
-            if not result.ok:
-                self._process_nok_result(result)
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
+        if not result.ok:
+            self._process_nok_result(result)
 
+        else:
+            if len(result.content) > 0:
+                result = json.loads(result.content)
+                if expected_type is not None and result.get("@type") != expected_type:
+                    raise SHCSessionError(
+                        f"Unexpected @type in API response: expected "
+                        f"{expected_type!r}, got {result.get('@type')!r}"
+                    )
+                if expected_element_type is not None:
+                    for result_ in result:
+                        if result_.get("@type") != expected_element_type:
+                            raise SHCSessionError(
+                                f"Unexpected @type in API response element: "
+                                f"expected {expected_element_type!r}, got "
+                                f"{result_.get('@type')!r}"
+                            )
+
+                return result
             else:
-                if len(result.content) > 0:
-                    result = json.loads(result.content)
-                    if (
-                        expected_type is not None
-                        and result.get("@type") != expected_type
-                    ):
-                        raise SHCSessionError(
-                            f"Unexpected @type in API response: expected "
-                            f"{expected_type!r}, got {result.get('@type')!r}"
-                        )
-                    if expected_element_type is not None:
-                        for result_ in result:
-                            if result_.get("@type") != expected_element_type:
-                                raise SHCSessionError(
-                                    f"Unexpected @type in API response element: "
-                                    f"expected {expected_element_type!r}, got "
-                                    f"{result_.get('@type')!r}"
-                                )
-
-                    return result
-                else:
-                    return {}
-        except requests.exceptions.SSLError as e:
-            raise SHCConnectionError(f"API call returned SSLError: {e}.") from e
+                return {}
 
     def _put_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
-        result = self._session_request(
-            "PUT", api_url, data=json.dumps(body), timeout=timeout
-        )
+        try:
+            result = self._session_request(
+                "PUT", api_url, data=json.dumps(body), timeout=timeout
+            )
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
         if not result.ok:
             self._process_nok_result(result)
         if len(result.content) > 0:
@@ -163,9 +163,12 @@ class SHCAPI:
             return {}
 
     def _post_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
-        result = self._session_request(
-            "POST", api_url, data=json.dumps(body), timeout=timeout
-        )
+        try:
+            result = self._session_request(
+                "POST", api_url, data=json.dumps(body), timeout=timeout
+            )
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
         if not result.ok:
             self._process_nok_result(result)
         if len(result.content) > 0:

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.9
+
+**No breaking changes.**
+
+**Fixes:**
+- `SHCAPI._put_api_or_fail`/`_post_api_or_fail` (used by e.g. scenario
+  triggers and device writes) previously let a `requests.exceptions.*`
+  transport error propagate completely unwrapped — only `_get_...` wrapped
+  `SSLError`, and only that one type. All three now wrap any
+  `requests.exceptions.RequestException` into `SHCConnectionError`, so
+  callers only ever need to catch boschshcpy's own exception hierarchy,
+  never `requests`' internals (flagged during home-assistant/core#174613's
+  review).
+- `SHCConnectionError` now subclasses `SHCException` instead of bare
+  `Exception`, so `except SHCException` alone catches connection failures
+  too. Existing `except SHCConnectionError:` call sites are unaffected;
+  `raise SHCConnectionError` with no arguments still works (default
+  message added).
+
 ## 0.4.8
 
 **No breaking changes.** APK-decompile-verified fixes and additions across
