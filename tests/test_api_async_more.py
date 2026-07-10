@@ -670,6 +670,47 @@ class TestPublicApiMethods:
         assert called_url == "https://192.0.2.1:8444/smarthome/intrusion/states/system"
         assert result["@type"] == "systemState"
 
+    def test_get_zigbee_routing_info_url(self, cert_and_key_paths: tuple[str, str]) -> None:
+        api = _make_api(cert_and_key_paths)
+        payload = {"device": "hdm:ZigBee:abc", "aggregatedQuality": "GOOD", "route": []}
+        resp = _make_mock_response(body=payload)
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_zigbee_routing_info("hdm:ZigBee:abc"))
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/zigbee/routinginfo/hdm%3AZigBee%3Aabc"
+        )
+        assert result == payload
+
+    def test_get_zigbee_routing_info_url_encodes_special_chars(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={"device": "hdm:ZigBee:abc#2", "aggregatedQuality": "GOOD", "route": []})
+        api._session.get = MagicMock(return_value=resp)
+
+        asyncio.run(api.get_zigbee_routing_info("hdm:ZigBee:abc#2"))
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/zigbee/routinginfo/hdm%3AZigBee%3Aabc%232"
+        )
+
+    def test_get_zigbee_routing_info_raises_on_connection_error(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        import aiohttp
+
+        api = _make_api(cert_and_key_paths)
+        api._session.get = MagicMock(
+            side_effect=aiohttp.ClientConnectionError("refused")
+        )
+
+        with pytest.raises(SHCConnectionError):
+            asyncio.run(api.get_zigbee_routing_info("hdm:ZigBee:abc"))
+
     def test_post_domain_action_url_and_body(self, cert_and_key_paths: tuple[str, str]) -> None:
         api = _make_api(cert_and_key_paths)
         resp = _make_mock_response(body={})

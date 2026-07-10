@@ -48,6 +48,7 @@ from .room import SHCRoom
 from .scenario import SHCScenario
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 from .userdefinedstate import SHCUserDefinedState
+from .zigbee_routing import SHCZigbeeRoutingInfo
 
 logger = logging.getLogger("boschshcpy")
 
@@ -663,6 +664,11 @@ class SHCSessionAsync:
 
     def userdefinedstate(self, userdefinedstate_id: str) -> SHCUserDefinedState:
         return self._userdefinedstates_by_id[userdefinedstate_id]
+
+    async def get_zigbee_routing_info(self, device_id: str) -> SHCZigbeeRoutingInfo:
+        """Fetch+parse Zigbee routing info for a device (on-demand, not cached)."""
+        raw_routing_info = await self._api.get_zigbee_routing_info(device_id)
+        return SHCZigbeeRoutingInfo(raw_routing_info)
 
     @property
     def information(self) -> Any:

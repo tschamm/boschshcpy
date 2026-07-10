@@ -36,6 +36,7 @@ import importlib.resources
 import json
 import logging
 import ssl
+import urllib.parse
 from typing import Any
 
 from .exceptions import SHCConnectionError, SHCSessionError
@@ -394,6 +395,14 @@ class SHCAPIAsync:
     async def get_domain_intrusion_detection(self) -> Any:
         api_url = f"{self._api_root}/intrusion/states/system"
         return await self._get_api_result_or_fail(api_url, expected_type="systemState")
+
+    async def get_zigbee_routing_info(self, device_id: str) -> Any:
+        """Async counterpart to SHCAPI.get_zigbee_routing_info."""
+        api_url = (
+            f"{self._api_root}/zigbee/routinginfo/"
+            f"{urllib.parse.quote(device_id, safe='')}"
+        )
+        return await self._get_api_result_or_fail(api_url)
 
     async def post_domain_action(self, path: str, data: Any = None) -> None:
         api_url = f"{self._api_root}/{path}"

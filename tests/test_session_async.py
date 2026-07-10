@@ -945,6 +945,23 @@ class TestPropertyAccessors:
         s._userdefinedstates_by_id["u1"] = uds
         assert s.userdefinedstate("u1") is uds
 
+    def test_get_zigbee_routing_info_returns_parsed_model(self):
+        from boschshcpy.zigbee_routing import SHCZigbeeRoutingInfo, ZigbeeRoutingQuality
+
+        s = _bare_session()
+        s._api.get_zigbee_routing_info.return_value = {
+            "device": "hdm:ZigBee:abc",
+            "aggregatedQuality": "GOOD",
+            "route": [{"deviceId": "hdm:ZigBee:abc", "quality": "GOOD"}],
+        }
+
+        info = asyncio.run(s.get_zigbee_routing_info("hdm:ZigBee:abc"))
+
+        assert isinstance(info, SHCZigbeeRoutingInfo)
+        assert info.device_id == "hdm:ZigBee:abc"
+        assert info.aggregated_quality is ZigbeeRoutingQuality.GOOD
+        s._api.get_zigbee_routing_info.assert_awaited_once_with("hdm:ZigBee:abc")
+
     def test_information_property(self):
         s = _bare_session()
         assert s.information is s._shc_information

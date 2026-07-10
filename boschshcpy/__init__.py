@@ -50,6 +50,11 @@ from .session import SHCSession
 from .userdefinedstate import SHCUserDefinedState
 from .message import SHCMessage
 from .emma import SHCEmma
+from .zigbee_routing import (  # noqa: F401
+    SHCZigbeeRoutingInfo,
+    ZigbeeRoutingHop,
+    ZigbeeRoutingQuality,
+)
 from .api_async import SHCAPIAsync, build_ssl_context  # noqa: F401
 from .session_async import SHCSessionAsync  # noqa: F401
 from .services_impl import (  # noqa: F401
@@ -147,6 +152,9 @@ __all__ = [
     "SHCUserDefinedState",
     "SHCMessage",
     "SHCEmma",
+    "SHCZigbeeRoutingInfo",
+    "ZigbeeRoutingHop",
+    "ZigbeeRoutingQuality",
     "SHCAPIAsync",
     "build_ssl_context",
     "SHCSessionAsync",

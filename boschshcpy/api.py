@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.resources
 import json
 import logging
+import urllib.parse
 from typing import Any, NoReturn, cast
 
 import requests
@@ -276,6 +277,25 @@ class SHCAPI:
     def get_domain_intrusion_detection(self) -> Any:
         api_url = f"{self._api_root}/intrusion/states/system"
         return self._get_api_result_or_fail(api_url, expected_type="systemState")
+
+    def get_zigbee_routing_info(self, device_id: str) -> Any:
+        """Fetch Zigbee routing info for a device.
+
+        Undocumented in the local OpenAPI (no /zigbee/* paths at all); APK
+        ground-truth (com.bosch.sh.common.model.zigbee). Response has no
+        "@type" tag (unlike device/service resources), so no
+        expected_type check — mirrors the bare passthrough of
+        get_device_services(). Errors propagate the same way as every
+        other sibling GET helper here (SHCConnectionError on transport
+        failure, SHCSessionError on a non-OK HTTP response) — callers that
+        want a None-on-failure fallback should catch at the SHCSession
+        layer instead, matching get_device_services()'s convention.
+        """
+        api_url = (
+            f"{self._api_root}/zigbee/routinginfo/"
+            f"{urllib.parse.quote(device_id, safe='')}"
+        )
+        return self._get_api_result_or_fail(api_url)
 
     def post_domain_action(self, path: str, data: Any = None) -> None:
         api_url = f"{self._api_root}/{path}"

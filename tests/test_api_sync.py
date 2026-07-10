@@ -527,6 +527,41 @@ class TestGetEndpoints:
         api = self._api_with_get(payload)
         assert api.get_domain_intrusion_detection() == payload
 
+    # get_zigbee_routing_info ----------------------------------------------------
+    def test_get_zigbee_routing_info_url(self):
+        payload = {"device": "hdm:ZigBee:abc", "aggregatedQuality": "GOOD", "route": []}
+        api = self._api_with_get(payload)
+        api.get_zigbee_routing_info("hdm:ZigBee:abc")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/zigbee/routinginfo/hdm%3AZigBee%3Aabc"
+
+    def test_get_zigbee_routing_info_url_encodes_special_chars(self):
+        # deviceId can contain '#' (sub-device suffix) — must be percent-encoded
+        payload = {"device": "hdm:ZigBee:abc#2", "aggregatedQuality": "GOOD", "route": []}
+        api = self._api_with_get(payload)
+        api.get_zigbee_routing_info("hdm:ZigBee:abc#2")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/zigbee/routinginfo/hdm%3AZigBee%3Aabc%232"
+
+    def test_get_zigbee_routing_info_returns_dict(self):
+        payload = {
+            "device": "hdm:ZigBee:abc",
+            "aggregatedQuality": "GOOD",
+            "route": [{"deviceId": "hdm:ZigBee:abc", "quality": "GOOD"}],
+        }
+        api = self._api_with_get(payload)
+        assert api.get_zigbee_routing_info("hdm:ZigBee:abc") == payload
+
+    def test_get_zigbee_routing_info_raises_on_transport_error(self):
+        import requests as req_mod
+
+        api = _make_api()
+        api._requests_session.get.side_effect = req_mod.exceptions.ConnectionError(
+            "refused"
+        )
+        with pytest.raises(SHCConnectionError, match="refused"):
+            api.get_zigbee_routing_info("hdm:ZigBee:abc")
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PUT endpoint methods

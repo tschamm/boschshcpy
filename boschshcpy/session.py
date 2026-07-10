@@ -22,6 +22,7 @@ from .message import SHCMessage
 from .emma import SHCEmma
 from .userdefinedstate import SHCUserDefinedState
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
+from .zigbee_routing import SHCZigbeeRoutingInfo
 
 logger = logging.getLogger("boschshcpy")
 
@@ -464,6 +465,11 @@ class SHCSession:
     def userdefinedstate(self, userdefinedstate_id: str) -> SHCUserDefinedState:
         return self._userdefinedstates_by_id[userdefinedstate_id]
 
+    def get_zigbee_routing_info(self, device_id: str) -> SHCZigbeeRoutingInfo:
+        """Fetch+parse Zigbee routing info for a device (on-demand, not cached)."""
+        raw_routing_info = self._api.get_zigbee_routing_info(device_id)
+        return SHCZigbeeRoutingInfo(raw_routing_info)
+
     def authenticate(self) -> None:
         self._shc_information = SHCInformation(api=self._api, zeroconf=self._zeroconf)
 
@@ -503,6 +509,7 @@ class SHCSession:
             "information",
             "public_information",
             "intrusion_detection",
+            "zigbee_routing_info",
         ]
 
     def rawscan(self, **kwargs: Any) -> Any:
@@ -541,6 +548,9 @@ class SHCSession:
 
             case "intrusion_detection":
                 return self._api.get_domain_intrusion_detection()
+
+            case "zigbee_routing_info":
+                return self._api.get_zigbee_routing_info(device_id=kwargs["device_id"])
 
             case _:
                 return None

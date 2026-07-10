@@ -1119,7 +1119,47 @@ class TestRawscan:
         cmds = s.rawscan_commands
         assert "devices" in cmds
         assert "intrusion_detection" in cmds
-        assert len(cmds) == 12
+        assert "zigbee_routing_info" in cmds
+        assert len(cmds) == 13
+
+    def test_rawscan_zigbee_routing_info(self):
+        s = _bare_session()
+        payload = {"device": "hdm:ZigBee:abc", "aggregatedQuality": "GOOD", "route": []}
+        s._api.get_zigbee_routing_info.return_value = payload
+        result = s.rawscan(command="zigbee_routing_info", device_id="hdm:ZigBee:abc")
+        s._api.get_zigbee_routing_info.assert_called_once_with(device_id="hdm:ZigBee:abc")
+        assert result == payload
+
+
+class TestGetZigbeeRoutingInfo:
+    """SHCSession.get_zigbee_routing_info — fetch+parse, on-demand (not cached)."""
+
+    def test_returns_parsed_model(self):
+        from boschshcpy.zigbee_routing import SHCZigbeeRoutingInfo, ZigbeeRoutingQuality
+
+        s = _bare_session()
+        payload = {
+            "device": "hdm:ZigBee:abc",
+            "aggregatedQuality": "GOOD",
+            "route": [{"deviceId": "hdm:ZigBee:abc", "quality": "GOOD"}],
+        }
+        s._api.get_zigbee_routing_info.return_value = payload
+
+        info = s.get_zigbee_routing_info("hdm:ZigBee:abc")
+
+        assert isinstance(info, SHCZigbeeRoutingInfo)
+        assert info.device_id == "hdm:ZigBee:abc"
+        assert info.aggregated_quality is ZigbeeRoutingQuality.GOOD
+
+    def test_passes_device_id_through(self):
+        s = _bare_session()
+        s._api.get_zigbee_routing_info.return_value = {
+            "device": "hdm:ZigBee:xyz",
+            "aggregatedQuality": "NO_CONNECTION",
+            "route": [],
+        }
+        s.get_zigbee_routing_info("hdm:ZigBee:xyz")
+        s._api.get_zigbee_routing_info.assert_called_once_with("hdm:ZigBee:xyz")
 
 
 # ---------------------------------------------------------------------------

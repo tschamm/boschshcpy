@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.4.10
+
+**No breaking changes.**
+
+**Added:**
+- Zigbee routing-info support: `GET /smarthome/zigbee/routinginfo/{deviceId}`
+  — an APK-discovered endpoint (not in the official OpenAPI docs), confirmed
+  working (HTTP 200) against real hardware. New `ZigbeeRoutingQuality` enum
+  (`GOOD`/`MEDIUM`/`BAD`/`NO_CONNECTION`/`DEVICE_NOT_INITIALIZED`/
+  `NOT_SUPPORTED`/`UNKNOWN`, unknown strings fall back to `UNKNOWN`), new
+  `SHCZigbeeRoutingInfo` model (`device_id`, `aggregated_quality`, `route` —
+  an ordered list of `ZigbeeRoutingHop(device_id, quality)`), and
+  `SHCAPI.get_zigbee_routing_info()` / `SHCAPIAsync.get_zigbee_routing_info()`
+  / `SHCSession.get_zigbee_routing_info()` /
+  `SHCSessionAsync.get_zigbee_routing_info()`. All new classes exported
+  top-level from `boschshcpy`.
+
 ## 0.4.9
 
 **No breaking changes.**
