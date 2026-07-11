@@ -1079,7 +1079,7 @@ class CameraNotificationService(SHCDeviceService):
 class ChildProtectionService(SHCDeviceService):
     @property
     def childLockActive(self) -> bool:
-        return bool(self.state["childLockActive"])
+        return bool(self.state.get("childLockActive", False))
 
     def summary(self) -> None:
         super().summary()

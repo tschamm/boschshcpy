@@ -334,6 +334,18 @@ class TestPutApiErrors:
         with pytest.raises(SHCConnectionError, match="connection error"):
             asyncio.run(api._put_api_or_fail("https://192.0.2.1:8444/smarthome/x", {}))
 
+    def test_timeout_in_put_raises_shcconnectionerror(self, cert_and_key_paths: tuple[str, str]) -> None:
+        """Bug-hunt (2026-07-11): aiohttp raises a bare TimeoutError (not a
+        ClientConnectionError subclass) when ClientTimeout elapses — it was
+        falling through _retry_once_on_connection_drop unwrapped, breaking
+        sync parity (requests.exceptions.Timeout is always wrapped into
+        SHCConnectionError on the sync path)."""
+        api = _make_api(cert_and_key_paths)
+        api._session.put = MagicMock(side_effect=TimeoutError("timed out"))
+
+        with pytest.raises(SHCConnectionError, match="timed out"):
+            asyncio.run(api._put_api_or_fail("https://192.0.2.1:8444/smarthome/x", {}))
+
     def test_connection_drop_then_success_retries_once_and_returns_result(
         self, cert_and_key_paths: tuple[str, str]
     ) -> None:

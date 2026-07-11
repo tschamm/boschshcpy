@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.4.11
+
+**No breaking changes.**
+
+Findings from a broad bug-hunt round across the sync/async session/api/services/models layers:
+
+- **`services_impl.py`:** `ChildProtectionService.childLockActive` indexed
+  `self.state["childLockActive"]` directly. Shutter-II's OpenAPI spec (unlike
+  Light-II's, which shares the same service class) does not mark this field
+  required, so the SHC can legitimately omit it — the same missing-key crash
+  class already fixed for `OccupancyDetectionService.isOccupied` and
+  `UserDefinedState` (#351). Now defaults to `False` via `.get()`.
+- **`api_async.py`:** `_retry_once_on_connection_drop` only caught
+  `aiohttp.ClientSSLError`/`ClientConnectionError`. A request timeout
+  (`ClientTimeout` elapsing) raises a bare `TimeoutError`, which fell through
+  unwrapped — breaking parity with the sync client, where
+  `requests.exceptions.Timeout` is always wrapped into `SHCConnectionError`.
+  Now wrapped consistently on both the first attempt and the retry attempt.
+
+Investigated, not fixed this round — flagged for a dedicated session rather
+than a same-day fix, given the risk of a rushed change to shared threading
+state: `session.py`'s `_devices_by_id`/`_services_by_device_id` dicts are
+mutated only by `SHCPollingThread` but read (`devices`, `device()`) from
+other threads with no lock; a device add/remove racing a concurrent read can
+raise `RuntimeError: dictionary changed size during iteration` in the
+*reading* thread, and — separately — the polling thread's own top-level
+`RuntimeError` catch around `_long_poll()` currently treats any
+`RuntimeError` there as fatal and permanently stops polling. Needs a
+considered fix (locking or a copy-on-read pattern), not a quick patch.
+
 ## 0.4.10
 
 **No breaking changes.**

@@ -178,6 +178,12 @@ class SHCAPIAsync:
             return await attempt()
         except aiohttp.ClientSSLError as exc:
             raise SHCConnectionError(f"API call returned SSLError: {exc}.") from exc
+        except TimeoutError as exc:
+            # aiohttp raises a bare TimeoutError (not a ClientConnectionError
+            # subclass) when ClientTimeout elapses — sync parity with
+            # requests.exceptions.Timeout, which api.py's RequestException
+            # catch already wraps into SHCConnectionError.
+            raise SHCConnectionError(f"API call timed out: {exc}.") from exc
         except aiohttp.ClientConnectionError as exc:
             logger.debug(
                 "%s dropped (%s); retrying once on a fresh connection", api_url, exc
@@ -188,6 +194,8 @@ class SHCAPIAsync:
                 raise SHCConnectionError(
                     f"API call returned SSLError: {exc2}."
                 ) from exc2
+            except TimeoutError as exc2:
+                raise SHCConnectionError(f"API call timed out: {exc2}.") from exc2
             except aiohttp.ClientConnectionError as exc2:
                 raise SHCConnectionError(f"API connection error: {exc2}.") from exc2
 

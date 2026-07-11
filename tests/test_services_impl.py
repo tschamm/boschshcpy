@@ -1407,6 +1407,16 @@ def test_child_protection_lock_inactive():
     assert svc.childLockActive is False
 
 
+def test_child_protection_lock_missing_key_defaults_false():
+    """Bug-hunt (2026-07-11): Shutter-II's OpenAPI spec (unlike Light-II's)
+    does not mark childLockActive required, so the SHC can omit it from a
+    partial poll snapshot — same bug class as #351 (UDS deleted/state).
+    Must default to False, not KeyError.
+    """
+    svc = _make_svc(ChildProtectionService, {})
+    assert svc.childLockActive is False
+
+
 # ===========================================================================
 # 23. KeypadService
 # ===========================================================================
