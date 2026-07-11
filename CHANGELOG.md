@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.12
+
+**No breaking changes.**
+
+- **`session.py`:** fixed a thread-safety race between `SHCPollingThread`
+  (sole mutator of `_devices_by_id`/`_services_by_device_id`) and cross-thread
+  readers (`devices` property, `device()`) — a device add/remove racing a
+  concurrent read could raise an unhandled `RuntimeError: dictionary changed
+  size during iteration` in the reading thread. Added `self._devices_lock`
+  (`threading.RLock`), held only for the actual dict mutation/snapshot —
+  never across I/O (`get_device_services`) or subscriber-callback invocation,
+  to avoid stalling readers/writers or risking deadlock. Found via a targeted
+  bug-hunt round; not tied to a user report.
+
 ## 0.4.11
 
 **No breaking changes.**

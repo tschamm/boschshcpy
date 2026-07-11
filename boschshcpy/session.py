@@ -62,6 +62,17 @@ class SHCSession:
         self._scenarios_by_id: dict[str, SHCScenario] = {}
         self._devices_by_id: dict[str, SHCDevice] = {}
         self._services_by_device_id: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        # Guards _devices_by_id / _services_by_device_id. The SHCPollingThread
+        # is the sole mutator (device add/update/delete during long-poll
+        # processing), but `devices`/`device()` are read from other threads
+        # (e.g. HA's executor). Without this, a mutation racing a concurrent
+        # `.values()` iteration can raise "dictionary changed size during
+        # iteration" in the READING thread. RLock (not Lock) so a callback
+        # invoked while the polling thread still holds the lock — or any
+        # future nested acquire on the same thread — can't self-deadlock;
+        # callers still release the lock before invoking subscriber/device
+        # callbacks wherever practical to keep the critical section short.
+        self._devices_lock = threading.RLock()
         self._domains_by_id: dict[str, Any] = {}
         self._messages_by_id: dict[str, SHCMessage] = {}
         self._userdefinedstates_by_id: dict[str, SHCUserDefinedState] = {}
@@ -99,29 +110,36 @@ class SHCSession:
         device_id = raw_device["id"]
 
         if update_services:
-            self._services_by_device_id.pop(device_id, None)
+            with self._devices_lock:
+                self._services_by_device_id.pop(device_id, None)
+            # I/O — deliberately outside the lock.
             raw_services = self._api.get_device_services(device_id)
-            for service in raw_services:
-                if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
-                    continue
-                device_id = service["deviceId"]
-                self._services_by_device_id[device_id].append(service)
+            with self._devices_lock:
+                for service in raw_services:
+                    if service["id"] not in SUPPORTED_DEVICE_SERVICE_IDS:
+                        continue
+                    device_id = service["deviceId"]
+                    self._services_by_device_id[device_id].append(service)
 
-        if not self._services_by_device_id[device_id]:
+        with self._devices_lock:
+            services = list(self._services_by_device_id[device_id])
+
+        if not services:
             logger.debug(
                 f"Skipping device id {device_id} which has no services that are supported by this library"
             )
             return None
 
-        device = self._device_helper.device_init(
-            raw_device, self._services_by_device_id[device_id]
-        )
-        self._devices_by_id[device_id] = device
+        device = self._device_helper.device_init(raw_device, services)
+        with self._devices_lock:
+            self._devices_by_id[device_id] = device
         return device
 
     def _update_device(self, raw_device: dict[str, Any]) -> None:
         device_id = str(raw_device["id"])
-        self._devices_by_id[device_id].update_raw_information(raw_device)
+        with self._devices_lock:
+            device = self._devices_by_id[device_id]
+        device.update_raw_information(raw_device)
 
     def _enumerate_services(self) -> None:
         raw_services = self._api.get_services()
@@ -281,8 +299,9 @@ class SHCSession:
                     "deleted" in raw_result and raw_result["deleted"] is True
                 ):  # Device deleted
                     logger.debug("Deleting device with id %s", device_id)
-                    self._services_by_device_id.pop(device_id, None)
-                    self._devices_by_id.pop(device_id, None)
+                    with self._devices_lock:
+                        self._services_by_device_id.pop(device_id, None)
+                        self._devices_by_id.pop(device_id, None)
             else:  # New device registered
                 logger.debug("Found new device with id %s", device_id)
                 new_device = self._add_device(raw_result, update_services=True)
@@ -421,10 +440,15 @@ class SHCSession:
 
     @property
     def devices(self) -> typing.Sequence[SHCDevice]:
-        return list(self._devices_by_id.values())
+        # Called from other threads (e.g. HA's executor) while the
+        # SHCPollingThread may be concurrently adding/removing devices —
+        # snapshot under the lock, then release before returning.
+        with self._devices_lock:
+            return list(self._devices_by_id.values())
 
     def device(self, device_id: str) -> SHCDevice:
-        return self._devices_by_id[device_id]
+        with self._devices_lock:
+            return self._devices_by_id[device_id]
 
     @property
     def rooms(self) -> typing.Sequence[SHCRoom]:

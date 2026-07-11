@@ -12,6 +12,7 @@ import json
 import threading
 from collections import defaultdict
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -24,6 +25,7 @@ from boschshcpy.session import SHCSession
 # ---------------------------------------------------------------------------
 # Helpers / factories
 # ---------------------------------------------------------------------------
+
 
 def _bare_session() -> SHCSession:
     """Return a SHCSession bypassing __init__ with minimal attribute seeding."""
@@ -38,6 +40,7 @@ def _bare_session() -> SHCSession:
     s._scenarios_by_id = {}
     s._devices_by_id = {}
     s._services_by_device_id = defaultdict(list)
+    s._devices_lock = threading.RLock()
     s._domains_by_id = {}
     s._messages_by_id = {}
     s._userdefinedstates_by_id = {}
@@ -73,6 +76,7 @@ def _fake_intrusion(types=None):
 # ---------------------------------------------------------------------------
 # Properties & simple accessors
 # ---------------------------------------------------------------------------
+
 
 class TestPropertyAccessors:
     def test_api_property(self):
@@ -177,6 +181,7 @@ class TestPropertyAccessors:
 # subscribe / scenario callbacks / userdefinedstate callbacks
 # ---------------------------------------------------------------------------
 
+
 class TestSubscriptions:
     def test_subscribe_appends(self):
         s = _bare_session()
@@ -224,6 +229,7 @@ class TestSubscriptions:
 # ---------------------------------------------------------------------------
 # _long_poll: subscribe + poll
 # ---------------------------------------------------------------------------
+
 
 class TestLongPoll:
     def test_long_poll_subscribes_when_no_poll_id(self):
@@ -289,6 +295,7 @@ class TestLongPoll:
 # _maybe_unsubscribe
 # ---------------------------------------------------------------------------
 
+
 class TestMaybeUnsubscribe:
     def test_unsubscribes_when_poll_id_set(self):
         s = _bare_session()
@@ -308,8 +315,8 @@ class TestMaybeUnsubscribe:
 # _process_long_polling_poll_result — all branches
 # ---------------------------------------------------------------------------
 
-class TestProcessLongPollingPollResult:
 
+class TestProcessLongPollingPollResult:
     # --- DeviceServiceData ---
 
     def test_device_service_data_known_device(self):
@@ -487,7 +494,13 @@ class TestProcessLongPollingPollResult:
         s = _bare_session()
         uds = MagicMock()
         s._userdefinedstates_by_id["u1"] = uds
-        raw = {"@type": "userDefinedState", "id": "u1", "name": "At Home", "state": True, "deleted": False}
+        raw = {
+            "@type": "userDefinedState",
+            "id": "u1",
+            "name": "At Home",
+            "state": True,
+            "deleted": False,
+        }
         s._process_long_polling_poll_result(raw)
         uds.update_raw_information.assert_called_once_with(raw)
 
@@ -497,7 +510,13 @@ class TestProcessLongPollingPollResult:
         s._userdefinedstates_by_id["u1"] = uds
         cb = MagicMock()
         s._userdefinedstate_callbacks["u1"].append(cb)
-        raw = {"@type": "userDefinedState", "id": "u1", "name": "x", "state": True, "deleted": False}
+        raw = {
+            "@type": "userDefinedState",
+            "id": "u1",
+            "name": "x",
+            "state": True,
+            "deleted": False,
+        }
         s._process_long_polling_poll_result(raw)
         cb.assert_called_once()
 
@@ -530,7 +549,13 @@ class TestProcessLongPollingPollResult:
         uds = MagicMock()
         s._userdefinedstates_by_id["u2"] = uds
         # No callbacks registered for u2
-        raw = {"@type": "userDefinedState", "id": "u2", "name": "x", "state": True, "deleted": False}
+        raw = {
+            "@type": "userDefinedState",
+            "id": "u2",
+            "name": "x",
+            "state": True,
+            "deleted": False,
+        }
         s._process_long_polling_poll_result(raw)  # must not raise
 
     # --- link / emma ---
@@ -560,6 +585,7 @@ class TestProcessLongPollingPollResult:
 # ---------------------------------------------------------------------------
 # start_polling / stop_polling
 # ---------------------------------------------------------------------------
+
 
 class TestPollingLifecycle:
     def test_start_polling_raises_when_already_polling(self):
@@ -623,6 +649,7 @@ class TestPollingLifecycle:
 # Polling thread internal logic (white-box: extract the closure)
 # ---------------------------------------------------------------------------
 
+
 class TestPollingThreadLogic:
     """Exercise the inner polling_thread_main closure without real threads."""
 
@@ -639,7 +666,11 @@ class TestPollingThreadLogic:
                 target = kwargs.get("target") or args[0] if args else None
                 # Thread(target=fn, name=...) pattern
                 call_kwargs = MockThread.call_args
-                captured["target"] = call_kwargs.kwargs.get("target") or call_kwargs.args[0] if call_kwargs.args else None
+                captured["target"] = (
+                    call_kwargs.kwargs.get("target") or call_kwargs.args[0]
+                    if call_kwargs.args
+                    else None
+                )
                 return mock_thread
 
             MockThread.side_effect = capture_target
@@ -817,6 +848,7 @@ class TestPollingThreadLogic:
 # _add_device
 # ---------------------------------------------------------------------------
 
+
 class TestAddDevice:
     def test_add_device_skipped_when_no_services(self):
         s = _bare_session()
@@ -844,6 +876,7 @@ class TestAddDevice:
 
         # SUPPORTED_DEVICE_SERVICE_IDS is a set — patch via the module attribute
         import boschshcpy.session as session_mod
+
         original = session_mod.SUPPORTED_DEVICE_SERVICE_IDS
         try:
             session_mod.SUPPORTED_DEVICE_SERVICE_IDS = {"CameraLive"}
@@ -871,6 +904,7 @@ class TestAddDevice:
 # _enumerate_* helpers (isolated)
 # ---------------------------------------------------------------------------
 
+
 class TestEnumerateHelpers:
     def test_enumerate_services_filters_unsupported(self):
         s = _bare_session()
@@ -879,6 +913,7 @@ class TestEnumerateHelpers:
             {"id": "UnsupportedService", "deviceId": "hdm:D2"},
         ]
         import boschshcpy.session as session_mod
+
         original = session_mod.SUPPORTED_DEVICE_SERVICE_IDS
         try:
             session_mod.SUPPORTED_DEVICE_SERVICE_IDS = {"SupportedService"}
@@ -959,6 +994,7 @@ class TestEnumerateHelpers:
         raw = {"id": "hdm:D9"}
         # one unsupported + one supported service
         import boschshcpy.session as session_mod
+
         original = session_mod.SUPPORTED_DEVICE_SERVICE_IDS
         try:
             session_mod.SUPPORTED_DEVICE_SERVICE_IDS = {"GoodSvc"}
@@ -979,8 +1015,242 @@ class TestEnumerateHelpers:
 
 
 # ---------------------------------------------------------------------------
+# _devices_lock — thread-safety of _devices_by_id / _services_by_device_id
+# ---------------------------------------------------------------------------
+
+
+class _LockSpy:
+    """Thin real (non-Mock) wrapper delegating to a real RLock.
+
+    MagicMock(wraps=lock) does NOT actually delegate dunder methods like
+    __enter__/__exit__ to the wrapped object (a well-known Mock limitation —
+    magic methods are looked up on the mock's own type, bypassing `wraps`),
+    so it can't prove the *real* lock was genuinely acquired/released. This
+    wrapper is a plain class, so `with wrapper:` really calls through to the
+    real RLock underneath while also recording call counts.
+    """
+
+    def __init__(self, real_lock: threading.RLock) -> None:
+        self._real = real_lock
+        self.enter_count = 0
+        self.exit_count = 0
+
+    def __enter__(self) -> None:
+        self.enter_count += 1
+        return self._real.__enter__()
+
+    def __exit__(self, *args: Any) -> Any:
+        self.exit_count += 1
+        return self._real.__exit__(*args)
+
+    def acquire(self, *args: Any, **kwargs: Any) -> Any:
+        return self._real.acquire(*args, **kwargs)
+
+    def release(self, *args: Any, **kwargs: Any) -> Any:
+        return self._real.release(*args, **kwargs)
+
+
+class TestDevicesLock:
+    """Regression tests for the race between the SHCPollingThread (sole
+    mutator of _devices_by_id/_services_by_device_id) and other threads
+    reading `devices`/`device()` concurrently (e.g. HA's executor)."""
+
+    def test_devices_lock_exists_and_is_reentrant(self):
+        s = _bare_session()
+        assert isinstance(s._devices_lock, type(threading.RLock()))
+        # RLock: acquiring twice from the same thread must not deadlock.
+        assert s._devices_lock.acquire(timeout=1)
+        try:
+            assert s._devices_lock.acquire(timeout=1)
+            s._devices_lock.release()
+        finally:
+            s._devices_lock.release()
+
+    def test_devices_property_acquires_and_releases_lock(self):
+        s = _bare_session()
+        s._devices_by_id["hdm:1"] = _fake_device("hdm:1")
+
+        spy = _LockSpy(s._devices_lock)
+        s._devices_lock = spy
+
+        result = s.devices
+
+        assert spy.enter_count == 1
+        assert spy.exit_count == 1
+        assert list(result) == [s._devices_by_id["hdm:1"]]
+        # Real lock must not still be held after the call returns.
+        assert spy._real.acquire(timeout=1)
+        spy._real.release()
+
+    def test_device_method_acquires_and_releases_lock(self):
+        s = _bare_session()
+        dev = _fake_device("hdm:X")
+        s._devices_by_id["hdm:X"] = dev
+
+        spy = _LockSpy(s._devices_lock)
+        s._devices_lock = spy
+
+        result = s.device("hdm:X")
+
+        assert spy.enter_count == 1
+        assert spy.exit_count == 1
+        assert result is dev
+        assert spy._real.acquire(timeout=1)
+        spy._real.release()
+
+    def test_add_device_holds_lock_during_mutation(self):
+        """_add_device must take the lock around the dict write, not just
+        read the dict without protection."""
+        s = _bare_session()
+        raw = {"id": "hdm:LockedAdd"}
+        s._services_by_device_id["hdm:LockedAdd"].append(
+            {"id": "svc", "deviceId": "hdm:LockedAdd"}
+        )
+        fake_dev = MagicMock()
+        s._device_helper.device_init.return_value = fake_dev
+
+        spy = _LockSpy(s._devices_lock)
+        s._devices_lock = spy
+
+        s._add_device(raw)
+
+        assert spy.enter_count >= 1
+        assert spy.exit_count == spy.enter_count
+        # Not left held.
+        assert spy._real.acquire(timeout=1)
+        spy._real.release()
+
+    def test_device_delete_holds_lock_during_mutation(self):
+        s = _bare_session()
+        dev = _fake_device("hdm:Del")
+        dev.update_raw_information = MagicMock()
+        s._devices_by_id["hdm:Del"] = dev
+        s._services_by_device_id["hdm:Del"].append({"id": "svc"})
+
+        spy = _LockSpy(s._devices_lock)
+        s._devices_lock = spy
+
+        raw = {"@type": "device", "id": "hdm:Del", "deleted": True}
+        s._process_long_polling_poll_result(raw)
+
+        assert "hdm:Del" not in s._devices_by_id
+        assert "hdm:Del" not in s._services_by_device_id
+        assert spy.enter_count >= 1
+        assert spy.exit_count == spy.enter_count
+        assert spy._real.acquire(timeout=1)
+        spy._real.release()
+
+    def test_devices_property_holds_real_lock_while_reading(self):
+        """Prove the REAL lock is genuinely held for the duration of the
+        `devices` property body, not just wrapped in a no-op context
+        manager: block a second thread's concurrent (non-blocking) acquire
+        attempt from succeeding while the reader is still inside the
+        `with self._devices_lock:` block."""
+        s = _bare_session()
+        s._devices_by_id["hdm:1"] = _fake_device("hdm:1")
+        real_lock = s._devices_lock
+
+        entered = threading.Event()
+        release_reader = threading.Event()
+        observed_locked_while_reading = threading.Event()
+
+        class _PausingLock:
+            def __enter__(self_) -> None:
+                real_lock.acquire()
+                entered.set()
+                release_reader.wait(timeout=5)
+                return None
+
+            def __exit__(self_, *args: Any) -> Any:
+                real_lock.release()
+                return None
+
+        def contender() -> None:
+            entered.wait(timeout=5)
+            # RLock only blocks a *different* thread's acquire — this thread
+            # is not the reader thread, so if the reader genuinely holds the
+            # real lock, this non-blocking acquire must fail.
+            got = real_lock.acquire(blocking=False)
+            if not got:
+                observed_locked_while_reading.set()
+            else:
+                real_lock.release()
+            release_reader.set()
+
+        s._devices_lock = _PausingLock()
+        contender_thread = threading.Thread(target=contender)
+        contender_thread.start()
+
+        result = s.devices
+
+        contender_thread.join(timeout=5)
+
+        assert observed_locked_while_reading.is_set(), (
+            "another thread was able to acquire _devices_lock while `devices` "
+            "was still inside its critical section — the lock is not "
+            "actually protecting the read"
+        )
+        assert list(result) == [s._devices_by_id["hdm:1"]]
+
+    def test_concurrent_mutation_and_iteration_does_not_raise(self):
+        """Soak test: hammer `devices` reads from other threads while the
+        'polling thread' concurrently adds/removes devices, with the lock in
+        place. Timing-dependent — verified NOT to reliably fail even with the
+        lock removed, so this alone doesn't prove the fix; the actual proof
+        is test_devices_property_holds_real_lock_while_reading above, which
+        asserts the lock is genuinely held rather than relying on a race."""
+        s = _bare_session()
+        s._device_helper.device_init.side_effect = lambda raw, services: _fake_device(
+            raw["id"]
+        )
+
+        stop = threading.Event()
+        errors: list[Exception] = []
+
+        def reader() -> None:
+            while not stop.is_set():
+                try:
+                    list(s.devices)
+                    for i in range(20):
+                        try:
+                            s.device(f"hdm:{i}")
+                        except KeyError:
+                            pass
+                except RuntimeError as exc:  # pragma: no cover - failure path
+                    errors.append(exc)
+
+        def writer() -> None:
+            for round_ in range(200):
+                dev_id = f"hdm:{round_ % 20}"
+                raw = {"id": dev_id}
+                s._services_by_device_id[dev_id].append(
+                    {"id": "svc", "deviceId": dev_id}
+                )
+                s._add_device(raw)
+                if round_ % 3 == 0:
+                    s._process_long_polling_poll_result(
+                        {"@type": "device", "id": dev_id, "deleted": True}
+                    )
+
+        readers = [threading.Thread(target=reader) for _ in range(4)]
+        for t in readers:
+            t.start()
+
+        writer_thread = threading.Thread(target=writer)
+        writer_thread.start()
+        writer_thread.join()
+
+        stop.set()
+        for t in readers:
+            t.join(timeout=5)
+
+        assert errors == []
+
+
+# ---------------------------------------------------------------------------
 # _initialize_domains / _initialize_emma
 # ---------------------------------------------------------------------------
+
 
 class TestInitializeHelpers:
     def test_initialize_domains_creates_intrusion_system(self):
@@ -1045,6 +1315,7 @@ class TestInitializeHelpers:
 # rawscan
 # ---------------------------------------------------------------------------
 
+
 class TestRawscan:
     def test_rawscan_devices(self):
         s = _bare_session()
@@ -1072,8 +1343,12 @@ class TestRawscan:
     def test_rawscan_device_service(self):
         s = _bare_session()
         s._api.get_device_service.return_value = {"id": "svc1"}
-        result = s.rawscan(command="device_service", device_id="hdm:1", service_id="svc1")
-        s._api.get_device_service.assert_called_once_with(device_id="hdm:1", service_id="svc1")
+        result = s.rawscan(
+            command="device_service", device_id="hdm:1", service_id="svc1"
+        )
+        s._api.get_device_service.assert_called_once_with(
+            device_id="hdm:1", service_id="svc1"
+        )
 
     def test_rawscan_rooms(self):
         s = _bare_session()
@@ -1127,7 +1402,9 @@ class TestRawscan:
         payload = {"device": "hdm:ZigBee:abc", "aggregatedQuality": "GOOD", "route": []}
         s._api.get_zigbee_routing_info.return_value = payload
         result = s.rawscan(command="zigbee_routing_info", device_id="hdm:ZigBee:abc")
-        s._api.get_zigbee_routing_info.assert_called_once_with(device_id="hdm:ZigBee:abc")
+        s._api.get_zigbee_routing_info.assert_called_once_with(
+            device_id="hdm:ZigBee:abc"
+        )
         assert result == payload
 
 
@@ -1166,6 +1443,7 @@ class TestGetZigbeeRoutingInfo:
 # authenticate / mdns_info
 # ---------------------------------------------------------------------------
 
+
 class TestAuthenticate:
     def test_authenticate_creates_shc_information(self):
         s = _bare_session()
@@ -1190,6 +1468,7 @@ class TestAuthenticate:
 # ---------------------------------------------------------------------------
 # Poll-id resubscribe integration: False return → next call resubscribes
 # ---------------------------------------------------------------------------
+
 
 class TestPollIdResubscribeCycle:
     def test_after_invalidation_next_long_poll_resubscribes(self):
@@ -1217,6 +1496,7 @@ class TestPollIdResubscribeCycle:
 # Resubscribe-refresh: device.update() called on all devices after re-subscribe
 # (#183 — state snapshot after poll-id invalidation)
 # ---------------------------------------------------------------------------
+
 
 class TestResubscribeRefresh:
     """Verify that _long_poll calls device.update() on every known device after
