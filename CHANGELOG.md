@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.13
+
+**No breaking changes.**
+
+Found via a chaos-engineering test round targeting the long-poll processing
+path (fault injection, not a live incident) — 4 instances of one pattern in
+`session.py`'s `_process_long_polling_poll_result` and `device_service.py`'s
+`process_long_polling_poll_result`: trusting the SHC's message shape without
+verifying it before indexing/`.get()`-ing into it, which raised an uncaught
+`KeyError`/`TypeError`/`AttributeError` and stalled the poll thread for 15s
+on a malformed message.
+
+- **`session.py`:** `raw_result["@type"]` → `.get("@type")` (top-level and
+  via recursion into an embedded `deviceServiceDataModel`); guarded the
+  `"message"` branch's `"arguments"` field against being present-but-not-a-dict;
+  caught `TypeError`/`JSONDecodeError` from `json.loads()` on a non-string or
+  invalid `deviceServiceDataModel` value.
+- **`device_service.py`:** guarded `process_long_polling_poll_result`'s
+  `"state"` field against being present-but-not-a-dict before comparing
+  `@type`.
+
+All four are behavior-preserving for well-formed traffic (dedicated
+regression tests confirm), verified with 2 independent adversarial bug-hunt
+passes.
+
 ## 0.4.12
 
 **No breaking changes.**
