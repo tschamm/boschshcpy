@@ -176,11 +176,15 @@ class SHCDeviceService:
         self._raw_device_service = raw_result  # Update device service data
 
         if "state" in self._raw_device_service:
-            if self.state and raw_result["state"].get("@type") != self.state.get(
-                "@type"
-            ):
+            new_state = raw_result["state"]
+            # Defensive, same reasoning as the @type guard above: a
+            # non-dict "state" (firmware glitch/partial poll) would
+            # otherwise crash .get() and kill the poll thread for 15s.
+            if not isinstance(new_state, dict):
                 return
-            self._raw_state = raw_result["state"]  # Update state
+            if self.state and new_state.get("@type") != self.state.get("@type"):
+                return
+            self._raw_state = new_state  # Update state
 
             for fn in list(self._callbacks.values()):  # [S4]
                 fn()

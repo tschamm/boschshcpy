@@ -5,6 +5,7 @@ Run with:
   PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest tests/test_device_service_snapshot.py -q \
     -o addopts= -p no:cacheprovider
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -165,3 +166,30 @@ def test_alarm_register_event_suppresses_replayed_unchanged_value():
         # Repeating the new value again must not re-fire
         _poll(svc, service_id, "PRIMARY_ALARM")
         assert calls == [1], f"{service_id} re-fired an unchanged value"
+
+
+def test_non_dict_state_in_poll_result_is_ignored_not_crashed():
+    """A "state" that isn't a dict (firmware glitch/partial poll) used to
+    crash `.get("@type")` with AttributeError -- same "trusts shape without
+    verifying" pattern as the session.py long-poll chaos-testing fixes.
+    Must now be ignored (no state update, no crash) instead.
+    """
+    svc = _make_service()
+    calls = []
+    svc.subscribe_callback("entity-a", lambda: calls.append(1))
+
+    for bad_state in (None, "not-a-dict", 42, [], True):
+        raw_result = {
+            "@type": "DeviceServiceData",
+            "id": "PowerSwitch",
+            "deviceId": "dev-1",
+            "path": "/devices/dev-1/services/PowerSwitch",
+            "state": bad_state,
+        }
+        svc.process_long_polling_poll_result(raw_result)  # must not raise
+
+    assert calls == [], "malformed state must not fire callbacks"
+    assert svc.state == {
+        "@type": "powerSwitchState",
+        "switchState": "ON",
+    }, "malformed state must not overwrite the last-known-good state"

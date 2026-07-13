@@ -256,7 +256,14 @@ class SHCSession:
 
     def _process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
         logger.debug(f"Long poll: {raw_result}")
-        if raw_result["@type"] == "DeviceServiceData":
+        # .get() rather than direct indexing: a poll result (top-level or an
+        # embedded deviceServiceDataModel recursed into below) missing "@type"
+        # entirely used to raise KeyError and stall the poll thread for 15s
+        # (chaos-testing finding, no live incident) -- treat it like any other
+        # unrecognized type instead, since every branch below already no-ops
+        # on a value it doesn't recognize.
+        result_type = raw_result.get("@type")
+        if result_type == "DeviceServiceData":
             device_id = raw_result["deviceId"]
             if device_id in self._devices_by_id:  # [S1]
                 device = self._devices_by_id[device_id]
@@ -266,24 +273,34 @@ class SHCSession:
                     f"Skipping polling result with unknown device id {device_id}."
                 )
             return
-        if raw_result["@type"] == "message":
+        if result_type == "message":
             # The SHC can emit messages without "arguments" (e.g. during boot /
-            # firmware update); guard instead of asserting so the poll thread
-            # survives and -O builds don't KeyError.
-            if "arguments" in raw_result and (
-                "deviceServiceDataModel" in raw_result["arguments"]
-            ):
-                raw_data_model = json.loads(
-                    raw_result["arguments"]["deviceServiceDataModel"]
-                )
-                self._process_long_polling_poll_result(raw_data_model)
+            # firmware update), with "arguments" present but not a dict, or
+            # with "deviceServiceDataModel" present but not valid embedded
+            # JSON (json.loads raising TypeError/JSONDecodeError); guard all
+            # three instead of asserting so the poll thread survives.
+            arguments = raw_result.get("arguments")
+            device_service_data_model = (
+                arguments.get("deviceServiceDataModel")
+                if isinstance(arguments, dict)
+                else None
+            )
+            if device_service_data_model is not None:
+                try:
+                    raw_data_model = json.loads(device_service_data_model)
+                except (TypeError, ValueError) as ex:
+                    logger.debug(
+                        "Ignoring malformed embedded deviceServiceDataModel: %s", ex
+                    )
+                else:
+                    self._process_long_polling_poll_result(raw_data_model)
             else:
                 # callback is missing when receiving new message
                 message_id = raw_result["id"]
                 message = SHCMessage(api=self._api, raw_message=raw_result)
                 self._messages_by_id[message_id] = message
             return
-        if raw_result["@type"] == "scenarioTriggered":
+        if result_type == "scenarioTriggered":
             if raw_result["id"] in self._scenario_callbacks:
                 self._scenario_callbacks[raw_result["id"]](raw_result)
             if (
@@ -291,7 +308,7 @@ class SHCSession:
             ):  # deprecated for providing bosch_shc.event trigger callbacks
                 self._scenario_callbacks["shc"](raw_result)
             return
-        if raw_result["@type"] == "device":
+        if result_type == "device":
             device_id = raw_result["id"]
             if device_id in self._devices_by_id:  # [S1]
                 self._update_device(raw_result)
@@ -310,11 +327,11 @@ class SHCSession:
                         if isinstance(new_device, instance):
                             callback(new_device)
             return
-        if raw_result["@type"] in SHCIntrusionSystem.DOMAIN_STATES:
+        if result_type in SHCIntrusionSystem.DOMAIN_STATES:
             if self.intrusion_system is not None:
                 self.intrusion_system.process_long_polling_poll_result(raw_result)
             return
-        if raw_result["@type"] == "userDefinedState":
+        if result_type == "userDefinedState":
             state_id = raw_result["id"]
             if state_id in self._userdefinedstates_by_id:
                 self._userdefinedstates_by_id[state_id].update_raw_information(
@@ -334,7 +351,7 @@ class SHCSession:
                 for callback in list(self._userdefinedstate_callbacks[state_id]):
                     callback()
             return
-        if raw_result["@type"] == "link":
+        if result_type == "link":
             link_id = raw_result["id"]
             if link_id == "com.bosch.tt.emma.applink":
                 self._emma.update_emma_data(raw_result)
