@@ -419,6 +419,40 @@ class SHCSessionAsync:
                     await self._process_long_polling_poll_result(raw_result)
 
                 if resubscribed:
+                    # hass#370: device.async_update() below only short-polls each
+                    # device's *services* — it never re-fetches the device's own
+                    # top-level info, so `status` (AVAILABLE/UNDEFINED/...) stays
+                    # stuck at whatever it was before the gap. A device that went
+                    # UNDEFINED during e.g. an SHC firmware-update reboot and later
+                    # reconnected would keep reporting stale `available=True` here
+                    # indefinitely, while its service short-poll below happily
+                    # refreshes with the SHC's own last-cached (possibly stale)
+                    # service value — exactly the "shows a confident but wrong
+                    # state instead of unavailable" bug reported. Bulk-refresh
+                    # every device's own info first so `status` is current before
+                    # the confidence-bearing service refresh below runs.
+                    try:
+                        raw_devices = await self._api.get_devices()
+                    except Exception as ex:  # noqa: BLE001
+                        logger.warning(
+                            "Failed to fetch device list after async resubscribe: %s",
+                            ex,
+                        )
+                        raw_devices = []
+                    for raw_device in raw_devices:
+                        device = self._devices_by_id.get(raw_device.get("id"))
+                        if device is None:
+                            continue
+                        try:
+                            device.update_raw_information(raw_device)
+                        except Exception as ex:  # noqa: BLE001
+                            logger.warning(
+                                "Failed to refresh device status for %s "
+                                "after async resubscribe: %s",
+                                raw_device.get("id"),
+                                ex,
+                            )
+
                     # Mirrors session.py:183-206: after a poll-id resubscribe
                     # the SHC doesn't deliver state changes that happened during
                     # the gap.  Short-poll every device so listeners get current

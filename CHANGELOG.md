@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+## 0.4.14 — device status refresh on long-poll resubscribe (hass#370)
+
+**No breaking changes.**
+
+- **`session.py`/`session_async.py`:** after a long-poll poll-id resubscribe
+  (happens roughly every 24h, or any time the connection was interrupted
+  long enough for the old poll id to be invalidated — e.g. during an SHC
+  firmware update/reboot), the existing per-device refresh only short-polled
+  each device's *services*. It never re-fetched the device's own top-level
+  info, so `status` (`AVAILABLE`/`UNDEFINED`/...) stayed stuck at whatever it
+  was before the gap. A device that went `UNDEFINED` during the gap and
+  later reconnected kept reporting stale availability indefinitely, while
+  its service short-poll happily refreshed with the SHC's own last-cached
+  (possibly stale) value — the combination made a genuinely uncertain
+  reading look like a fresh, confident one (hass#370: a window/door contact
+  showed "closed" instead of "unavailable" right after an SHC firmware
+  update, misleading automations that assumed it was really closed). Fixed
+  by bulk-refreshing every device's own info (one `get_devices()` call) at
+  the start of the resubscribe-refresh block, before the existing
+  service-level short-poll runs.
+- **`api.py`/`register_client.py`:** removed a now-unused `# type: ignore[misc]`
+  on `HostNameIgnoringAdapter` in both files — `requests`' type stubs no
+  longer need the suppression, mypy was flagging both as unused.
+
 ## 0.4.13
 
 **No breaking changes.**

@@ -1607,3 +1607,105 @@ class TestResubscribeRefresh:
         result = s._long_poll()
 
         assert result is True
+
+
+class TestResubscribeDeviceStatusRefresh:
+    """hass#370: resubscribe must also refresh each device's own top-level
+    info (status), not just its services — otherwise a device that went
+    UNDEFINED during the gap and later reconnected keeps reporting stale
+    availability indefinitely."""
+
+    def test_resubscribe_refreshes_device_status_before_service_shortpoll(self):
+        """Status refresh must run BEFORE the service short-poll below it —
+        otherwise the reported bug (stale status paired with a fresh-looking
+        service value) could momentarily reappear on every resubscribe."""
+        s = _bare_session()
+        s._poll_id = None
+        call_order = []
+        dev1 = MagicMock()
+        dev1.update_raw_information.side_effect = lambda rd: call_order.append(
+            ("status", "hdm:D1")
+        )
+        dev1.update.side_effect = lambda **kw: call_order.append(("service", "hdm:D1"))
+        dev2 = MagicMock()
+        dev2.update_raw_information.side_effect = lambda rd: call_order.append(
+            ("status", "hdm:D2")
+        )
+        dev2.update.side_effect = lambda **kw: call_order.append(("service", "hdm:D2"))
+        s._devices_by_id["hdm:D1"] = dev1
+        s._devices_by_id["hdm:D2"] = dev2
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+        s._api.get_devices.return_value = [
+            {"id": "hdm:D1", "status": "AVAILABLE"},
+            {"id": "hdm:D2", "status": "UNDEFINED"},
+        ]
+
+        s._long_poll()
+
+        dev1.update_raw_information.assert_called_once_with(
+            {"id": "hdm:D1", "status": "AVAILABLE"}
+        )
+        dev2.update_raw_information.assert_called_once_with(
+            {"id": "hdm:D2", "status": "UNDEFINED"}
+        )
+        # Both status refreshes must precede both service refreshes.
+        status_positions = [i for i, c in enumerate(call_order) if c[0] == "status"]
+        service_positions = [i for i, c in enumerate(call_order) if c[0] == "service"]
+        assert max(status_positions) < min(service_positions), call_order
+
+    def test_resubscribe_one_device_status_refresh_error_does_not_skip_others(self):
+        """A failing update_raw_information() for one device must not prevent
+        the status refresh of the OTHER devices in the same resubscribe cycle
+        (the try/except must be per-device, not around the whole loop)."""
+        s = _bare_session()
+        s._poll_id = None
+        dev1 = MagicMock()
+        dev1.update_raw_information.side_effect = ValueError("bad payload")
+        dev2 = MagicMock()
+        s._devices_by_id["hdm:D1"] = dev1
+        s._devices_by_id["hdm:D2"] = dev2
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+        s._api.get_devices.return_value = [
+            {"id": "hdm:D1", "status": "AVAILABLE"},
+            {"id": "hdm:D2", "status": "UNDEFINED"},
+        ]
+
+        result = s._long_poll()
+
+        assert result is True
+        dev1.update_raw_information.assert_called_once()
+        dev2.update_raw_information.assert_called_once_with(
+            {"id": "hdm:D2", "status": "UNDEFINED"}
+        )
+
+    def test_resubscribe_skips_device_not_in_local_cache(self):
+        """get_devices() returning a device id we don't know about (yet)
+        must not raise — the normal 'new device' long-poll path handles
+        genuinely new devices."""
+        s = _bare_session()
+        s._poll_id = None
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+        s._api.get_devices.return_value = [{"id": "hdm:Unknown", "status": "AVAILABLE"}]
+
+        result = s._long_poll()
+
+        assert result is True
+
+    def test_resubscribe_device_status_refresh_error_is_logged_not_raised(self):
+        """get_devices() itself failing must be caught, not crash the poll —
+        the service short-poll refresh below must still run."""
+        s = _bare_session()
+        s._poll_id = None
+        dev = MagicMock()
+        s._devices_by_id["hdm:D1"] = dev
+        s._api.long_polling_subscribe.return_value = "new-id"
+        s._api.long_polling_poll.return_value = []
+        s._api.get_devices.side_effect = ConnectionError("SHC unreachable")
+
+        result = s._long_poll()
+
+        assert result is True
+        dev.update.assert_called_once_with(fire_callbacks=True)

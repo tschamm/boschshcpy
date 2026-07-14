@@ -16,7 +16,7 @@ from .exceptions import JSONRPCError as JSONRPCError  # noqa: F401 -- explicit r
 logger = logging.getLogger("boschshcpy")
 
 
-class HostNameIgnoringAdapter(HTTPAdapter):  # type: ignore[misc]
+class HostNameIgnoringAdapter(HTTPAdapter):
     def init_poolmanager(
         self,
         connections: int,

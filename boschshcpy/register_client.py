@@ -21,7 +21,7 @@ from .generate_cert import generate_certificate
 logger = logging.getLogger("boschshcpy")
 
 
-class HostNameIgnoringAdapter(HTTPAdapter):  # type: ignore[misc]
+class HostNameIgnoringAdapter(HTTPAdapter):
     def init_poolmanager(
         self,
         connections: int,

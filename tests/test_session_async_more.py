@@ -475,6 +475,199 @@ class TestPollLoopResubscribeRefresh:
         asyncio.run(run())
 
 
+class TestPollLoopResubscribeDeviceStatusRefresh:
+    """hass#370: resubscribe must also refresh each device's own top-level
+    info (status), not just its services — otherwise a device that went
+    UNDEFINED during the gap and later reconnected keeps reporting stale
+    availability indefinitely."""
+
+    def test_resubscribe_refreshes_device_status_before_service_shortpoll(self):
+        """Status refresh must run BEFORE the service short-poll below it —
+        otherwise the reported bug (stale status paired with a fresh-looking
+        service value) could momentarily reappear on every resubscribe."""
+        api = _fake_api()
+
+        subscribe_calls = [0]
+
+        async def fake_subscribe():
+            subscribe_calls[0] += 1
+            return f"pid-{subscribe_calls[0]}"
+
+        api.long_polling_subscribe.side_effect = fake_subscribe
+
+        poll_calls = [0]
+
+        async def fake_poll(poll_id, timeout):
+            poll_calls[0] += 1
+            if poll_calls[0] == 1:
+                return []
+            raise asyncio.CancelledError
+
+        api.long_polling_poll.side_effect = fake_poll
+        api.get_devices.return_value = [
+            {"id": "hdm:D1", "status": "AVAILABLE"},
+            {"id": "hdm:D2", "status": "UNDEFINED"},
+        ]
+
+        call_order = []
+
+        async def run():
+            s = _bare_session(api)
+            s._poll_id = None
+            dev1 = _fake_device("hdm:D1")
+            dev2 = _fake_device("hdm:D2")
+            dev1.update_raw_information.side_effect = lambda rd: call_order.append(
+                ("status", "hdm:D1")
+            )
+            dev2.update_raw_information.side_effect = lambda rd: call_order.append(
+                ("status", "hdm:D2")
+            )
+
+            async def dev1_service(**kw):
+                call_order.append(("service", "hdm:D1"))
+
+            async def dev2_service(**kw):
+                call_order.append(("service", "hdm:D2"))
+
+            dev1.async_update.side_effect = dev1_service
+            dev2.async_update.side_effect = dev2_service
+            s._devices_by_id["hdm:D1"] = dev1
+            s._devices_by_id["hdm:D2"] = dev2
+
+            with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
+                s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
+                try:
+                    await asyncio.wait_for(s._poll_task, timeout=3.0)
+                except (asyncio.CancelledError, asyncio.TimeoutError):
+                    pass
+                s._poll_task = None
+
+            return dev1, dev2
+
+        dev1, dev2 = asyncio.run(run())
+        dev1.update_raw_information.assert_called_once_with(
+            {"id": "hdm:D1", "status": "AVAILABLE"}
+        )
+        dev2.update_raw_information.assert_called_once_with(
+            {"id": "hdm:D2", "status": "UNDEFINED"}
+        )
+        # Both status refreshes must precede both service refreshes.
+        status_positions = [i for i, c in enumerate(call_order) if c[0] == "status"]
+        service_positions = [i for i, c in enumerate(call_order) if c[0] == "service"]
+        assert max(status_positions) < min(service_positions), call_order
+
+    def test_resubscribe_one_device_status_refresh_error_does_not_skip_others(self):
+        """A failing update_raw_information() for one device must not prevent
+        the status refresh of the OTHER devices in the same resubscribe cycle
+        (the try/except must be per-device, not around the whole loop)."""
+        api = _fake_api()
+        api.long_polling_subscribe.return_value = "pid-1"
+
+        poll_calls = [0]
+
+        async def fake_poll(poll_id, timeout):
+            poll_calls[0] += 1
+            if poll_calls[0] == 1:
+                return []
+            raise asyncio.CancelledError
+
+        api.long_polling_poll.side_effect = fake_poll
+        api.get_devices.return_value = [
+            {"id": "hdm:D1", "status": "AVAILABLE"},
+            {"id": "hdm:D2", "status": "UNDEFINED"},
+        ]
+
+        async def run():
+            s = _bare_session(api)
+            s._poll_id = None
+            dev1 = _fake_device("hdm:D1")
+            dev2 = _fake_device("hdm:D2")
+            dev1.update_raw_information.side_effect = ValueError("bad payload")
+            s._devices_by_id["hdm:D1"] = dev1
+            s._devices_by_id["hdm:D2"] = dev2
+
+            with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
+                s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
+                try:
+                    await asyncio.wait_for(s._poll_task, timeout=3.0)
+                except (asyncio.CancelledError, asyncio.TimeoutError):
+                    pass
+                s._poll_task = None
+
+            return dev1, dev2
+
+        dev1, dev2 = asyncio.run(run())
+        dev1.update_raw_information.assert_called_once()
+        dev2.update_raw_information.assert_called_once_with(
+            {"id": "hdm:D2", "status": "UNDEFINED"}
+        )
+
+    def test_resubscribe_skips_device_not_in_local_cache(self):
+        """get_devices() returning a device id we don't know about (yet)
+        must not raise — just skip it, the normal 'new device' long-poll
+        path handles genuinely new devices."""
+        api = _fake_api()
+        api.long_polling_subscribe.return_value = "pid-1"
+
+        poll_calls = [0]
+
+        async def fake_poll(poll_id, timeout):
+            poll_calls[0] += 1
+            if poll_calls[0] == 1:
+                return []
+            raise asyncio.CancelledError
+
+        api.long_polling_poll.side_effect = fake_poll
+        api.get_devices.return_value = [{"id": "hdm:Unknown", "status": "AVAILABLE"}]
+
+        async def run():
+            s = _bare_session(api)
+            s._poll_id = None
+            with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
+                s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
+                try:
+                    await asyncio.wait_for(s._poll_task, timeout=3.0)
+                except (asyncio.CancelledError, asyncio.TimeoutError):
+                    pass
+                s._poll_task = None
+
+        asyncio.run(run())  # must not raise
+
+    def test_resubscribe_device_status_refresh_error_is_logged_not_raised(self):
+        """get_devices() itself failing must be caught, not crash the loop."""
+        api = _fake_api()
+        api.long_polling_subscribe.return_value = "pid-1"
+
+        poll_calls = [0]
+
+        async def fake_poll(poll_id, timeout):
+            poll_calls[0] += 1
+            if poll_calls[0] == 1:
+                return []
+            raise asyncio.CancelledError
+
+        api.long_polling_poll.side_effect = fake_poll
+        api.get_devices.side_effect = ConnectionError("SHC unreachable")
+
+        async def run():
+            s = _bare_session(api)
+            s._poll_id = None
+            dev = _fake_device("hdm:D1")
+            s._devices_by_id["hdm:D1"] = dev
+            with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
+                s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
+                try:
+                    await asyncio.wait_for(s._poll_task, timeout=3.0)
+                except (asyncio.CancelledError, asyncio.TimeoutError):
+                    pass
+                s._poll_task = None
+            return dev
+
+        dev = asyncio.run(run())
+        # The service short-poll must still run despite the status-refresh failure.
+        dev.async_update.assert_called_once_with(fire_callbacks=True)
+
+
 # ---------------------------------------------------------------------------
 # Lines 426-433: _poll_loop JSONRPCError non-(-32001) path
 # ---------------------------------------------------------------------------

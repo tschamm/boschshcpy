@@ -212,6 +212,34 @@ class SHCSession:
                 self._process_long_polling_poll_result(raw_result)
 
             if resubscribed:
+                # hass#370: bulk-refresh every device's own top-level info (in
+                # particular `status`) before the service-level short-poll
+                # below — see session_async.py's mirror of this block for the
+                # full root-cause writeup. Without this, a device that went
+                # UNDEFINED during the gap and later reconnected would keep
+                # reporting stale availability indefinitely.
+                try:
+                    raw_devices = self.api.get_devices()
+                except Exception as ex:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to fetch device list after resubscribe: %s",
+                        ex,
+                    )
+                    raw_devices = []
+                for raw_device in raw_devices:
+                    device = self._devices_by_id.get(raw_device.get("id"))
+                    if device is None:
+                        continue
+                    try:
+                        device.update_raw_information(raw_device)
+                    except Exception as ex:  # noqa: BLE001
+                        logger.warning(
+                            "Failed to refresh device status for %s after "
+                            "resubscribe: %s",
+                            raw_device.get("id"),
+                            ex,
+                        )
+
                 # Refresh all device-service states after a poll-id resubscribe
                 # (#183): the SHC invalidates poll IDs roughly every 24 h; any
                 # device state that changed during the gap is not delivered in the
