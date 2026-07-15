@@ -283,6 +283,190 @@ class TestUrlAndHeaders:
         sent = api._session.put.call_args[1]["data"]
         assert '"profile": "OUTDOOR"' in sent
 
+    def test_put_device_firmware_activation_url_and_no_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.put = MagicMock(return_value=resp)
+
+        asyncio.run(api.put_device_firmware_activation("hdm:ZigBee:abc"))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/devicemanagement/firmware/"
+            "hdm%3AZigBee%3Aabc/activate"
+        )
+        sent = api._session.put.call_args[1]["data"]
+        assert sent == "null"
+
+    def test_get_water_alarm_system_state_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(
+            body={"@type": "waterAlarmSystemState", "available": True, "state": "ALARM_OFF"}
+        )
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_water_alarm_system_state())
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/wateralarm"
+        assert result["state"] == "ALARM_OFF"
+
+    def test_put_domain_action_url_and_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.put = MagicMock(return_value=resp)
+
+        asyncio.run(api.put_domain_action("wateralarm/actions/mute"))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/wateralarm/actions/mute"
+        sent = api._session.put.call_args[1]["data"]
+        assert sent == "null"
+
+    def test_get_automation_rules_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body=[{"@type": "automationRule", "id": "r1"}])
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_automation_rules())
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/automation/rules"
+        assert result == [{"@type": "automationRule", "id": "r1"}]
+
+    def test_put_automation_rule_url_and_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.put = MagicMock(return_value=resp)
+
+        asyncio.run(api.put_automation_rule("r1", {"id": "r1", "enabled": False}))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/automation/rules/r1"
+        sent = api._session.put.call_args[1]["data"]
+        assert '"enabled": false' in sent
+
+    def test_trigger_automation_rule_url_and_no_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.put = MagicMock(return_value=resp)
+
+        asyncio.run(api.trigger_automation_rule("r1"))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/automation/rules/r1/trigger"
+        )
+        sent = api._session.put.call_args[1]["data"]
+        assert sent == "null"
+
+    def test_delete_automation_rule_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.delete = MagicMock(return_value=resp)
+
+        asyncio.run(api.delete_automation_rule("r1"))
+
+        called_url = api._session.delete.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/automation/rules/r1"
+
+    def test_delete_automation_rule_raises_on_error(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(status=500, ok=False)
+        api._session.delete = MagicMock(return_value=resp)
+
+        with pytest.raises(SHCSessionError):
+            asyncio.run(api.delete_automation_rule("r1"))
+
+    def test_get_thermostat_regulation_config_url_and_result(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={"id": "dev1", "algorithmUsed": "INTERNAL"})
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_thermostat_regulation_config("dev1"))
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/thermostat/regulation/dev1/config"
+        )
+        assert result == {"id": "dev1", "algorithmUsed": "INTERNAL"}
+
+    def test_get_thermostat_regulation_config_404_returns_none(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(status=404, ok=False)
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_thermostat_regulation_config("dev1"))
+        assert result is None
+
+    def test_get_thermostat_regulation_config_other_error_raises(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(status=500, ok=False)
+        api._session.get = MagicMock(return_value=resp)
+
+        with pytest.raises(SHCSessionError):
+            asyncio.run(api.get_thermostat_regulation_config("dev1"))
+
+    def test_get_device_firmware_state_url_and_result(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body="AwaitingActivation")
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_device_firmware_state("hdm:ZigBee:abc"))
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/devicemanagement/firmware/"
+            "hdm%3AZigBee%3Aabc"
+        )
+        assert result == "AwaitingActivation"
+
+    def test_get_device_firmware_state_404_returns_none(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(status=404, ok=False)
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(
+            api.get_device_firmware_state("roomClimateControl_hz_7")
+        )
+        assert result is None
+
+    def test_get_device_firmware_state_other_error_raises(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(status=500, ok=False)
+        api._session.get = MagicMock(return_value=resp)
+
+        with pytest.raises(SHCSessionError):
+            asyncio.run(api.get_device_firmware_state("hdm:ZigBee:abc"))
+
     def test_long_polling_subscribe_url(self, cert_and_key_paths: tuple[str, str]) -> None:
         api = _make_api(cert_and_key_paths)
         resp = _make_mock_response(

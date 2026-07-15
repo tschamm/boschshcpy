@@ -245,6 +245,85 @@ class SHCAPI:
         api_url = f"{self._api_root}/devices/{device_id}"
         return self._put_api_or_fail(api_url, device_data)
 
+    def put_device_firmware_activation(self, device_id: str) -> None:
+        """Trigger a firmware update install for one device (no request body).
+
+        Not in the official OpenAPI spec; APK ground-truth
+        (RestRequests.putDeviceFirmwareActivation -> PUT
+        devicemanagement/firmware/{deviceId}/activate). NEVER_BLIND_FIX:
+        confirm on real hardware before relying on this outside tests.
+        """
+        api_url = f"{self._api_root}/devicemanagement/firmware/{urllib.parse.quote(device_id, safe='')}/activate"
+        self._put_api_or_fail(api_url, body=None)
+
+    def get_device_firmware_state(self, device_id: str) -> str | None:
+        """Probe this device's firmware lifecycle state (no OpenAPI spec).
+
+        APK ground-truth (RestRequests.getDeviceFirmwareState -> GET
+        devicemanagement/firmware/{deviceId}), device-agnostic and
+        independent of deviceServiceIds -- confirmed against a real SHC to
+        return a bare JSON string (e.g. "UpToDate", "AwaitingActivation") for
+        any device with firmware, and HTTP 404 for devices/virtual entries
+        without it (returned here as None, not an error).
+        """
+        api_url = f"{self._api_root}/devicemanagement/firmware/{urllib.parse.quote(device_id, safe='')}"
+        try:
+            result = self._session_request("GET", api_url, timeout=30)
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
+        if result.status_code == 404:
+            return None
+        if not result.ok:
+            self._process_nok_result(result)
+        if len(result.content) == 0:
+            return None
+        return cast(str, json.loads(result.content))
+
+    def get_automation_rules(self) -> Any:
+        """List all local automation rules (APK ground-truth, no OpenAPI spec).
+
+        Bosch's own native "if this then that" rule engine, entirely separate
+        from Home Assistant's automations. Confirmed live: GET
+        automation/rules returns a JSON array of "automationRule" objects.
+        """
+        api_url = f"{self._api_root}/automation/rules"
+        return self._get_api_result_or_fail(
+            api_url, expected_element_type="automationRule"
+        )
+
+    def get_automation_rule(self, rule_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/automation/rules/{urllib.parse.quote(rule_id, safe='')}"
+        )
+        return self._get_api_result_or_fail(api_url, expected_type="automationRule")
+
+    def put_automation_rule(self, rule_id: str, rule_data: Any) -> Any:
+        """Update an automation rule (full-body PUT, e.g. to toggle enabled)."""
+        api_url = (
+            f"{self._api_root}/automation/rules/{urllib.parse.quote(rule_id, safe='')}"
+        )
+        return self._put_api_or_fail(api_url, rule_data)
+
+    def trigger_automation_rule(self, rule_id: str) -> None:
+        """Manually fire an automation rule now (PUT .../trigger, no body)."""
+        api_url = (
+            f"{self._api_root}/automation/rules/"
+            f"{urllib.parse.quote(rule_id, safe='')}/trigger"
+        )
+        self._put_api_or_fail(api_url, body=None)
+
+    def delete_automation_rule(self, rule_id: str) -> None:
+        """Delete an automation rule permanently. Not exposed via HA entities."""
+        api_url = (
+            f"{self._api_root}/automation/rules/{urllib.parse.quote(rule_id, safe='')}"
+        )
+        try:
+            result = self._session_request("DELETE", api_url, timeout=30)
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
+        if not result.ok:
+            self._process_nok_result(result)
+
     def get_services(self) -> Any:
         api_url = f"{self._api_root}/services"
         return self._get_api_result_or_fail(
@@ -300,6 +379,145 @@ class SHCAPI:
     def post_domain_action(self, path: str, data: Any = None) -> None:
         api_url = f"{self._api_root}/{path}"
         self._post_api_or_fail(api_url, body=data)
+
+    def put_domain_action(self, path: str, data: Any = None) -> None:
+        api_url = f"{self._api_root}/{path}"
+        self._put_api_or_fail(api_url, body=data)
+
+    def get_water_alarm_system_state(self) -> Any:
+        """Whole-home water-leak alarm system state (no OpenAPI spec)."""
+        api_url = f"{self._api_root}/wateralarm"
+        return self._get_api_result_or_fail(
+            api_url, expected_type="waterAlarmSystemState"
+        )
+
+    def get_water_alarm_system_configuration(self) -> Any:
+        api_url = f"{self._api_root}/wateralarm/configuration"
+        return self._get_api_result_or_fail(
+            api_url, expected_type="waterAlarmSystemConfiguration"
+        )
+
+    # intrusion detection configuration discovery (no OpenAPI spec; APK
+    # ground-truth RestRequests.getIntrusionDetectionConfigurationProfiles*/
+    # getIntrusionConfigurationEndpoint*). Read-only, confirmed live.
+    def get_intrusion_profiles(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/profiles"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_intrusion_profile(self, profile_id: str) -> Any:
+        api_url = f"{self._api_root}/intrusion/profiles/{urllib.parse.quote(profile_id, safe='')}"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_intrusion_profile_states(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/states/profiles"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_intrusion_endpoint_alarm_actuators(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/endpoints/alarm/actuators"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_intrusion_endpoint_alarm_triggers(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/endpoints/alarm/triggers"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_intrusion_endpoint_reminder_actuators(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/endpoints/reminder/actuators"
+        return self._get_api_result_or_fail(api_url)
+
+    # thermostat regulation algorithm (per-device, no OpenAPI spec; APK
+    # ground-truth RestRequests.getThermostatRegulationAlgorithmConfiguration/
+    # putThermostatRegulationAlgorithmConfiguration).
+    def get_thermostat_regulation_config(self, device_id: str) -> Any:
+        """Fetch this device's regulation-algorithm config.
+
+        Returns None on HTTP 404 (device has no regulation-algorithm
+        config), matching get_device_firmware_state's contract -- not
+        every device advertising deviceServiceIds has this endpoint.
+        """
+        api_url = (
+            f"{self._api_root}/thermostat/regulation/"
+            f"{urllib.parse.quote(device_id, safe='')}/config"
+        )
+        try:
+            result = self._session_request("GET", api_url, timeout=30)
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
+        if result.status_code == 404:
+            return None
+        if not result.ok:
+            self._process_nok_result(result)
+        if len(result.content) == 0:
+            return None
+        return json.loads(result.content)
+
+    def put_thermostat_regulation_config(self, device_id: str, config: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/thermostat/regulation/"
+            f"{urllib.parse.quote(device_id, safe='')}/config"
+        )
+        return self._put_api_or_fail(api_url, config)
+
+    # temperature drop service (per-room anti-frost/window-open compensation;
+    # no OpenAPI spec; APK ground-truth RestRequests.getTemperatureDropService(s)/
+    # putTemperatureDropService). Confirmed live across 12 real rooms.
+    def get_temperature_drop_services(self) -> Any:
+        api_url = f"{self._api_root}/climate/temperaturedropservice"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_temperature_drop_service(self, room_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/temperaturedropservice/"
+            f"{urllib.parse.quote(room_id, safe='')}"
+        )
+        return self._get_api_result_or_fail(api_url)
+
+    def put_temperature_drop_service(self, room_id: str, data: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/temperaturedropservice/"
+            f"{urllib.parse.quote(room_id, safe='')}"
+        )
+        return self._put_api_or_fail(api_url, data)
+
+    # hydraulic balancing (no OpenAPI spec; APK ground-truth
+    # RestRequests.get(All)HydraulicBalancingConfiguration(s)/
+    # putHydraulicBalancingConfiguration). NOT live-confirmed -- this test
+    # installation returns 503 (no hydraulic-balancing-capable devices) --
+    # implemented from the decompiled Kotlin data class only.
+    def get_hydraulic_balancing_configurations(self) -> Any:
+        api_url = f"{self._api_root}/climate/hydraulicbalancing"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_hydraulic_balancing_configuration(self, config_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/hydraulicbalancing/"
+            f"{urllib.parse.quote(config_id, safe='')}"
+        )
+        return self._get_api_result_or_fail(api_url)
+
+    def put_hydraulic_balancing_configuration(self, config_id: str, config: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/hydraulicbalancing/"
+            f"{urllib.parse.quote(config_id, safe='')}"
+        )
+        return self._put_api_or_fail(api_url, config)
+
+    # comfort zone templates (Twinguard/air-quality sensors; no OpenAPI spec;
+    # APK ground-truth RestRequests.getComfortZoneTemplatesRequest/
+    # getSaveCustomComfortZoneTemplateRequest). NOT live-confirmed -- this
+    # installation has no Twinguard device.
+    def get_comfort_zone_templates(self, sensor_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/airquality/comfortzone/templates/"
+            f"{urllib.parse.quote(sensor_id, safe='')}"
+        )
+        return self._get_api_result_or_fail(api_url)
+
+    def put_comfort_zone_template(self, sensor_id: str, comfort_zone: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/airquality/comfortzone/templates/"
+            f"{urllib.parse.quote(sensor_id, safe='')}/custom"
+        )
+        return self._put_api_or_fail(api_url, comfort_zone)
 
     @staticmethod
     def _check_jsonrpc_version(result: Any, method: str) -> None:

@@ -1,6 +1,117 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — big sync with the official Bosch Smart Home app
+
+A large round of reverse-engineering (APK decompile + live traffic capture
+against a real SHC) closing the gap between this library and what the
+official Bosch app can do. Several features below are entirely new
+capability surfaces (not previously modeled at all, not just extended).
+Everything marked **live-confirmed** was verified against a real controller,
+not implemented from the OpenAPI spec/decompile alone.
+
+- **★ Firmware update triggers + per-device firmware state probe**
+  (controller + per-device) — the headline feature of this release. Not in
+  the official OpenAPI spec — traced via APK decompile
+  (`RestClientImpl`/`RestRequests`, `FirmwarePresenter`/`FirmwareStateLoader`):
+  - `SHCInformation.start_software_update()` /
+    `_AsyncSHCInformation.async_start_software_update()` — `POST
+    rootdevices/startSoftwareUpdate` (no request body), triggers the
+    controller's own firmware update install. **Confirmed live**: controller
+    reports `NO_UPDATE_AVAILABLE` via `/information` when up to date.
+  - `SHCDevice.activate_firmware_update()` / `async_activate_firmware_update()`
+    — `PUT devicemanagement/firmware/{deviceId}/activate` (no request body),
+    triggers a firmware update install for one device.
+  - `SHCAPI.get_device_firmware_state()` / `SHCAPIAsync.get_device_firmware_state()`
+    and `SHCDevice.firmware_update_state()` / `async_firmware_update_state()`
+    — `GET devicemanagement/firmware/{deviceId}`, a **device-agnostic**
+    firmware lifecycle probe, independent of `deviceServiceIds` (the earlier
+    per-device `SoftwareUpdateService`/`"SoftwareUpdate"` device-service
+    model was a wrong guess — no real device ever advertises that service —
+    and has been removed). Returns one of `Fetching`, `UpToDate`,
+    `UpdateRunning`, `TransferringUpdate`, `AwaitingUserInteraction`,
+    `AwaitingActivation`, `AwaitingActivationTimeout`, `UpdatePending`,
+    `UpdateAvailable`, `UpToDateAwaitingUserInteraction`, `Failed`, `Unknown`
+    (from the app's `FirmwareView.FirmwareState` enum), or `None` on HTTP 404
+    (device has no firmware capability — confirmed live: virtual devices and
+    the controller's own root device 404 here).
+  - **Confirmed live** against a real device with a pending update: a
+    TRV_GEN2 radiator thermostat returned `"AwaitingActivation"` — matching
+    what the Bosch app showed for that exact device at the same moment.
+  - **Install action also confirmed live end-to-end**: triggering it via
+    `activate_firmware_update()` moved the real device's state
+    `AwaitingActivation` → `UpdatePending` → `Unknown` (mid-transfer) →
+    `UpToDateAwaitingUserInteraction` over ~90 seconds — a genuine,
+    successful over-the-air firmware install; the device stayed fully
+    functional afterward (temperature/valve sensors kept reporting
+    normally).
+- **New: local automation-rule engine support** (read/enable/trigger) — the
+  same native "rules" the Bosch app's automation editor manages. Not in the
+  official OpenAPI spec — APK-traced and **confirmed live** against a real
+  SHC with 23 real user-configured rules. New `SHCAutomationRule` class;
+  read/toggle-enable/manual-trigger/delete via `GET`/`PUT`/`DELETE`
+  `automation/rules{,/{id},/{id}/trigger}`.
+- **New: whole-home water-leak alarm system** (state + mute) — mirrors the
+  existing intrusion-system domain. New `SHCWaterAlarmSystem` domain (`GET
+  wateralarm[/configuration]`, `PUT wateralarm/actions/mute`), wired into
+  both sync/async sessions the same way as intrusion. **Live-confirmed**
+  against a real SHC (`available=false`, `state=ALARM_OFF` when idle).
+  Degrades gracefully (domain simply absent) on installations without water
+  sensors.
+- **New: intrusion-system read-only discovery** — profiles, per-profile
+  states, and endpoint actuator/trigger listings, all **live-confirmed**.
+  Lays the groundwork for exposing intrusion-system configuration (not just
+  arm/disarm) to consumers.
+- **New: per-device thermostat regulation algorithm** read/write
+  (`device.py`) — **live-confirmed**; returns `None` (rather than raising)
+  on devices without this capability, matching the same graceful-degradation
+  contract as the firmware probe above.
+- **New: per-room temperature-drop service** read/write (`room.py`) — the
+  anti-frost/window-open compensation setting from the app's room-detail
+  screen. **Live-confirmed** across 12 real rooms.
+- **New: hydraulic balancing + comfort-zone template** API methods — added
+  from the decompiled model classes; this project's test SHC has neither
+  hydraulic-balancing-capable devices nor a Twinguard, so these are **not
+  live-confirmed** yet (flagged accordingly in their docstrings). Treat as
+  provisional until a capable installation can verify them.
+- Hardening found via an internal bug-hunt pass on the above: the
+  thermostat-regulation-config probe now returns `None` on HTTP 404 (was
+  raising `SHCSessionError`), matching the firmware-probe's own contract;
+  `SHCWaterAlarmSystem` is now correctly exported from the package's
+  top-level `__init__.py`; the water-alarm domain's degrade-on-unsupported
+  handler now narrowly catches `SHCException` instead of bare `Exception`.
+  (controller + per-device). Not in the official OpenAPI spec — traced via
+  APK decompile (`RestClientImpl`/`RestRequests`, `FirmwarePresenter`/
+  `FirmwareStateLoader`):
+  - `SHCInformation.start_software_update()` /
+    `_AsyncSHCInformation.async_start_software_update()` — `POST
+    rootdevices/startSoftwareUpdate` (no request body), triggers the
+    controller's own firmware update install. **Confirmed live**: controller
+    reports `NO_UPDATE_AVAILABLE` via `/information` when up to date.
+  - `SHCDevice.activate_firmware_update()` / `async_activate_firmware_update()`
+    — `PUT devicemanagement/firmware/{deviceId}/activate` (no request body),
+    triggers a firmware update install for one device.
+  - `SHCAPI.get_device_firmware_state()` / `SHCAPIAsync.get_device_firmware_state()`
+    and `SHCDevice.firmware_update_state()` / `async_firmware_update_state()`
+    — `GET devicemanagement/firmware/{deviceId}`, a **device-agnostic**
+    firmware lifecycle probe, independent of `deviceServiceIds` (the earlier
+    per-device `SoftwareUpdateService`/`"SoftwareUpdate"` device-service
+    model was a wrong guess — no real device ever advertises that service —
+    and has been removed). Returns one of `Fetching`, `UpToDate`,
+    `UpdateRunning`, `TransferringUpdate`, `AwaitingUserInteraction`,
+    `AwaitingActivation`, `AwaitingActivationTimeout`, `UpdatePending`,
+    `UpdateAvailable`, `UpToDateAwaitingUserInteraction`, `Failed`, `Unknown`
+    (from the app's `FirmwareView.FirmwareState` enum), or `None` on HTTP 404
+    (device has no firmware capability — confirmed live: virtual devices and
+    the controller's own root device 404 here).
+  - **Confirmed live** against a real device with a pending update: a
+    TRV_GEN2 radiator thermostat returned `"AwaitingActivation"` — matching
+    what the Bosch app showed for that exact device at the same moment.
+  - **Install action also confirmed live**: triggering it via
+    `activate_firmware_update()` moved the real device's state
+    `AwaitingActivation` → `UpdatePending` → `Unknown` (mid-transfer) →
+    `UpToDateAwaitingUserInteraction` over ~90 seconds — a genuine,
+    successful firmware install; the device stayed fully functional
+    afterward (temperature/valve sensors kept reporting normally).
 
 ## 0.4.14 — device status refresh on long-poll resubscribe (hass#370)
 

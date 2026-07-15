@@ -116,6 +116,68 @@ class SHCDevice:
         # back to our request body when the SHC answers with an empty 2xx.
         self.update_raw_information(response if response else body)
 
+    def activate_firmware_update(self) -> None:
+        """Trigger this device's firmware update install (sync).
+
+        APK ground-truth (RestRequests.putDeviceFirmwareActivation), not in
+        the official OpenAPI spec. Confirmed live against a real TRV_GEN2.
+        """
+        self._api.put_device_firmware_activation(self.id)
+
+    async def async_activate_firmware_update(self) -> None:
+        """Trigger this device's firmware update install (async)."""
+        # self._api is typed SHCAPI (sync) but duck-typed to SHCAPIAsync at
+        # runtime for async sessions, same as every other async_* method on
+        # this shared class — the sync method's honest `-> None` return type
+        # (unlike put_device's looser `Any`) makes mypy flag the await here.
+        await self._api.put_device_firmware_activation(self.id)  # type: ignore[misc,func-returns-value]
+
+    def firmware_update_state(self) -> str | None:
+        """Probe this device's firmware lifecycle state (sync).
+
+        Live GET, not cached from deviceServiceIds -- APK ground-truth shows
+        the app probes every physical device by id regardless of its
+        advertised services (RestRequests.getDeviceFirmwareState). Returns
+        one of FirmwareUpdateState's raw names (e.g. "UpToDate",
+        "AwaitingActivation"), or None if this device has no firmware
+        capability (confirmed via rawscan: virtual devices and the
+        controller's own root device 404 here).
+        """
+        return self._api.get_device_firmware_state(self.id)
+
+    async def async_firmware_update_state(self) -> str | None:
+        """Probe this device's firmware lifecycle state (async)."""
+        return await self._api.get_device_firmware_state(self.id)  # type: ignore[misc,no-any-return]
+
+    def thermostat_regulation_algorithm(self) -> str | None:
+        """This thermostat's regulation algorithm ("INTERNAL"/"CUSTOM"/"UNKNOWN").
+
+        Not in the official OpenAPI spec; APK ground-truth
+        (RestRequests.getThermostatRegulationAlgorithmConfiguration).
+        Returns None if this device has no regulation-algorithm config.
+        """
+        config = self._api.get_thermostat_regulation_config(self.id)
+        return str(config["algorithmUsed"]) if config else None
+
+    async def async_thermostat_regulation_algorithm(self) -> str | None:
+        """Async counterpart to thermostat_regulation_algorithm()."""
+        config = await self._api.get_thermostat_regulation_config(self.id)
+        return str(config["algorithmUsed"]) if config else None
+
+    def set_thermostat_regulation_algorithm(self, algorithm_used: str) -> None:
+        """Set this thermostat's regulation algorithm (sync)."""
+        self._api.put_thermostat_regulation_config(
+            self.id, {"id": self.id, "algorithmUsed": algorithm_used}
+        )
+
+    async def async_set_thermostat_regulation_algorithm(
+        self, algorithm_used: str
+    ) -> None:
+        """Set this thermostat's regulation algorithm (async)."""
+        await self._api.put_thermostat_regulation_config(
+            self.id, {"id": self.id, "algorithmUsed": algorithm_used}
+        )
+
     @property
     def name(self) -> str:
         # Not in the OpenAPI "required" list for Device — .get() to match the
@@ -150,20 +212,6 @@ class SHCDevice:
             if "parentDeviceId" in self._raw_device
             else None
         )
-
-    @property
-    def software_update(self) -> SHCDeviceService | None:
-        """The per-device SoftwareUpdate service, or None if not exposed.
-
-        Spec-grounded (APK 10.33). Most devices do not carry this service, so
-        callers must guard on the None return. Read-only firmware status — the
-        local API has no per-device install action (hass#186 lesson).
-        """
-        return self.device_service("SoftwareUpdate")
-
-    @property
-    def supports_software_update(self) -> bool:
-        return self.device_service("SoftwareUpdate") is not None
 
     @property
     def device_services(self) -> typing.Sequence[SHCDeviceService]:

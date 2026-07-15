@@ -38,6 +38,7 @@ def _bare_session() -> SHCSession:
     s._long_poll_timeout = 10
     s._rooms_by_id = {}
     s._scenarios_by_id = {}
+    s._automation_rules_by_id = {}
     s._devices_by_id = {}
     s._services_by_device_id = defaultdict(list)
     s._devices_lock = threading.RLock()
@@ -139,6 +140,18 @@ class TestPropertyAccessors:
         sc.name = "Away"
         s._scenarios_by_id["sc1"] = sc
         assert "Away" in s.scenario_names
+
+    def test_automation_rules_list(self):
+        s = _bare_session()
+        rule = MagicMock()
+        s._automation_rules_by_id["r1"] = rule
+        assert rule in s.automation_rules
+
+    def test_automation_rule_by_id(self):
+        s = _bare_session()
+        rule = MagicMock()
+        s._automation_rules_by_id["r1"] = rule
+        assert s.automation_rule("r1") is rule
 
     def test_messages_list(self):
         s = _bare_session()
@@ -943,6 +956,35 @@ class TestEnumerateHelpers:
             s._enumerate_scenarios()
         assert "sc1" in s._scenarios_by_id
 
+    def test_enumerate_automation_rules_populates_dict(self):
+        s = _bare_session()
+        raw_rule = {"id": "r1", "name": "TV aus", "enabled": True}
+        s._api.get_automation_rules.return_value = [raw_rule]
+        with patch("boschshcpy.session.SHCAutomationRule") as MockRule:
+            mock_inst = MagicMock()
+            MockRule.return_value = mock_inst
+            s._enumerate_automation_rules()
+        assert "r1" in s._automation_rules_by_id
+
+    def test_refresh_automation_rules_updates_existing(self):
+        s = _bare_session()
+        existing = MagicMock()
+        s._automation_rules_by_id["r1"] = existing
+        raw_rule = {"id": "r1", "name": "TV aus", "enabled": False}
+        s._api.get_automation_rules.return_value = [raw_rule]
+        s.refresh_automation_rules()
+        existing.update_raw_rule.assert_called_once_with(raw_rule)
+
+    def test_refresh_automation_rules_adds_new(self):
+        s = _bare_session()
+        raw_rule = {"id": "r2", "name": "Neu", "enabled": True}
+        s._api.get_automation_rules.return_value = [raw_rule]
+        with patch("boschshcpy.session.SHCAutomationRule") as MockRule:
+            mock_inst = MagicMock()
+            MockRule.return_value = mock_inst
+            s.refresh_automation_rules()
+        assert "r2" in s._automation_rules_by_id
+
     def test_enumerate_messages_populates_dict(self):
         s = _bare_session()
         raw_msg = {
@@ -1293,6 +1335,7 @@ class TestInitializeHelpers:
         s._enumerate_devices = lambda: steps.append("devices")
         s._enumerate_rooms = lambda: steps.append("rooms")
         s._enumerate_scenarios = lambda: steps.append("scenarios")
+        s._enumerate_automation_rules = lambda: steps.append("automation_rules")
         s._enumerate_messages = lambda: steps.append("messages")
         s._enumerate_userdefinedstates = lambda: steps.append("userdefinedstates")
         s._initialize_domains = lambda: steps.append("domains")
@@ -1304,6 +1347,7 @@ class TestInitializeHelpers:
             "devices",
             "rooms",
             "scenarios",
+            "automation_rules",
             "messages",
             "userdefinedstates",
             "domains",

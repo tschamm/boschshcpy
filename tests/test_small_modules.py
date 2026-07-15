@@ -83,6 +83,15 @@ def test_shcinformation_version():
     assert info.version == "9.91.7"
 
 
+def test_shcinformation_start_software_update_posts_domain_action():
+    info = _make_shc_info()
+    info._api = MagicMock()
+    info.start_software_update()
+    info._api.post_domain_action.assert_called_once_with(
+        "rootdevices/startSoftwareUpdate"
+    )
+
+
 def test_shcinformation_update_state_no_update():
     info = _make_shc_info(sw_state="NO_UPDATE_AVAILABLE")
     assert info.updateState == SHCInformation.UpdateState.NO_UPDATE_AVAILABLE

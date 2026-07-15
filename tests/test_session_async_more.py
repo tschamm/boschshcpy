@@ -792,3 +792,20 @@ class TestAsyncSHCInformationSummary:
         captured = capsys.readouterr()
         assert "AsyncSHCInformation" in captured.out
         assert "None" in captured.out
+
+
+class TestAsyncSHCInformationStartSoftwareUpdate:
+    def test_start_software_update_posts_domain_action(self):
+        api = AsyncMock()
+        info = _AsyncSHCInformation({}, {}, api=api)
+
+        asyncio.run(info.async_start_software_update())
+
+        api.post_domain_action.assert_awaited_once_with(
+            "rootdevices/startSoftwareUpdate"
+        )
+
+    def test_start_software_update_is_noop_without_api(self):
+        info = _AsyncSHCInformation({}, {})  # api=None (unit-test construction)
+
+        asyncio.run(info.async_start_software_update())  # must not raise

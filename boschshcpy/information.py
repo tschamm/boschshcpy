@@ -243,6 +243,16 @@ class SHCInformation:
         else:
             raise SHCConnectionError
 
+    def start_software_update(self) -> None:
+        """Trigger a controller firmware update install.
+
+        Not in the official OpenAPI spec; APK ground-truth
+        (RestClientImpl.startSwUpdateRootDevice -> POST
+        rootdevices/startSoftwareUpdate, no request body). NEVER_BLIND_FIX:
+        confirm on real hardware before relying on this outside tests.
+        """
+        self._api.post_domain_action("rootdevices/startSoftwareUpdate")
+
     def summary(self) -> None:
         print("Information:")
         print(f"  shcIpAddress       : {self.shcIpAddress}")

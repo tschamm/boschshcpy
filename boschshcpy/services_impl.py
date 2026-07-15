@@ -2722,63 +2722,6 @@ class KeypadTriggerService(SHCDeviceService):
         print(f"    idsToTrigger             : {self.ids_to_trigger}")
 
 
-class SoftwareUpdateService(SHCDeviceService):
-    """Per-device firmware update state (read-only).
-
-    Mirrors the controller-level ShcInfo softwareUpdateState block (see
-    SHCInformation, hass#186) but at the individual-device level. Like the
-    controller case, the local API exposes no install action — updates are
-    started from the Bosch app — so this is a read-only status surface only.
-    Spec-grounded from APK 10.33; not yet confirmed in a per-device rawscan, so
-    all access is .get/try-guarded and any device may or may not carry it.
-    """
-
-    class SwUpdateState(Enum):
-        NO_UPDATE_AVAILABLE = "NO_UPDATE_AVAILABLE"
-        UPDATE_AVAILABLE = "UPDATE_AVAILABLE"
-        DOWNLOADING = "DOWNLOADING"
-        INSTALLING = "INSTALLING"
-        UPDATE_IN_PROGRESS = "UPDATE_IN_PROGRESS"
-        UPDATE_SUCCESS = "UPDATE_SUCCESS"
-        UPDATE_FAILED = "UPDATE_FAILED"
-        UNKNOWN = "UNKNOWN"
-
-    @property
-    def sw_update_state(self) -> SoftwareUpdateService.SwUpdateState:
-        raw = self.state.get("swUpdateState")
-        if raw is None:
-            return self.SwUpdateState.UNKNOWN
-        try:
-            return self.SwUpdateState(raw)
-        except ValueError:
-            return self.SwUpdateState.UNKNOWN
-
-    @property
-    def sw_update_last_result(self) -> str | None:
-        raw = self.state.get("swUpdateLastResult")
-        return str(raw) if raw is not None else None
-
-    @property
-    def sw_update_available_version(self) -> str | None:
-        raw = self.state.get("swUpdateAvailableVersion")
-        return str(raw) if raw is not None else None
-
-    @property
-    def sw_installed_version(self) -> str | None:
-        raw = self.state.get("swInstalledVersion")
-        return str(raw) if raw is not None else None
-
-    @property
-    def automatic_updates_enabled(self) -> bool:
-        return bool(self.state.get("automaticUpdatesEnabled", False))
-
-    def summary(self) -> None:
-        super().summary()
-        print(f"    swUpdateState            : {self.sw_update_state}")
-        print(f"    swInstalledVersion       : {self.sw_installed_version}")
-        print(f"    swUpdateAvailableVersion : {self.sw_update_available_version}")
-
-
 class DimmerConfigurationService(SHCDeviceService):
     """Micromodule dimmer calibration config (#123).
 
@@ -2928,7 +2871,6 @@ SERVICE_MAPPING = {
     "SmartSensitivityControl": SmartSensitivityControlService,
     "SmokeSensitivity": SmokeSensitivityService,
     "SmokeDetectorCheck": SmokeDetectorCheckService,
-    "SoftwareUpdate": SoftwareUpdateService,
     "SurveillanceAlarm": SurveillanceAlarmService,
     "SwitchConfiguration": SwitchConfiguration,
     "TemperatureLevel": TemperatureLevelService,

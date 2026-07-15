@@ -40,11 +40,17 @@ from typing import Any, Sequence, cast
 from .api_async import JSONRPCError as JSONRPCError, SHCAPIAsync  # noqa: F401
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
-from .domain_impl import SHCIntrusionSystem
+from .domain_impl import SHCIntrusionSystem, SHCWaterAlarmSystem
 from .emma import SHCEmma
-from .exceptions import SHCAuthenticationError, SHCConnectionError, SHCSessionError
+from .exceptions import (
+    SHCAuthenticationError,
+    SHCConnectionError,
+    SHCException,
+    SHCSessionError,
+)
 from .message import SHCMessage
 from .room import SHCRoom
+from .automation import SHCAutomationRule
 from .scenario import SHCScenario
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS
 from .userdefinedstate import SHCUserDefinedState
@@ -122,6 +128,7 @@ class SHCSessionAsync:
         # Device model dictionaries (same shape as SHCSession)
         self._rooms_by_id: dict[str, SHCRoom] = {}
         self._scenarios_by_id: dict[str, SHCScenario] = {}
+        self._automation_rules_by_id: dict[str, SHCAutomationRule] = {}
         self._devices_by_id: dict[str, SHCDevice] = {}
         self._services_by_device_id: dict[str, list[Any]] = defaultdict(list)
         self._domains_by_id: dict[str, Any] = {}
@@ -160,6 +167,7 @@ class SHCSessionAsync:
         await self._async_enumerate_devices()
         await self._async_enumerate_rooms()
         await self._async_enumerate_scenarios()
+        await self._async_enumerate_automation_rules()
         await self._async_enumerate_messages()
         await self._async_enumerate_userdefinedstates()
         await self._async_initialize_domains()
@@ -266,6 +274,28 @@ class SHCSessionAsync:
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)  # type: ignore[arg-type]
             self._scenarios_by_id[scenario_id] = scenario
 
+    async def _async_enumerate_automation_rules(self) -> None:
+        """Mirrors SHCSession._enumerate_automation_rules()."""
+        raw_rules = await self._api.get_automation_rules()
+        for raw_rule in raw_rules:
+            rule = SHCAutomationRule(api=self._api, raw_rule=raw_rule)  # type: ignore[arg-type]
+            self._automation_rules_by_id[raw_rule["id"]] = rule
+
+    async def async_refresh_automation_rules(self) -> None:
+        """Re-fetch every automation rule's current state (enabled/etc.).
+
+        Rules aren't part of the long-poll device-service push model, so
+        callers (e.g. HA's should_poll entities) must call this explicitly.
+        """
+        raw_rules = await self._api.get_automation_rules()
+        for raw_rule in raw_rules:
+            rule_id = raw_rule["id"]
+            if rule_id in self._automation_rules_by_id:
+                self._automation_rules_by_id[rule_id].update_raw_rule(raw_rule)
+            else:
+                rule = SHCAutomationRule(api=self._api, raw_rule=raw_rule)  # type: ignore[arg-type]
+                self._automation_rules_by_id[rule_id] = rule
+
     async def _async_enumerate_messages(self) -> None:
         """Mirrors SHCSession._enumerate_messages()."""
         raw_messages = await self._api.get_messages()
@@ -294,6 +324,14 @@ class SHCSessionAsync:
             raw_ids,
             self.information.macAddress,
         )
+        try:
+            raw_water_alarm_state = await self._api.get_water_alarm_system_state()
+        except SHCException as ex:  # see sync session.py counterpart
+            logger.debug("Water alarm system domain unavailable: %s", ex)
+        else:
+            self._domains_by_id["WATERALARM"] = SHCWaterAlarmSystem(
+                self._api, raw_water_alarm_state, self.information.macAddress
+            )
 
     async def _async_initialize_emma(self) -> None:
         """Mirrors SHCSession._initialize_emma()."""
@@ -593,6 +631,12 @@ class SHCSessionAsync:
                 self.intrusion_system.process_long_polling_poll_result(raw_result)
             return
 
+        # --- water alarm system domain state ---
+        if raw_result["@type"] == "waterAlarmSystemState":
+            if self.water_alarm_system is not None:
+                self.water_alarm_system.process_long_polling_poll_result(raw_result)
+            return
+
         # --- userDefinedState (session.py:283-299) ---
         if raw_result["@type"] == "userDefinedState":
             state_id = raw_result["id"]
@@ -685,6 +729,13 @@ class SHCSessionAsync:
         return self._scenarios_by_id[scenario_id]
 
     @property
+    def automation_rules(self) -> Sequence[SHCAutomationRule]:
+        return list(self._automation_rules_by_id.values())
+
+    def automation_rule(self, rule_id: str) -> SHCAutomationRule:
+        return self._automation_rules_by_id[rule_id]
+
+    @property
     def messages(self) -> Sequence[SHCMessage]:
         return list(self._messages_by_id.values())
 
@@ -711,6 +762,10 @@ class SHCSessionAsync:
     @property
     def intrusion_system(self) -> SHCIntrusionSystem | None:
         return self._domains_by_id.get("IDS")
+
+    @property
+    def water_alarm_system(self) -> SHCWaterAlarmSystem | None:
+        return self._domains_by_id.get("WATERALARM")
 
 
 # ---------------------------------------------------------------------------
@@ -746,6 +801,18 @@ class _AsyncSHCInformation:
         pub_info = await self._api.get_public_information()
         if pub_info is not None:
             self._pub_info = pub_info
+
+    async def async_start_software_update(self) -> None:
+        """Trigger a controller firmware update install.
+
+        Not in the official OpenAPI spec; APK ground-truth
+        (RestClientImpl.startSwUpdateRootDevice -> POST
+        rootdevices/startSoftwareUpdate, no request body). NEVER_BLIND_FIX:
+        confirm on real hardware before relying on this outside tests.
+        """
+        if self._api is None:
+            return
+        await self._api.post_domain_action("rootdevices/startSoftwareUpdate")
 
     @property
     def macAddress(self) -> str | None:

@@ -423,6 +423,248 @@ class TestGetEndpoints:
         sent = api._requests_session.put.call_args.kwargs["data"]
         assert '"profile": "OUTDOOR"' in sent
 
+    # put_device_firmware_activation ---------------------------------------------
+    def test_put_device_firmware_activation_url_and_no_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        api.put_device_firmware_activation("hdm:ZigBee:abc")
+        called_url = api._requests_session.put.call_args[0][0]
+        assert (
+            called_url
+            == f"{_API_ROOT}/devicemanagement/firmware/hdm%3AZigBee%3Aabc/activate"
+        )
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert sent == "null"
+
+    def test_put_device_firmware_activation_encodes_special_chars(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        api.put_device_firmware_activation("hdm:ZigBee:abc#2")
+        called_url = api._requests_session.put.call_args[0][0]
+        assert (
+            called_url
+            == f"{_API_ROOT}/devicemanagement/firmware/hdm%3AZigBee%3Aabc%232/activate"
+        )
+
+    # water alarm system ------------------------------------------------------
+    def test_get_water_alarm_system_state_url(self):
+        payload = {"@type": "waterAlarmSystemState", "available": True, "state": "ALARM_OFF"}
+        api = self._api_with_get(payload)
+        assert api.get_water_alarm_system_state() == payload
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/wateralarm"
+
+    def test_get_water_alarm_system_configuration_url(self):
+        payload = {"@type": "waterAlarmSystemConfiguration", "visualActuatorsActive": False}
+        api = self._api_with_get(payload)
+        assert api.get_water_alarm_system_configuration() == payload
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/wateralarm/configuration"
+
+    def test_put_domain_action_url_and_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        api.put_domain_action("wateralarm/actions/mute")
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/wateralarm/actions/mute"
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert sent == "null"
+
+    # intrusion configuration discovery --------------------------------------
+    def test_get_intrusion_profiles_url(self):
+        api = self._api_with_get([{"@type": "configurationProfile", "id": "0"}])
+        api.get_intrusion_profiles()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/intrusion/profiles"
+
+    def test_get_intrusion_profile_url(self):
+        api = self._api_with_get({"@type": "configurationProfile", "id": "0"})
+        api.get_intrusion_profile("0")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/intrusion/profiles/0"
+
+    def test_get_intrusion_profile_states_url(self):
+        api = self._api_with_get([])
+        api.get_intrusion_profile_states()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/intrusion/states/profiles"
+
+    def test_get_intrusion_endpoint_alarm_actuators_url(self):
+        api = self._api_with_get([])
+        api.get_intrusion_endpoint_alarm_actuators()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/intrusion/endpoints/alarm/actuators"
+
+    def test_get_intrusion_endpoint_alarm_triggers_url(self):
+        api = self._api_with_get([])
+        api.get_intrusion_endpoint_alarm_triggers()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/intrusion/endpoints/alarm/triggers"
+
+    def test_get_intrusion_endpoint_reminder_actuators_url(self):
+        api = self._api_with_get([])
+        api.get_intrusion_endpoint_reminder_actuators()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/intrusion/endpoints/reminder/actuators"
+
+    # thermostat regulation ---------------------------------------------------
+    def test_get_thermostat_regulation_config_url(self):
+        api = self._api_with_get({"id": "dev1", "algorithmUsed": "INTERNAL"})
+        api.get_thermostat_regulation_config("dev1")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/thermostat/regulation/dev1/config"
+
+    def test_get_thermostat_regulation_config_404_returns_none(self):
+        api = _make_api()
+        api._requests_session.get.return_value = _fake_response(
+            None, status_code=404
+        )
+        assert api.get_thermostat_regulation_config("dev1") is None
+
+    def test_get_thermostat_regulation_config_other_error_raises(self):
+        api = _make_api()
+        api._requests_session.get.return_value = _fake_response(
+            None, status_code=500
+        )
+        with pytest.raises(SHCSessionError):
+            api.get_thermostat_regulation_config("dev1")
+
+    def test_put_thermostat_regulation_config_url_and_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response({})
+        api.put_thermostat_regulation_config("dev1", {"id": "dev1", "algorithmUsed": "CUSTOM"})
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/thermostat/regulation/dev1/config"
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert '"algorithmUsed": "CUSTOM"' in sent
+
+    # temperature drop service ------------------------------------------------
+    def test_get_temperature_drop_services_url(self):
+        api = self._api_with_get([])
+        api.get_temperature_drop_services()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/climate/temperaturedropservice"
+
+    def test_get_temperature_drop_service_url(self):
+        api = self._api_with_get({"roomId": "hz_1"})
+        api.get_temperature_drop_service("hz_1")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/climate/temperaturedropservice/hz_1"
+
+    def test_put_temperature_drop_service_url_and_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response({})
+        api.put_temperature_drop_service("hz_1", {"roomId": "hz_1", "configuration": {"enabled": False}})
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/climate/temperaturedropservice/hz_1"
+
+    # hydraulic balancing ------------------------------------------------------
+    def test_get_hydraulic_balancing_configurations_url(self):
+        api = self._api_with_get([])
+        api.get_hydraulic_balancing_configurations()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/climate/hydraulicbalancing"
+
+    def test_get_hydraulic_balancing_configuration_url(self):
+        api = self._api_with_get({"id": "hb1"})
+        api.get_hydraulic_balancing_configuration("hb1")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/climate/hydraulicbalancing/hb1"
+
+    def test_put_hydraulic_balancing_configuration_url(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response({})
+        api.put_hydraulic_balancing_configuration("hb1", {"id": "hb1", "enabled": True})
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/climate/hydraulicbalancing/hb1"
+
+    # comfort zone templates -----------------------------------------------
+    def test_get_comfort_zone_templates_url(self):
+        api = self._api_with_get([])
+        api.get_comfort_zone_templates("sensor1")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/airquality/comfortzone/templates/sensor1"
+
+    def test_put_comfort_zone_template_url(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response({})
+        api.put_comfort_zone_template("sensor1", {"name": "Custom", "custom": True})
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/airquality/comfortzone/templates/sensor1/custom"
+
+    # automation rules ------------------------------------------------------
+    def test_get_automation_rules_url(self):
+        payload = [{"@type": "automationRule", "id": "r1"}]
+        api = self._api_with_get(payload)
+        assert api.get_automation_rules() == payload
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/automation/rules"
+
+    def test_get_automation_rule_url(self):
+        payload = {"@type": "automationRule", "id": "r1"}
+        api = self._api_with_get(payload)
+        assert api.get_automation_rule("r1") == payload
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/automation/rules/r1"
+
+    def test_put_automation_rule_url_and_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        body = {"@type": "automationRule", "id": "r1", "enabled": False}
+        api.put_automation_rule("r1", body)
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/automation/rules/r1"
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert '"enabled": false' in sent
+
+    def test_trigger_automation_rule_url_and_no_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        api.trigger_automation_rule("r1")
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/automation/rules/r1/trigger"
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert sent == "null"
+
+    def test_delete_automation_rule_url(self):
+        api = _make_api()
+        api._requests_session.delete.return_value = _fake_response(None)
+        api.delete_automation_rule("r1")
+        called_url = api._requests_session.delete.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/automation/rules/r1"
+
+    def test_delete_automation_rule_raises_on_error(self):
+        api = _make_api()
+        api._requests_session.delete.return_value = _fake_response(
+            None, status_code=500
+        )
+        with pytest.raises(SHCSessionError):
+            api.delete_automation_rule("r1")
+
+    # get_device_firmware_state ---------------------------------------------
+    def test_get_device_firmware_state_url_and_result(self):
+        api = _make_api()
+        api._requests_session.get.return_value = _fake_response("AwaitingActivation")
+        result = api.get_device_firmware_state("hdm:ZigBee:abc")
+        called_url = api._requests_session.get.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/devicemanagement/firmware/hdm%3AZigBee%3Aabc"
+        assert result == "AwaitingActivation"
+
+    def test_get_device_firmware_state_404_returns_none(self):
+        api = _make_api()
+        api._requests_session.get.return_value = _fake_response(
+            None, status_code=404
+        )
+        assert api.get_device_firmware_state("roomClimateControl_hz_7") is None
+
+    def test_get_device_firmware_state_other_error_raises(self):
+        api = _make_api()
+        api._requests_session.get.return_value = _fake_response(
+            None, status_code=500
+        )
+        with pytest.raises(SHCSessionError):
+            api.get_device_firmware_state("hdm:ZigBee:abc")
+
     # get_services --------------------------------------------------------------
     def test_get_services_url(self):
         payload = [{"@type": "DeviceServiceData"}]

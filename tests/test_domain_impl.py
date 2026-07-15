@@ -7,7 +7,7 @@ and a hand-crafted raw_domain_state dict.
 import pytest
 from unittest.mock import MagicMock, call
 
-from boschshcpy.domain_impl import SHCIntrusionSystem, build
+from boschshcpy.domain_impl import SHCIntrusionSystem, SHCWaterAlarmSystem, build
 
 
 # ---------------------------------------------------------------------------
@@ -403,10 +403,28 @@ def test_domain_build_unknown_raises():
 
 
 def test_domain_build_ids_model_mapping():
-    """MODEL_MAPPING contains exactly 'IDS' and nothing else unexpected."""
     from boschshcpy.domain_impl import MODEL_MAPPING, SUPPORTED_DOMAINS
     assert "IDS" in SUPPORTED_DOMAINS
     assert MODEL_MAPPING["IDS"] is SHCIntrusionSystem
+
+
+def test_domain_build_water_alarm_model_mapping():
+    from boschshcpy.domain_impl import MODEL_MAPPING, SUPPORTED_DOMAINS
+    assert "WATERALARM" in SUPPORTED_DOMAINS
+    assert MODEL_MAPPING["WATERALARM"] is SHCWaterAlarmSystem
+
+
+def test_domain_build_water_alarm():
+    api = MagicMock()
+    raw = {"available": True, "state": "ALARM_OFF"}
+    result = build(
+        api=api,
+        domain_model="WATERALARM",
+        raw_domain_state=raw,
+        root_device_id="hdm:root",
+    )
+    assert isinstance(result, SHCWaterAlarmSystem)
+    assert result.root_device_id == "hdm:root"
 
 
 # ===========================================================================
@@ -536,3 +554,150 @@ def test_ids_process_long_polling_poll_result_missing_type_key():
     missing '@type' (defensive against a malformed poll event)."""
     svc = _make_ids()
     svc.process_long_polling_poll_result({})  # no '@type' — must not raise
+
+
+# ===========================================================================
+# SHCWaterAlarmSystem
+# ===========================================================================
+
+
+def _make_water_alarm(api=None, available=True, state="ALARM_OFF", root_device_id="hdm:root"):
+    if api is None:
+        api = MagicMock()
+    raw = {"available": available, "state": state}
+    return SHCWaterAlarmSystem(api=api, raw_domain_state=raw, root_device_id=root_device_id)
+
+
+def test_water_alarm_id():
+    assert _make_water_alarm().id == "/wateralarm"
+
+
+def test_water_alarm_manufacturer():
+    assert _make_water_alarm().manufacturer == "BOSCH"
+
+
+def test_water_alarm_name():
+    assert _make_water_alarm().name == "Water Alarm System"
+
+
+def test_water_alarm_device_model():
+    assert _make_water_alarm().device_model == "WATERALARM"
+
+
+def test_water_alarm_deleted_always_false():
+    assert _make_water_alarm().deleted is False
+
+
+def test_water_alarm_root_device_id():
+    assert _make_water_alarm(root_device_id="hdm:x").root_device_id == "hdm:x"
+
+
+def test_water_alarm_available_true():
+    assert _make_water_alarm(available=True).available is True
+
+
+def test_water_alarm_available_false():
+    assert _make_water_alarm(available=False).available is False
+
+
+def test_water_alarm_state_off():
+    assert (
+        _make_water_alarm(state="ALARM_OFF").alarm_state
+        == SHCWaterAlarmSystem.AlarmState.ALARM_OFF
+    )
+
+
+def test_water_alarm_state_on():
+    assert (
+        _make_water_alarm(state="ALARM_ON").alarm_state
+        == SHCWaterAlarmSystem.AlarmState.ALARM_ON
+    )
+
+
+def test_water_alarm_state_muted():
+    assert (
+        _make_water_alarm(state="ALARM_MUTED").alarm_state
+        == SHCWaterAlarmSystem.AlarmState.ALARM_MUTED
+    )
+
+
+def test_water_alarm_state_unknown_value_falls_back():
+    assert (
+        _make_water_alarm(state="SOMETHING_NEW").alarm_state
+        == SHCWaterAlarmSystem.AlarmState.UNKNOWN
+    )
+
+
+def test_water_alarm_state_missing_key_falls_back():
+    svc = _make_water_alarm()
+    svc._raw_state = {}
+    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.UNKNOWN
+
+
+def test_water_alarm_subscribe_unsubscribe_callback():
+    svc = _make_water_alarm()
+    cb = MagicMock()
+    svc.subscribe_callback("entity1", cb)
+    assert svc._callbacks["entity1"] is cb
+    svc.unsubscribe_callback("entity1")
+    assert "entity1" not in svc._callbacks
+
+
+def test_water_alarm_unsubscribe_nonexistent_does_not_raise():
+    svc = _make_water_alarm()
+    svc.unsubscribe_callback("nope")  # must not raise
+
+
+def test_water_alarm_summary(capsys):
+    _make_water_alarm().summary()
+    out = capsys.readouterr().out
+    assert "/wateralarm" in out
+
+
+def test_water_alarm_mute_calls_api():
+    api = MagicMock()
+    svc = _make_water_alarm(api=api)
+    svc.mute()
+    api.put_domain_action.assert_called_once_with("wateralarm/actions/mute")
+
+
+def test_water_alarm_async_mute_awaits_api():
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    api = MagicMock()
+    api.put_domain_action = AsyncMock()
+    svc = _make_water_alarm(api=api)
+    asyncio.run(svc.async_mute())
+    api.put_domain_action.assert_awaited_once_with("wateralarm/actions/mute")
+
+
+def test_water_alarm_short_poll_updates_state():
+    api = MagicMock()
+    api.get_water_alarm_system_state.return_value = {
+        "available": True,
+        "state": "ALARM_ON",
+    }
+    svc = _make_water_alarm(api=api)
+    svc.short_poll()
+    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.ALARM_ON
+
+
+def test_water_alarm_process_long_polling_updates_state_and_fires_callback():
+    svc = _make_water_alarm()
+    cb = MagicMock()
+    svc.subscribe_callback("e1", cb)
+    svc.process_long_polling_poll_result(
+        {"@type": "waterAlarmSystemState", "available": True, "state": "ALARM_ON"}
+    )
+    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.ALARM_ON
+    cb.assert_called_once()
+
+
+def test_water_alarm_process_long_polling_ignores_other_types():
+    svc = _make_water_alarm(state="ALARM_OFF")
+    cb = MagicMock()
+    svc.subscribe_callback("e1", cb)
+    svc.process_long_polling_poll_result({"@type": "somethingElse"})
+    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.ALARM_OFF
+    cb.assert_not_called()

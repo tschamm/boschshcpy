@@ -428,40 +428,6 @@ class TestKeypadTriggerService:
 
 
 # ---------------------------------------------------------------------------
-# SoftwareUpdateService (per-device firmware status)
-# ---------------------------------------------------------------------------
-
-class TestSoftwareUpdateService:
-    def _svc(self, **state):
-        from boschshcpy.services_impl import SoftwareUpdateService
-        return _make_svc(SoftwareUpdateService, state)
-
-    def test_read_props(self):
-        svc = self._svc(
-            swUpdateState="UPDATE_AVAILABLE",
-            swInstalledVersion="1.0.0",
-            swUpdateAvailableVersion="1.1.0",
-            automaticUpdatesEnabled=True,
-        )
-        from boschshcpy.services_impl import SoftwareUpdateService
-        assert svc.sw_update_state == SoftwareUpdateService.SwUpdateState.UPDATE_AVAILABLE
-        assert svc.sw_installed_version == "1.0.0"
-        assert svc.sw_update_available_version == "1.1.0"
-        assert svc.automatic_updates_enabled is True
-
-    def test_unknown_state_falls_back(self):
-        from boschshcpy.services_impl import SoftwareUpdateService
-        # Missing → UNKNOWN; bogus value → UNKNOWN (no ValueError on poll).
-        assert self._svc().sw_update_state == SoftwareUpdateService.SwUpdateState.UNKNOWN
-        bogus = self._svc(swUpdateState="SOMETHING_NEW")
-        assert bogus.sw_update_state == SoftwareUpdateService.SwUpdateState.UNKNOWN
-
-    def test_registered_in_service_mapping(self):
-        from boschshcpy.services_impl import SERVICE_MAPPING, SoftwareUpdateService
-        assert SERVICE_MAPPING["SoftwareUpdate"] is SoftwareUpdateService
-
-
-# ---------------------------------------------------------------------------
 # DimmerConfigurationService (micromodule dimmer calibration, rawscan #123)
 # ---------------------------------------------------------------------------
 

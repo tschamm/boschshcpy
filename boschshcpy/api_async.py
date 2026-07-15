@@ -37,7 +37,7 @@ import json
 import logging
 import ssl
 import urllib.parse
-from typing import Any
+from typing import Any, cast
 
 from .exceptions import SHCConnectionError, SHCSessionError
 
@@ -369,6 +369,96 @@ class SHCAPIAsync:
         api_url = f"{self._api_root}/devices/{device_id}"
         return await self._put_api_or_fail(api_url, device_data)
 
+    async def put_device_firmware_activation(self, device_id: str) -> None:
+        """Trigger a firmware update install for one device (no request body).
+
+        Not in the official OpenAPI spec; APK ground-truth
+        (RestRequests.putDeviceFirmwareActivation -> PUT
+        devicemanagement/firmware/{deviceId}/activate). NEVER_BLIND_FIX:
+        confirm on real hardware before relying on this outside tests.
+        """
+        api_url = f"{self._api_root}/devicemanagement/firmware/{urllib.parse.quote(device_id, safe='')}/activate"
+        await self._put_api_or_fail(api_url, body=None)
+
+    async def get_device_firmware_state(self, device_id: str) -> str | None:
+        """Probe this device's firmware lifecycle state (no OpenAPI spec).
+
+        Async mirror of the sync client's ``get_device_firmware_state`` --
+        see there for the APK ground-truth and the 404-means-unsupported
+        contract.
+        """
+        import aiohttp
+
+        api_url = f"{self._api_root}/devicemanagement/firmware/{urllib.parse.quote(device_id, safe='')}"
+
+        async def _attempt() -> str | None:
+            async with self._session.get(
+                api_url,
+                headers=self._headers,
+                ssl=self._ssl_ctx,
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as resp:
+                if resp.status == 404:
+                    return None
+                if not resp.ok:
+                    await self._process_nok_result(resp)
+                content = await resp.read()
+                if len(content) == 0:
+                    return None
+                return cast(str, json.loads(content))
+
+        return cast(
+            "str | None", await self._retry_once_on_connection_drop(api_url, _attempt)
+        )
+
+    async def get_automation_rules(self) -> Any:
+        """Async mirror of the sync client's ``get_automation_rules``."""
+        api_url = f"{self._api_root}/automation/rules"
+        return await self._get_api_result_or_fail(
+            api_url, expected_element_type="automationRule"
+        )
+
+    async def get_automation_rule(self, rule_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/automation/rules/{urllib.parse.quote(rule_id, safe='')}"
+        )
+        return await self._get_api_result_or_fail(
+            api_url, expected_type="automationRule"
+        )
+
+    async def put_automation_rule(self, rule_id: str, rule_data: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/automation/rules/{urllib.parse.quote(rule_id, safe='')}"
+        )
+        return await self._put_api_or_fail(api_url, rule_data)
+
+    async def trigger_automation_rule(self, rule_id: str) -> None:
+        api_url = (
+            f"{self._api_root}/automation/rules/"
+            f"{urllib.parse.quote(rule_id, safe='')}/trigger"
+        )
+        await self._put_api_or_fail(api_url, body=None)
+
+    async def delete_automation_rule(self, rule_id: str) -> None:
+        """Delete an automation rule permanently. Not exposed via HA entities."""
+        import aiohttp
+
+        api_url = (
+            f"{self._api_root}/automation/rules/{urllib.parse.quote(rule_id, safe='')}"
+        )
+
+        async def _attempt() -> None:
+            async with self._session.delete(
+                api_url,
+                headers=self._headers,
+                ssl=self._ssl_ctx,
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as resp:
+                if not resp.ok:
+                    await self._process_nok_result(resp)
+
+        await self._retry_once_on_connection_drop(api_url, _attempt)
+
     async def get_services(self) -> Any:
         api_url = f"{self._api_root}/services"
         return await self._get_api_result_or_fail(
@@ -415,6 +505,140 @@ class SHCAPIAsync:
     async def post_domain_action(self, path: str, data: Any = None) -> None:
         api_url = f"{self._api_root}/{path}"
         await self._post_api_or_fail(api_url, body=data)
+
+    async def put_domain_action(self, path: str, data: Any = None) -> None:
+        api_url = f"{self._api_root}/{path}"
+        await self._put_api_or_fail(api_url, body=data)
+
+    async def get_water_alarm_system_state(self) -> Any:
+        """Whole-home water-leak alarm system state (no OpenAPI spec)."""
+        api_url = f"{self._api_root}/wateralarm"
+        return await self._get_api_result_or_fail(
+            api_url, expected_type="waterAlarmSystemState"
+        )
+
+    async def get_water_alarm_system_configuration(self) -> Any:
+        api_url = f"{self._api_root}/wateralarm/configuration"
+        return await self._get_api_result_or_fail(
+            api_url, expected_type="waterAlarmSystemConfiguration"
+        )
+
+    async def get_intrusion_profiles(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/profiles"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_intrusion_profile(self, profile_id: str) -> Any:
+        api_url = f"{self._api_root}/intrusion/profiles/{urllib.parse.quote(profile_id, safe='')}"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_intrusion_profile_states(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/states/profiles"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_intrusion_endpoint_alarm_actuators(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/endpoints/alarm/actuators"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_intrusion_endpoint_alarm_triggers(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/endpoints/alarm/triggers"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_intrusion_endpoint_reminder_actuators(self) -> Any:
+        api_url = f"{self._api_root}/intrusion/endpoints/reminder/actuators"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_thermostat_regulation_config(self, device_id: str) -> Any:
+        """Fetch this device's regulation-algorithm config.
+
+        Async mirror of the sync client's ``get_thermostat_regulation_config``
+        -- returns None on HTTP 404 (device has no regulation-algorithm
+        config), matching get_device_firmware_state's contract.
+        """
+        import aiohttp
+
+        api_url = (
+            f"{self._api_root}/thermostat/regulation/"
+            f"{urllib.parse.quote(device_id, safe='')}/config"
+        )
+
+        async def _attempt() -> Any:
+            async with self._session.get(
+                api_url,
+                headers=self._headers,
+                ssl=self._ssl_ctx,
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as resp:
+                if resp.status == 404:
+                    return None
+                if not resp.ok:
+                    await self._process_nok_result(resp)
+                content = await resp.read()
+                if len(content) == 0:
+                    return None
+                return json.loads(content)
+
+        return await self._retry_once_on_connection_drop(api_url, _attempt)
+
+    async def put_thermostat_regulation_config(
+        self, device_id: str, config: Any
+    ) -> Any:
+        api_url = (
+            f"{self._api_root}/thermostat/regulation/"
+            f"{urllib.parse.quote(device_id, safe='')}/config"
+        )
+        return await self._put_api_or_fail(api_url, config)
+
+    async def get_temperature_drop_services(self) -> Any:
+        api_url = f"{self._api_root}/climate/temperaturedropservice"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_temperature_drop_service(self, room_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/temperaturedropservice/"
+            f"{urllib.parse.quote(room_id, safe='')}"
+        )
+        return await self._get_api_result_or_fail(api_url)
+
+    async def put_temperature_drop_service(self, room_id: str, data: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/temperaturedropservice/"
+            f"{urllib.parse.quote(room_id, safe='')}"
+        )
+        return await self._put_api_or_fail(api_url, data)
+
+    async def get_hydraulic_balancing_configurations(self) -> Any:
+        api_url = f"{self._api_root}/climate/hydraulicbalancing"
+        return await self._get_api_result_or_fail(api_url)
+
+    async def get_hydraulic_balancing_configuration(self, config_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/hydraulicbalancing/"
+            f"{urllib.parse.quote(config_id, safe='')}"
+        )
+        return await self._get_api_result_or_fail(api_url)
+
+    async def put_hydraulic_balancing_configuration(
+        self, config_id: str, config: Any
+    ) -> Any:
+        api_url = (
+            f"{self._api_root}/climate/hydraulicbalancing/"
+            f"{urllib.parse.quote(config_id, safe='')}"
+        )
+        return await self._put_api_or_fail(api_url, config)
+
+    async def get_comfort_zone_templates(self, sensor_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/airquality/comfortzone/templates/"
+            f"{urllib.parse.quote(sensor_id, safe='')}"
+        )
+        return await self._get_api_result_or_fail(api_url)
+
+    async def put_comfort_zone_template(self, sensor_id: str, comfort_zone: Any) -> Any:
+        api_url = (
+            f"{self._api_root}/airquality/comfortzone/templates/"
+            f"{urllib.parse.quote(sensor_id, safe='')}/custom"
+        )
+        return await self._put_api_or_fail(api_url, comfort_zone)
 
     # ------------------------------------------------------------------
     # Long-poll methods (Phase 1: async POST calls only — thread not replaced)

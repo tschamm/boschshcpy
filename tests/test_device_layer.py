@@ -297,6 +297,144 @@ class TestSHCDeviceSetProfile:
 
 
 # ---------------------------------------------------------------------------
+# SHCDevice — firmware update trigger (activate_firmware_update)
+# ---------------------------------------------------------------------------
+
+class TestSHCDeviceActivateFirmwareUpdate:
+    def test_activate_firmware_update_calls_api_with_device_id(self):
+        raw = _raw_device()
+        api = _fake_api()
+        dev = _make_device(raw, api=api)
+
+        dev.activate_firmware_update()
+
+        api.put_device_firmware_activation.assert_called_once_with("dev-1")
+
+    def test_async_activate_firmware_update_awaits_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        raw = _raw_device()
+        api = _fake_api()
+        api.put_device_firmware_activation = AsyncMock()
+        dev = _make_device(raw, api=api)
+
+        asyncio.run(dev.async_activate_firmware_update())
+
+        api.put_device_firmware_activation.assert_awaited_once_with("dev-1")
+
+
+class TestSHCDeviceFirmwareUpdateState:
+    def test_firmware_update_state_calls_api_with_device_id(self):
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_device_firmware_state.return_value = "AwaitingActivation"
+        dev = _make_device(raw, api=api)
+
+        assert dev.firmware_update_state() == "AwaitingActivation"
+        api.get_device_firmware_state.assert_called_once_with("dev-1")
+
+    def test_firmware_update_state_none_when_unsupported(self):
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_device_firmware_state.return_value = None
+        dev = _make_device(raw, api=api)
+
+        assert dev.firmware_update_state() is None
+
+    def test_async_firmware_update_state_awaits_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_device_firmware_state = AsyncMock(return_value="UpToDate")
+        dev = _make_device(raw, api=api)
+
+        result = asyncio.run(dev.async_firmware_update_state())
+
+        assert result == "UpToDate"
+        api.get_device_firmware_state.assert_awaited_once_with("dev-1")
+
+
+class TestSHCDeviceThermostatRegulationAlgorithm:
+    def test_thermostat_regulation_algorithm_returns_value(self):
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_thermostat_regulation_config.return_value = {
+            "id": "dev-1",
+            "algorithmUsed": "CUSTOM",
+        }
+        dev = _make_device(raw, api=api)
+
+        assert dev.thermostat_regulation_algorithm() == "CUSTOM"
+        api.get_thermostat_regulation_config.assert_called_once_with("dev-1")
+
+    def test_thermostat_regulation_algorithm_none_when_unsupported(self):
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_thermostat_regulation_config.return_value = None
+        dev = _make_device(raw, api=api)
+
+        assert dev.thermostat_regulation_algorithm() is None
+
+    def test_async_thermostat_regulation_algorithm_awaits_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_thermostat_regulation_config = AsyncMock(
+            return_value={"id": "dev-1", "algorithmUsed": "INTERNAL"}
+        )
+        dev = _make_device(raw, api=api)
+
+        result = asyncio.run(dev.async_thermostat_regulation_algorithm())
+
+        assert result == "INTERNAL"
+        api.get_thermostat_regulation_config.assert_awaited_once_with("dev-1")
+
+    def test_async_thermostat_regulation_algorithm_none_when_unsupported(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        raw = _raw_device()
+        api = _fake_api()
+        api.get_thermostat_regulation_config = AsyncMock(return_value=None)
+        dev = _make_device(raw, api=api)
+
+        result = asyncio.run(dev.async_thermostat_regulation_algorithm())
+
+        assert result is None
+
+    def test_set_thermostat_regulation_algorithm_calls_api(self):
+        raw = _raw_device()
+        api = _fake_api()
+        dev = _make_device(raw, api=api)
+
+        dev.set_thermostat_regulation_algorithm("CUSTOM")
+
+        api.put_thermostat_regulation_config.assert_called_once_with(
+            "dev-1", {"id": "dev-1", "algorithmUsed": "CUSTOM"}
+        )
+
+    def test_async_set_thermostat_regulation_algorithm_calls_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        raw = _raw_device()
+        api = _fake_api()
+        api.put_thermostat_regulation_config = AsyncMock(return_value=None)
+        dev = _make_device(raw, api=api)
+
+        asyncio.run(dev.async_set_thermostat_regulation_algorithm("INTERNAL"))
+
+        api.put_thermostat_regulation_config.assert_awaited_once_with(
+            "dev-1", {"id": "dev-1", "algorithmUsed": "INTERNAL"}
+        )
+
+
+# ---------------------------------------------------------------------------
 # SHCDevice — service wiring
 # ---------------------------------------------------------------------------
 

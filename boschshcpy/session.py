@@ -11,10 +11,11 @@ from typing import Any, cast
 
 from .api import SHCAPI
 from .api import JSONRPCError as JSONRPCError  # noqa: F401 -- explicit re-export
+from .automation import SHCAutomationRule
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
-from .domain_impl import SHCIntrusionSystem
-from .exceptions import SHCSessionError
+from .domain_impl import SHCIntrusionSystem, SHCWaterAlarmSystem
+from .exceptions import SHCException, SHCSessionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -60,6 +61,7 @@ class SHCSession:
         # All devices
         self._rooms_by_id: dict[str, SHCRoom] = {}
         self._scenarios_by_id: dict[str, SHCScenario] = {}
+        self._automation_rules_by_id: dict[str, SHCAutomationRule] = {}
         self._devices_by_id: dict[str, SHCDevice] = {}
         self._services_by_device_id: dict[str, list[dict[str, Any]]] = defaultdict(list)
         # Guards _devices_by_id / _services_by_device_id. The SHCPollingThread
@@ -99,6 +101,7 @@ class SHCSession:
         self._enumerate_devices()
         self._enumerate_rooms()
         self._enumerate_scenarios()
+        self._enumerate_automation_rules()
         self._enumerate_messages()
         self._enumerate_userdefinedstates()
         self._initialize_domains()
@@ -169,6 +172,29 @@ class SHCSession:
             scenario = SHCScenario(api=self._api, raw_scenario=raw_scenario)
             self._scenarios_by_id[scenario_id] = scenario
 
+    def _enumerate_automation_rules(self) -> None:
+        raw_rules = self._api.get_automation_rules()
+        for raw_rule in raw_rules:
+            self._automation_rules_by_id[raw_rule["id"]] = SHCAutomationRule(
+                api=self._api, raw_rule=raw_rule
+            )
+
+    def refresh_automation_rules(self) -> None:
+        """Re-fetch every automation rule's current state (enabled/etc.).
+
+        Rules aren't part of the long-poll device-service push model, so
+        callers (e.g. HA's should_poll entities) must call this explicitly.
+        """
+        raw_rules = self._api.get_automation_rules()
+        for raw_rule in raw_rules:
+            rule_id = raw_rule["id"]
+            if rule_id in self._automation_rules_by_id:
+                self._automation_rules_by_id[rule_id].update_raw_rule(raw_rule)
+            else:
+                self._automation_rules_by_id[rule_id] = SHCAutomationRule(
+                    api=self._api, raw_rule=raw_rule
+                )
+
     def _enumerate_messages(self) -> None:
         raw_messages = self._api.get_messages()
         for raw_message in raw_messages:
@@ -194,6 +220,16 @@ class SHCSession:
             self._api.get_domain_intrusion_detection(),
             self._shc_information.macAddress,
         )
+        try:
+            raw_water_alarm_state = self._api.get_water_alarm_system_state()
+        except SHCException as ex:
+            # installations without any water-leak sensors may not expose
+            # this domain at all; degrade rather than failing session setup.
+            logger.debug("Water alarm system domain unavailable: %s", ex)
+        else:
+            self._domains_by_id["WATERALARM"] = SHCWaterAlarmSystem(
+                self._api, raw_water_alarm_state, self._shc_information.macAddress
+            )
 
     def _initialize_emma(self) -> None:
         self._emma = SHCEmma(self._api, self._shc_information, None)
@@ -359,6 +395,10 @@ class SHCSession:
             if self.intrusion_system is not None:
                 self.intrusion_system.process_long_polling_poll_result(raw_result)
             return
+        if result_type == "waterAlarmSystemState":
+            if self.water_alarm_system is not None:
+                self.water_alarm_system.process_long_polling_poll_result(raw_result)
+            return
         if result_type == "userDefinedState":
             state_id = raw_result["id"]
             if state_id in self._userdefinedstates_by_id:
@@ -520,6 +560,13 @@ class SHCSession:
         return self._scenarios_by_id[scenario_id]
 
     @property
+    def automation_rules(self) -> typing.Sequence[SHCAutomationRule]:
+        return list(self._automation_rules_by_id.values())
+
+    def automation_rule(self, rule_id: str) -> SHCAutomationRule:
+        return self._automation_rules_by_id[rule_id]
+
+    @property
     def messages(self) -> typing.Sequence[SHCMessage]:
         return list(self._messages_by_id.values())
 
@@ -554,6 +601,11 @@ class SHCSession:
     @property
     def intrusion_system(self) -> SHCIntrusionSystem:
         return cast(SHCIntrusionSystem, self._domains_by_id["IDS"])
+
+    @property
+    def water_alarm_system(self) -> SHCWaterAlarmSystem | None:
+        """None on installations where the domain didn't initialize (no water sensors)."""
+        return cast("SHCWaterAlarmSystem | None", self._domains_by_id.get("WATERALARM"))
 
     @property
     def api(self) -> SHCAPI:

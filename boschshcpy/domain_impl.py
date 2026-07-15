@@ -221,7 +221,96 @@ class SHCIntrusionSystem:
             fn()
 
 
-MODEL_MAPPING = {"IDS": SHCIntrusionSystem}
+class SHCWaterAlarmSystem:
+    """The whole-home water-leak alarm system (distinct from individual WLS
+    sensors, which each have their own device_helper bucket). Not in the
+    official OpenAPI spec; APK ground-truth
+    (RestRequests.getWaterLeakSystemState/Configuration/
+    putWaterLeakSystemMuteAction). Confirmed live: GET wateralarm ->
+    {"available": false, ..., "state": "ALARM_OFF"} when no alarm is active.
+    """
+
+    class AlarmState(Enum):
+        ALARM_OFF = "ALARM_OFF"
+        ALARM_ON = "ALARM_ON"
+        ALARM_MUTED = "ALARM_MUTED"
+        UNKNOWN = "UNKNOWN"
+
+    def __init__(
+        self, api: Any, raw_domain_state: dict[str, Any], root_device_id: str | None
+    ) -> None:
+        self._api = api
+        self._raw_state = raw_domain_state
+        self._root_device_id = root_device_id
+        self._callbacks: dict[Any, Callable[[], None]] = {}
+
+    @property
+    def id(self) -> str:
+        return "/wateralarm"
+
+    @property
+    def manufacturer(self) -> str:
+        return "BOSCH"
+
+    @property
+    def name(self) -> str:
+        return "Water Alarm System"
+
+    @property
+    def root_device_id(self) -> str | None:
+        return self._root_device_id
+
+    @property
+    def device_model(self) -> str:
+        return "WATERALARM"
+
+    @property
+    def deleted(self) -> bool:
+        return False
+
+    @property
+    def available(self) -> bool:
+        return bool(self._raw_state.get("available", False))
+
+    @property
+    def alarm_state(self) -> AlarmState:
+        try:
+            return self.AlarmState(self._raw_state.get("state"))
+        except ValueError:
+            return self.AlarmState.UNKNOWN
+
+    def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
+        self._callbacks[entity] = callback
+
+    def unsubscribe_callback(self, entity: Any) -> None:
+        self._callbacks.pop(entity, None)
+
+    def summary(self) -> None:
+        print(f"  Domain:            {self.id}")
+        print(f"    Available:      {self.available}")
+        print(f"    Alarm State:    {self.alarm_state}")
+
+    def mute(self) -> None:
+        self._api.put_domain_action("wateralarm/actions/mute")
+
+    async def async_mute(self) -> None:
+        """Async write: mute the active water alarm."""
+        await self._api.put_domain_action("wateralarm/actions/mute")
+
+    def short_poll(self) -> None:
+        self._raw_state = self._api.get_water_alarm_system_state()
+
+    def process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
+        if raw_result.get("@type") == "waterAlarmSystemState":
+            self._raw_state = raw_result
+            for fn in list(self._callbacks.values()):
+                fn()
+
+
+MODEL_MAPPING: dict[str, type[SHCIntrusionSystem] | type[SHCWaterAlarmSystem]] = {
+    "IDS": SHCIntrusionSystem,
+    "WATERALARM": SHCWaterAlarmSystem,
+}
 
 SUPPORTED_DOMAINS = MODEL_MAPPING.keys()
 
@@ -231,7 +320,7 @@ def build(
     domain_model: str,
     raw_domain_state: dict[str, Any],
     root_device_id: str | None,
-) -> SHCIntrusionSystem:
+) -> SHCIntrusionSystem | SHCWaterAlarmSystem:
     if domain_model not in SUPPORTED_DOMAINS:
         raise ValueError(f"Unsupported domain model: {domain_model!r}")
     return MODEL_MAPPING[domain_model](
