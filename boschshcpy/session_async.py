@@ -845,6 +845,29 @@ class _AsyncSHCInformation:
         return cast(bool | None, sw.get("automaticUpdatesEnabled"))
 
     @property
+    def last_update_result(self) -> str | None:
+        """Result of the last software update attempt (swUpdateLastResult)."""
+        sw = self._pub_info.get("softwareUpdateState", {})
+        return cast(str | None, sw.get("swUpdateLastResult"))
+
+    @property
+    def update_activation_timeout(self) -> int | None:
+        """Seconds left to confirm a pending update activation."""
+        sw = self._pub_info.get("softwareUpdateState", {})
+        activation = sw.get("swActivationDate", {})
+        return cast("int | None", activation.get("timeout"))
+
+    @property
+    def api_versions(self) -> list[str] | None:
+        """API versions supported by this controller."""
+        return cast("list[str] | None", self._pub_info.get("apiVersions"))
+
+    @property
+    def shc_generation(self) -> str | None:
+        """Controller hardware generation ("SHC_1" or "SHC_2")."""
+        return cast(str | None, self._pub_info.get("shcGeneration"))
+
+    @property
     def unique_id(self) -> str | None:
         # Prefer macAddress (same logic as SHCInformation.get_unique_id)
         mac = self.macAddress

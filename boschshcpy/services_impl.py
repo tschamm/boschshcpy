@@ -658,6 +658,37 @@ class PowerSwitchService(SHCDeviceService):
         print(f"    automaticPowerOffTime    : {self.powerofftime}")
 
 
+class BoilerHeatingService(SHCDeviceService):
+    """Multiroom Boiler Control's heat-demand state.
+
+    Documented in the official OpenAPI spec
+    (MultiroomBoilerControl-local-openapi-v3.yml) but not previously
+    implemented in this library -- NOT live-tested (no owned Boiler
+    hardware); implemented directly from the spec.
+    """
+
+    class HeatDemand(Enum):
+        HEAT_DEMAND = "HEAT_DEMAND"
+        NO_HEAT_DEMAND = "NO_HEAT_DEMAND"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def enabled(self) -> bool:
+        return bool(self.state.get("enabled", False))
+
+    @property
+    def heat_demand(self) -> HeatDemand:
+        try:
+            return self.HeatDemand(self.state.get("heatDemand"))
+        except ValueError:
+            return self.HeatDemand.UNKNOWN
+
+    @property
+    def rooms_heat_state(self) -> dict[str, str]:
+        """Map of room ID -> raw heatDemand string for that room."""
+        return dict(self.state.get("roomsHeatState", {}))
+
+
 class PowerMeterService(SHCDeviceService):
     @property
     def powerconsumption(self) -> float:
@@ -674,6 +705,11 @@ class PowerMeterService(SHCDeviceService):
         # field → return None so the HA layer can skip the yield entities.
         value = self.state.get("energyYield")
         return None if value is None else float(value)
+
+    @property
+    def energy_consumption_start_date(self) -> int | None:
+        """Epoch-ms timestamp the accumulated energyConsumption counts from."""
+        return self.state.get("energyConsumptionStartDate")
 
     async def async_reset_energy_summation(self) -> None:
         """Async: reset the accumulated energy counter (hass#120 audit).
@@ -990,6 +1026,10 @@ class BlindsControlService(SHCDeviceService):
         if raw is None:
             return None
         return self.BlindsType(raw)
+
+    @property
+    def blade_adjustment_time_ms(self) -> int | None:
+        return self.state.get("bladeAdjustmentTimeInMillis")
 
     def summary(self) -> None:
         super().summary()
@@ -2823,6 +2863,7 @@ SERVICE_MAPPING = {
     "BinarySwitch": BinarySwitchService,
     "BlindsControl": BlindsControlService,
     "BlindsSceneControl": BlindsSceneControlService,
+    "BoilerHeating": BoilerHeatingService,
     "Bypass": BypassService,
     "CameraAmbientLight": CameraAmbientLightService,
     "CameraFrontLight": CameraFrontLightService,

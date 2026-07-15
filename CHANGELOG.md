@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.6.0 — full official-spec audit: new Boiler Control + open-windows summary + smaller gaps closed
+
+A systematic pass cross-checking every one of the 24 official OpenAPI spec
+files (bosch-shc-api-docs) against this library's actual implementation, to
+close every documented-but-unimplemented gap we could find (not just fix
+bugs). No further wrong-enum/wrong-HTTP-verb bugs were found (the 0.5.1 fix
+was isolated) — everything below is new capability.
+
+- **New: Multiroom Boiler Control** (`SHCBoiler`, `BoilerHeatingService`) —
+  a device family + room-linking API (`get_boiler_capable_rooms`,
+  `get`/`put_boiler_linked_rooms`, `put_boiler_add_room`) fully documented in
+  the official spec but never previously implemented. **NOT live-tested**
+  (no owned Boiler hardware) — implemented directly and carefully from the
+  spec; flagged as such in every relevant docstring.
+- **New: whole-home open-doors/open-windows summary**
+  (`SHCAPI.get_open_windows()` / async twin) — **live-confirmed**. Also
+  discovered the real response is a superset of the documented `Windows`
+  schema (adds `bypassedDoors`/`bypassedWindows`/`openOthers`/
+  `bypassedOthers`/`unknownOthers` beyond what's documented) — reported
+  upstream.
+- **New: additional `SHCInformation` fields** (`shcGeneration`,
+  `api_versions`, `last_update_result`, `update_activation_timeout`) — all
+  documented in the official ShcInfo spec but not previously exposed.
+- **New: `SHCWaterAlarmSystem` incident detail** (`first_incident_device_id`,
+  `first_incident_room_name`, `first_incident_timestamp`,
+  `visual_actuators_available`, `video_actuators_available`) — closes the
+  rest of the `WaterAlarmSystemStateData` schema this library didn't yet
+  surface.
+- **New: `BlindsControlService.blade_adjustment_time_ms`** and
+  **`PowerMeterService.energy_consumption_start_date`** — two more
+  documented-but-missing read-only fields.
+- Two intentionally-not-implemented gaps, left as backlog (would need real
+  hardware or a larger design discussion, not blind-implemented): the
+  Relay spec's alternate `sendImpulse` operation (this library only uses
+  the documented `PUT .../ImpulseSwitch/state` path — both are spec-legal,
+  unconfirmed whether they're equivalent on the wire) and the
+  Thermostat-II `DisplayConfiguration` PUT's joint-required
+  `displayBrightness`+`displayOnTime` fields (this library's setters write
+  each independently — unconfirmed whether the real firmware actually
+  enforces the joint requirement).
+
 ## 0.5.1 — fix water-alarm state enum + mute HTTP method (real bug, found via official spec)
 
 **No breaking changes** (the wrong enum member was never reachable in practice — see below).

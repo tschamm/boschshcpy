@@ -389,6 +389,35 @@ class TestSHCInformationSoftwareUpdate:
         assert info.available_version is None
         assert info.automatic_updates_enabled is None
 
+    def test_last_update_result_and_activation_timeout(self):
+        info = self._info(
+            swUpdateLastResult="UPDATE_SUCCESS",
+            swActivationDate={"timeout": 120},
+        )
+        assert info.last_update_result == "UPDATE_SUCCESS"
+        assert info.update_activation_timeout == 120
+
+    def test_last_update_result_and_activation_timeout_missing(self):
+        info = self._info()
+        assert info.last_update_result is None
+        assert info.update_activation_timeout is None
+
+    def test_api_versions_and_shc_generation(self):
+        from boschshcpy.information import SHCInformation
+
+        info = SHCInformation.__new__(SHCInformation)
+        info._pub_info = {"apiVersions": ["3.19"], "shcGeneration": "SHC_2"}
+        assert info.api_versions == ["3.19"]
+        assert info.shc_generation == "SHC_2"
+
+    def test_api_versions_and_shc_generation_missing(self):
+        from boschshcpy.information import SHCInformation
+
+        info = SHCInformation.__new__(SHCInformation)
+        info._pub_info = {}
+        assert info.api_versions is None
+        assert info.shc_generation is None
+
 
 # ---------------------------------------------------------------------------
 # KeypadTriggerService (Universal Switch II button->scenario mapping)

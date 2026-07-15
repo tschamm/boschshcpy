@@ -130,6 +130,31 @@ class TestAsyncSHCInformation:
         info = _AsyncSHCInformation({"shcIpAddress": "1.2.3.4"}, {})
         assert info.name == "1.2.3.4"
 
+    def test_last_update_result_and_activation_timeout(self):
+        info = _AsyncSHCInformation(
+            {
+                "softwareUpdateState": {
+                    "swUpdateLastResult": "UPDATE_FAILED",
+                    "swActivationDate": {"timeout": 60},
+                }
+            },
+            {},
+        )
+        assert info.last_update_result == "UPDATE_FAILED"
+        assert info.update_activation_timeout == 60
+
+    def test_api_versions_and_shc_generation(self):
+        info = _AsyncSHCInformation(
+            {"apiVersions": ["3.19"], "shcGeneration": "SHC_1"}, {}
+        )
+        assert info.api_versions == ["3.19"]
+        assert info.shc_generation == "SHC_1"
+
+    def test_api_versions_and_shc_generation_missing(self):
+        info = _AsyncSHCInformation({}, {})
+        assert info.api_versions is None
+        assert info.shc_generation is None
+
     def test_missing_fields_return_none(self):
         info = _AsyncSHCInformation({}, {})
         assert info.macAddress is None

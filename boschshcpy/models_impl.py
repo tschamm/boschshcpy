@@ -13,6 +13,7 @@ from .services_impl import (
     BinarySwitchService,
     BlindsControlService,
     BlindsSceneControlService,
+    BoilerHeatingService,
     BypassService,
     CameraAmbientLightService,
     CameraFrontLightService,
@@ -1862,6 +1863,65 @@ class SHCClimateControl(_TemperatureLevel):
         return self._roomclimatecontrol_service.next_setpoint_temperature_change
 
 
+class SHCBoiler(SHCDevice):
+    """Multiroom Boiler Control device.
+
+    Documented in the official OpenAPI spec
+    (MultiroomBoilerControl-local-openapi-v3.yml) but not previously
+    implemented -- NOT live-tested (no owned Boiler hardware); implemented
+    directly from the spec. Room-linking is done via dedicated
+    relay/boiler/* endpoints (see SHCAPI.get_boiler_capable_rooms() and
+    friends), not a device service.
+    """
+
+    def __init__(
+        self,
+        api: SHCAPI,
+        raw_device: dict[str, Any],
+        raw_device_services: list[dict[str, Any]],
+    ) -> None:
+        super().__init__(api, raw_device, raw_device_services)
+        self._boiler_heating_service: BoilerHeatingService = self.device_service(  # type: ignore[assignment]
+            "BoilerHeating"
+        )
+
+    @property
+    def heating_enabled(self) -> bool:
+        return self._boiler_heating_service.enabled
+
+    @property
+    def heat_demand(self) -> BoilerHeatingService.HeatDemand:
+        return self._boiler_heating_service.heat_demand
+
+    @property
+    def rooms_heat_state(self) -> dict[str, str]:
+        return self._boiler_heating_service.rooms_heat_state
+
+    def linked_rooms(self) -> dict[str, bool]:
+        """Sync: room ID -> whether it's linked to this boiler."""
+        return dict(self._api.get_boiler_linked_rooms(self.id))
+
+    async def async_linked_rooms(self) -> dict[str, bool]:
+        """Async: room ID -> whether it's linked to this boiler."""
+        return dict(await self._api.get_boiler_linked_rooms(self.id))
+
+    def set_linked_rooms(self, room_ids: list[str]) -> None:
+        """Sync: replace the full set of rooms linked to this boiler."""
+        self._api.put_boiler_linked_rooms(self.id, room_ids)
+
+    async def async_set_linked_rooms(self, room_ids: list[str]) -> None:
+        """Async: replace the full set of rooms linked to this boiler."""
+        await self._api.put_boiler_linked_rooms(self.id, room_ids)  # type: ignore[misc,func-returns-value]
+
+    def add_linked_room(self, room_id: str) -> None:
+        """Sync: link one additional room to this boiler."""
+        self._api.put_boiler_add_room(self.id, room_id)
+
+    async def async_add_linked_room(self, room_id: str) -> None:
+        """Async: link one additional room to this boiler."""
+        await self._api.put_boiler_add_room(self.id, room_id)  # type: ignore[misc,func-returns-value]
+
+
 class SHCHeatingCircuit(SHCDevice):
     def __init__(
         self,
@@ -3244,6 +3304,7 @@ MODEL_MAPPING = {
     "HEATING_CIRCUIT": SHCHeatingCircuit,
     "MICROMODULE_DIMMER": SHCMicromoduleDimmer,
     "OUTDOOR_SIREN": SHCOutdoorSiren,
+    "BOILER": SHCBoiler,
 }
 
 SUPPORTED_MODELS = MODEL_MAPPING.keys()

@@ -592,6 +592,46 @@ class TestGetEndpoints:
         called_url = api._requests_session.put.call_args[0][0]
         assert called_url == f"{_API_ROOT}/airquality/comfortzone/templates/sensor1/custom"
 
+    # multiroom boiler control -------------------------------------------------
+    def test_get_boiler_capable_rooms_url(self):
+        api = self._api_with_get(["hz_1"])
+        api.get_boiler_capable_rooms()
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/relay/boiler/rooms"
+
+    def test_get_boiler_linked_rooms_url(self):
+        api = self._api_with_get({"hz_1": True})
+        api.get_boiler_linked_rooms("boiler1")
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/relay/boiler/boiler1/rooms"
+
+    def test_put_boiler_linked_rooms_url_and_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response({})
+        api.put_boiler_linked_rooms("boiler1", ["hz_1", "hz_2"])
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/relay/boiler/boiler1/rooms"
+        sent = api._requests_session.put.call_args.kwargs["data"]
+        assert "hz_1" in sent and "hz_2" in sent
+
+    def test_put_boiler_add_room_url_and_plain_text_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        api.put_boiler_add_room("boiler1", "hz_3")
+        called_url = api._requests_session.put.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/relay/boiler/boiler1/room"
+        kwargs = api._requests_session.put.call_args.kwargs
+        assert kwargs["data"] == b"hz_3"
+        assert kwargs["headers"]["Content-Type"] == "text/plain"
+
+    # open doors/windows --------------------------------------------------------
+    def test_get_open_windows_url(self):
+        payload = {"allDoors": [], "openDoors": [], "allWindows": [], "openWindows": []}
+        api = self._api_with_get(payload)
+        assert api.get_open_windows() == payload
+        url = api._requests_session.get.call_args[0][0]
+        assert url == f"{_API_ROOT}/doors-windows/openwindows"
+
     # automation rules ------------------------------------------------------
     def test_get_automation_rules_url(self):
         payload = [{"@type": "automationRule", "id": "r1"}]

@@ -278,6 +278,29 @@ class SHCWaterAlarmSystem:
         except ValueError:
             return self.AlarmState.UNKNOWN
 
+    @property
+    def visual_actuators_available(self) -> bool:
+        return bool(self._raw_state.get("visualActuatorsAvailable", False))
+
+    @property
+    def video_actuators_available(self) -> bool:
+        return bool(self._raw_state.get("videoActuatorsAvailable", False))
+
+    @property
+    def first_incident_device_id(self) -> str | None:
+        incident: dict[str, Any] = self._raw_state.get("firstIncident") or {}
+        return incident.get("deviceId")
+
+    @property
+    def first_incident_room_name(self) -> str | None:
+        incident: dict[str, Any] = self._raw_state.get("firstIncident") or {}
+        return incident.get("roomName")
+
+    @property
+    def first_incident_timestamp(self) -> int | None:
+        incident: dict[str, Any] = self._raw_state.get("firstIncident") or {}
+        return incident.get("timestamp")
+
     def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
         self._callbacks[entity] = callback
 

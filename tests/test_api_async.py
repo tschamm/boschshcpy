@@ -394,6 +394,83 @@ class TestUrlAndHeaders:
         with pytest.raises(SHCSessionError):
             asyncio.run(api.delete_automation_rule("r1"))
 
+    def test_get_boiler_capable_rooms_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body=["hz_1"])
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_boiler_capable_rooms())
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/relay/boiler/rooms"
+        assert result == ["hz_1"]
+
+    def test_get_boiler_linked_rooms_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={"hz_1": True})
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_boiler_linked_rooms("boiler1"))
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/relay/boiler/boiler1/rooms"
+        )
+        assert result == {"hz_1": True}
+
+    def test_put_boiler_linked_rooms_url_and_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.put = MagicMock(return_value=resp)
+
+        asyncio.run(api.put_boiler_linked_rooms("boiler1", ["hz_1", "hz_2"]))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/relay/boiler/boiler1/rooms"
+        )
+        sent = api._session.put.call_args[1]["data"]
+        assert "hz_1" in sent and "hz_2" in sent
+
+    def test_put_boiler_add_room_url_and_plain_text_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body=None)
+        api._session.put = MagicMock(return_value=resp)
+
+        asyncio.run(api.put_boiler_add_room("boiler1", "hz_3"))
+
+        called_url = api._session.put.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/relay/boiler/boiler1/room"
+        )
+        kwargs = api._session.put.call_args[1]
+        assert kwargs["data"] == b"hz_3"
+        assert kwargs["headers"]["Content-Type"] == "text/plain"
+
+    def test_get_open_windows_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        payload = {"allDoors": [], "openDoors": [], "allWindows": [], "openWindows": []}
+        resp = _make_mock_response(body=payload)
+        api._session.get = MagicMock(return_value=resp)
+
+        result = asyncio.run(api.get_open_windows())
+
+        called_url = api._session.get.call_args[0][0]
+        assert called_url == (
+            "https://192.0.2.1:8444/smarthome/doors-windows/openwindows"
+        )
+        assert result == payload
+
     def test_get_thermostat_regulation_config_url_and_result(
         self, cert_and_key_paths: tuple[str, str]
     ) -> None:

@@ -208,6 +208,11 @@ class TestInitBodies:
         obj = SHCHeatingCircuit(api=None, raw_device=self._rd("HEATING_CIRCUIT"), raw_device_services=[])
         assert obj._heating_circuit_service is None                # lines 662-663
 
+    def test_boiler_init(self):
+        from boschshcpy.models_impl import SHCBoiler
+        obj = SHCBoiler(api=None, raw_device=self._rd("BOILER"), raw_device_services=[])
+        assert obj._boiler_heating_service is None
+
     def test_universalswitch_init(self):
         from boschshcpy.models_impl import SHCUniversalSwitch
         obj = SHCUniversalSwitch(api=None, raw_device=self._rd("WRC2"), raw_device_services=[])
@@ -1414,3 +1419,95 @@ class TestMicromoduleDimmerBinarystateSetter:
         obj._powerswitch_service = None
         obj.binarystate = True
         assert calls == []
+
+
+# ---------------------------------------------------------------------------
+# SHCBoiler (Multiroom Boiler Control) -- new in this round, not live-tested
+# ---------------------------------------------------------------------------
+
+class TestSHCBoiler:
+    def _make(self, api=None):
+        from unittest.mock import MagicMock
+
+        from boschshcpy.models_impl import SHCBoiler
+
+        raw_device = _fake_raw_device(model="BOILER")
+        raw_service = {
+            "id": "BoilerHeating",
+            "deviceId": raw_device["id"],
+            "path": "/x/BoilerHeating",
+            "state": {
+                "enabled": True,
+                "heatDemand": "HEAT_DEMAND",
+                "roomsHeatState": {"hz_1": "HEAT_DEMAND"},
+            },
+        }
+        obj = SHCBoiler(
+            api=api if api is not None else MagicMock(),
+            raw_device=raw_device,
+            raw_device_services=[raw_service],
+        )
+        return obj
+
+    def test_heating_enabled_and_demand(self):
+        obj = self._make()
+        assert obj.heating_enabled is True
+        from boschshcpy.services_impl import BoilerHeatingService
+        assert obj.heat_demand == BoilerHeatingService.HeatDemand.HEAT_DEMAND
+        assert obj.rooms_heat_state == {"hz_1": "HEAT_DEMAND"}
+
+    def test_linked_rooms_delegates_to_api(self):
+        from unittest.mock import MagicMock
+
+        api = MagicMock()
+        api.get_boiler_linked_rooms.return_value = {"hz_1": True, "hz_2": False}
+        obj = self._make(api=api)
+        assert obj.linked_rooms() == {"hz_1": True, "hz_2": False}
+        api.get_boiler_linked_rooms.assert_called_once_with(obj.id)
+
+    def test_set_linked_rooms_delegates_to_api(self):
+        from unittest.mock import MagicMock
+
+        api = MagicMock()
+        obj = self._make(api=api)
+        obj.set_linked_rooms(["hz_1", "hz_2"])
+        api.put_boiler_linked_rooms.assert_called_once_with(obj.id, ["hz_1", "hz_2"])
+
+    def test_add_linked_room_delegates_to_api(self):
+        from unittest.mock import MagicMock
+
+        api = MagicMock()
+        obj = self._make(api=api)
+        obj.add_linked_room("hz_3")
+        api.put_boiler_add_room.assert_called_once_with(obj.id, "hz_3")
+
+    def test_async_linked_rooms_delegates_to_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock
+
+        api = MagicMock()
+        api.get_boiler_linked_rooms = AsyncMock(return_value={"hz_1": True})
+        obj = self._make(api=api)
+        result = asyncio.run(obj.async_linked_rooms())
+        assert result == {"hz_1": True}
+        api.get_boiler_linked_rooms.assert_awaited_once_with(obj.id)
+
+    def test_async_set_linked_rooms_delegates_to_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock
+
+        api = MagicMock()
+        api.put_boiler_linked_rooms = AsyncMock(return_value=None)
+        obj = self._make(api=api)
+        asyncio.run(obj.async_set_linked_rooms(["hz_1"]))
+        api.put_boiler_linked_rooms.assert_awaited_once_with(obj.id, ["hz_1"])
+
+    def test_async_add_linked_room_delegates_to_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock
+
+        api = MagicMock()
+        api.put_boiler_add_room = AsyncMock(return_value=None)
+        obj = self._make(api=api)
+        asyncio.run(obj.async_add_linked_room("hz_4"))
+        api.put_boiler_add_room.assert_awaited_once_with(obj.id, "hz_4")

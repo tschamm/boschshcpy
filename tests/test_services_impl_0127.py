@@ -18,6 +18,7 @@ from boschshcpy.services_impl import (
     AlarmService,
     AirQualityLevelService,
     BlindsControlService,
+    BoilerHeatingService,
     HeatingCircuitService,
     KeypadService,
     PowerSwitchService,
@@ -215,6 +216,52 @@ class TestBlindsControlServiceBlindsType:
                                                "blindsType": "UNKNOWN_TYPE_XYZ"})
         with pytest.raises(ValueError):
             _ = svc.blinds_type
+
+    def test_blade_adjustment_time_ms_present(self):
+        svc = _make_svc(BlindsControlService, {"currentAngle": 0.0, "targetAngle": 0.0,
+                                               "bladeAdjustmentTimeInMillis": 1500})
+        assert svc.blade_adjustment_time_ms == 1500
+
+    def test_blade_adjustment_time_ms_absent(self):
+        svc = _make_svc(BlindsControlService, {"currentAngle": 0.0, "targetAngle": 0.0})
+        assert svc.blade_adjustment_time_ms is None
+
+
+class TestBoilerHeatingService:
+    def test_enabled_and_heat_demand(self):
+        svc = _make_svc(
+            BoilerHeatingService,
+            {
+                "enabled": True,
+                "heatDemand": "HEAT_DEMAND",
+                "roomsHeatState": {"hz_1": "HEAT_DEMAND", "hz_2": "NO_HEAT_DEMAND"},
+            },
+        )
+        assert svc.enabled is True
+        assert svc.heat_demand == BoilerHeatingService.HeatDemand.HEAT_DEMAND
+        assert svc.rooms_heat_state == {"hz_1": "HEAT_DEMAND", "hz_2": "NO_HEAT_DEMAND"}
+
+    def test_disabled_and_no_heat_demand(self):
+        svc = _make_svc(
+            BoilerHeatingService,
+            {"enabled": False, "heatDemand": "NO_HEAT_DEMAND", "roomsHeatState": {}},
+        )
+        assert svc.enabled is False
+        assert svc.heat_demand == BoilerHeatingService.HeatDemand.NO_HEAT_DEMAND
+        assert svc.rooms_heat_state == {}
+
+    def test_unknown_heat_demand_falls_back(self):
+        svc = _make_svc(
+            BoilerHeatingService,
+            {"enabled": True, "heatDemand": "SOMETHING_NEW", "roomsHeatState": {}},
+        )
+        assert svc.heat_demand == BoilerHeatingService.HeatDemand.UNKNOWN
+
+    def test_defaults_when_fields_missing(self):
+        svc = _make_svc(BoilerHeatingService, {})
+        assert svc.enabled is False
+        assert svc.heat_demand == BoilerHeatingService.HeatDemand.UNKNOWN
+        assert svc.rooms_heat_state == {}
 
 
 class TestWaterLeakageSensorServiceUnknownEnum:

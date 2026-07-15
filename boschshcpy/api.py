@@ -424,6 +424,18 @@ class SHCAPI:
         api_url = f"{self._api_root}/intrusion/endpoints/reminder/actuators"
         return self._get_api_result_or_fail(api_url)
 
+    def get_open_windows(self) -> Any:
+        """Whole-home open-door/open-window summary (official OpenAPI spec,
+        MainResources-local-openapi-v3.yml). Live-confirmed. The real
+        response is a superset of the documented `Windows` schema -- it also
+        includes bypassedDoors/bypassedWindows/openOthers/bypassedOthers/
+        unknownOthers alongside the documented allDoors/openDoors/
+        unknownDoors/allWindows/openWindows/unknownWindows/allOthers, each a
+        list of {identifier, name, roomName}.
+        """
+        api_url = f"{self._api_root}/doors-windows/openwindows"
+        return self._get_api_result_or_fail(api_url)
+
     # thermostat regulation algorithm (per-device, no OpenAPI spec; APK
     # ground-truth RestRequests.getThermostatRegulationAlgorithmConfiguration/
     # putThermostatRegulationAlgorithmConfiguration).
@@ -518,6 +530,46 @@ class SHCAPI:
             f"{urllib.parse.quote(sensor_id, safe='')}/custom"
         )
         return self._put_api_or_fail(api_url, comfort_zone)
+
+    # Multiroom Boiler Control room-linking (official OpenAPI spec,
+    # MultiroomBoilerControl-local-openapi-v3.yml). NOT live-confirmed -- no
+    # owned Boiler hardware; implemented directly from the spec.
+    def get_boiler_capable_rooms(self) -> Any:
+        api_url = f"{self._api_root}/relay/boiler/rooms"
+        return self._get_api_result_or_fail(api_url)
+
+    def get_boiler_linked_rooms(self, boiler_id: str) -> Any:
+        api_url = (
+            f"{self._api_root}/relay/boiler/"
+            f"{urllib.parse.quote(boiler_id, safe='')}/rooms"
+        )
+        return self._get_api_result_or_fail(api_url)
+
+    def put_boiler_linked_rooms(self, boiler_id: str, room_ids: list[str]) -> None:
+        api_url = (
+            f"{self._api_root}/relay/boiler/"
+            f"{urllib.parse.quote(boiler_id, safe='')}/rooms"
+        )
+        self._put_api_or_fail(api_url, room_ids)
+
+    def put_boiler_add_room(self, boiler_id: str, room_id: str) -> None:
+        """Spec requires a bare text/plain body, not JSON."""
+        api_url = (
+            f"{self._api_root}/relay/boiler/"
+            f"{urllib.parse.quote(boiler_id, safe='')}/room"
+        )
+        try:
+            result = self._session_request(
+                "PUT",
+                api_url,
+                data=room_id.encode("utf-8"),
+                headers={"Content-Type": "text/plain"},
+                timeout=30,
+            )
+        except requests.exceptions.RequestException as e:
+            raise SHCConnectionError(f"API call failed: {e}.") from e
+        if not result.ok:
+            self._process_nok_result(result)
 
     @staticmethod
     def _check_jsonrpc_version(result: Any, method: str) -> None:

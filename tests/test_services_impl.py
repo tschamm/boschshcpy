@@ -865,6 +865,21 @@ def test_energy_yield_absent_returns_none():
     assert svc.energyyield is None
 
 
+def test_energy_consumption_start_date_present():
+    svc = _make_svc(
+        PowerMeterService,
+        {"powerConsumption": 1.0, "energyConsumption": 123.0, "energyConsumptionStartDate": 1700000000000},
+    )
+    assert svc.energy_consumption_start_date == 1700000000000
+
+
+def test_energy_consumption_start_date_absent_returns_none():
+    svc = _make_svc(
+        PowerMeterService, {"powerConsumption": 1.0, "energyConsumption": 123.0}
+    )
+    assert svc.energy_consumption_start_date is None
+
+
 def test_reset_energy_summation_posts_empty_array_operation():
     """hass#120 audit: the app calls executeOperation(RESET_COMMAND, listener)
     with NO params array (Java varargs elision == an explicit empty array),

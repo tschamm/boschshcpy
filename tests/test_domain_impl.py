@@ -634,6 +634,39 @@ def test_water_alarm_state_missing_key_falls_back():
     assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.UNKNOWN
 
 
+def test_water_alarm_actuators_available_defaults_false():
+    svc = _make_water_alarm()
+    assert svc.visual_actuators_available is False
+    assert svc.video_actuators_available is False
+
+
+def test_water_alarm_actuators_available_true():
+    svc = _make_water_alarm()
+    svc._raw_state["visualActuatorsAvailable"] = True
+    svc._raw_state["videoActuatorsAvailable"] = True
+    assert svc.visual_actuators_available is True
+    assert svc.video_actuators_available is True
+
+
+def test_water_alarm_first_incident_present():
+    svc = _make_water_alarm()
+    svc._raw_state["firstIncident"] = {
+        "deviceId": "hdm:ZigBee:abc",
+        "roomName": "Kitchen",
+        "timestamp": 12345,
+    }
+    assert svc.first_incident_device_id == "hdm:ZigBee:abc"
+    assert svc.first_incident_room_name == "Kitchen"
+    assert svc.first_incident_timestamp == 12345
+
+
+def test_water_alarm_first_incident_missing():
+    svc = _make_water_alarm()
+    assert svc.first_incident_device_id is None
+    assert svc.first_incident_room_name is None
+    assert svc.first_incident_timestamp is None
+
+
 def test_water_alarm_subscribe_unsubscribe_callback():
     svc = _make_water_alarm()
     cb = MagicMock()
