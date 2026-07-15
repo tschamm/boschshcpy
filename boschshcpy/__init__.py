@@ -38,6 +38,7 @@ from .device_helper import (
 )
 from .device_service import SHCDeviceService
 from .domain_impl import SHCIntrusionSystem, SHCWaterAlarmSystem
+from .models_impl import SHCBoiler
 from .exceptions import (
     SHCAuthenticationError,
     SHCConnectionError,
@@ -106,6 +107,7 @@ from .services_impl import (  # noqa: F401
 __all__ = [
     "SHCDevice",
     "SHCBatteryDevice",
+    "SHCBoiler",
     "SHCCamera360",
     "SHCCameraEyes",
     "SHCCameraOutdoorGen2",

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.1 — export SHCBoiler from the package top-level
+
+**No breaking changes.**
+
+- `SHCBoiler` (new in 0.6.0) was never added to `boschshcpy/__init__.py`'s
+  imports/`__all__` — the exact same omission as `SHCWaterAlarmSystem` fixed
+  in 0.5.1. `from boschshcpy import SHCBoiler` raised `ImportError`; the
+  class still worked fine when accessed only through normal device
+  enumeration (`session.devices`), which is why the test suite didn't catch
+  it. Caught immediately after tagging 0.6.0, while live-deploying it.
+
 ## 0.6.0 — full official-spec audit: new Boiler Control + open-windows summary + smaller gaps closed
 
 A systematic pass cross-checking every one of the 24 official OpenAPI spec
