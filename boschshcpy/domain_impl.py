@@ -223,16 +223,15 @@ class SHCIntrusionSystem:
 
 class SHCWaterAlarmSystem:
     """The whole-home water-leak alarm system (distinct from individual WLS
-    sensors, which each have their own device_helper bucket). Not in the
-    official OpenAPI spec; APK ground-truth
-    (RestRequests.getWaterLeakSystemState/Configuration/
-    putWaterLeakSystemMuteAction). Confirmed live: GET wateralarm ->
-    {"available": false, ..., "state": "ALARM_OFF"} when no alarm is active.
+    sensors, which each have their own device_helper bucket). Documented in
+    the official OpenAPI spec (WaterDetectionSystem-local-openapi-v3.yml).
+    Confirmed live: GET wateralarm -> {"available": false, ..., "state":
+    "ALARM_OFF"} when no alarm is active.
     """
 
     class AlarmState(Enum):
         ALARM_OFF = "ALARM_OFF"
-        ALARM_ON = "ALARM_ON"
+        WATER_ALARM = "WATER_ALARM"
         ALARM_MUTED = "ALARM_MUTED"
         UNKNOWN = "UNKNOWN"
 
@@ -291,11 +290,11 @@ class SHCWaterAlarmSystem:
         print(f"    Alarm State:    {self.alarm_state}")
 
     def mute(self) -> None:
-        self._api.put_domain_action("wateralarm/actions/mute")
+        self._api.post_domain_action("wateralarm/actions/mute")
 
     async def async_mute(self) -> None:
         """Async write: mute the active water alarm."""
-        await self._api.put_domain_action("wateralarm/actions/mute")
+        await self._api.post_domain_action("wateralarm/actions/mute")
 
     def short_poll(self) -> None:
         self._raw_state = self._api.get_water_alarm_system_state()

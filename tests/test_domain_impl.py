@@ -609,8 +609,8 @@ def test_water_alarm_state_off():
 
 def test_water_alarm_state_on():
     assert (
-        _make_water_alarm(state="ALARM_ON").alarm_state
-        == SHCWaterAlarmSystem.AlarmState.ALARM_ON
+        _make_water_alarm(state="WATER_ALARM").alarm_state
+        == SHCWaterAlarmSystem.AlarmState.WATER_ALARM
     )
 
 
@@ -658,7 +658,7 @@ def test_water_alarm_mute_calls_api():
     api = MagicMock()
     svc = _make_water_alarm(api=api)
     svc.mute()
-    api.put_domain_action.assert_called_once_with("wateralarm/actions/mute")
+    api.post_domain_action.assert_called_once_with("wateralarm/actions/mute")
 
 
 def test_water_alarm_async_mute_awaits_api():
@@ -666,21 +666,21 @@ def test_water_alarm_async_mute_awaits_api():
     from unittest.mock import AsyncMock
 
     api = MagicMock()
-    api.put_domain_action = AsyncMock()
+    api.post_domain_action = AsyncMock()
     svc = _make_water_alarm(api=api)
     asyncio.run(svc.async_mute())
-    api.put_domain_action.assert_awaited_once_with("wateralarm/actions/mute")
+    api.post_domain_action.assert_awaited_once_with("wateralarm/actions/mute")
 
 
 def test_water_alarm_short_poll_updates_state():
     api = MagicMock()
     api.get_water_alarm_system_state.return_value = {
         "available": True,
-        "state": "ALARM_ON",
+        "state": "WATER_ALARM",
     }
     svc = _make_water_alarm(api=api)
     svc.short_poll()
-    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.ALARM_ON
+    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.WATER_ALARM
 
 
 def test_water_alarm_process_long_polling_updates_state_and_fires_callback():
@@ -688,9 +688,9 @@ def test_water_alarm_process_long_polling_updates_state_and_fires_callback():
     cb = MagicMock()
     svc.subscribe_callback("e1", cb)
     svc.process_long_polling_poll_result(
-        {"@type": "waterAlarmSystemState", "available": True, "state": "ALARM_ON"}
+        {"@type": "waterAlarmSystemState", "available": True, "state": "WATER_ALARM"}
     )
-    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.ALARM_ON
+    assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.WATER_ALARM
     cb.assert_called_once()
 
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.5.1 — fix water-alarm state enum + mute HTTP method (real bug, found via official spec)
+
+**No breaking changes** (the wrong enum member was never reachable in practice — see below).
+
+- `SHCWaterAlarmSystem.AlarmState` had `ALARM_ON = "ALARM_ON"`, but the
+  official OpenAPI spec (`WaterDetectionSystem-local-openapi-v3.yml`, part of
+  `bosch-shc-api-docs`) documents the real value as `WATER_ALARM`. Since
+  0.5.0 was never live-tested against an actual triggered water leak (no
+  capable hardware available), this meant a real alarm would have silently
+  fallen back to `AlarmState.UNKNOWN` instead of reporting the alarm.
+  Renamed the enum member to `WATER_ALARM = "WATER_ALARM"`.
+- `SHCWaterAlarmSystem.mute()`/`async_mute()` called `PUT
+  wateralarm/actions/mute`, but the spec documents `POST` for this and every
+  other `*/actions/*` endpoint (matching the sibling
+  `SHCIntrusionSystem.mute()`, which already correctly used `POST`). Every
+  mute-button press would have failed with a method-not-allowed response.
+  Fixed to `POST`.
+- Both bugs were found by systematically cross-checking the newly-added
+  domain against the official spec (which, it turns out, already documents
+  the `wateralarm` domain — our own docstring's "not in the official spec"
+  claim was also wrong, corrected).
+
 ## 0.5.0 — big sync with the official Bosch Smart Home app
 
 A large round of reverse-engineering (APK decompile + live traffic capture
