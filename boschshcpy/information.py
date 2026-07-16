@@ -84,6 +84,9 @@ class SHCInformation:
         INSTALLING = "INSTALLING"
         UPDATE_SUCCESS = "UPDATE_SUCCESS"
         UPDATE_FAILED = "UPDATE_FAILED"
+        # Not a spec value: reported when swUpdateState is missing or carries
+        # a value this library does not know, so callers never handle None.
+        UNKNOWN = "UNKNOWN"
 
     def __init__(
         self, api: Any, authenticate: bool = True, zeroconf: Any = None
@@ -148,15 +151,13 @@ class SHCInformation:
         return self._pub_info.get("shcGeneration", None)
 
     @property
-    def updateState(self) -> UpdateState | None:
+    def updateState(self) -> UpdateState:
         sw: dict[str, Any] = self._pub_info.get("softwareUpdateState", {})
         raw = sw.get("swUpdateState", None)
-        if raw is None:
-            return None
         try:
             return self.UpdateState(raw)
         except ValueError:
-            return None
+            return self.UpdateState.UNKNOWN
 
     @property
     def shcIpAddress(self) -> str | None:

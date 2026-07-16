@@ -15,7 +15,7 @@ from .automation import SHCAutomationRule
 from .device import SHCDevice
 from .device_helper import SHCDeviceHelper
 from .domain_impl import SHCIntrusionSystem, SHCWaterAlarmSystem
-from .exceptions import SHCException, SHCSessionError
+from .exceptions import SHCConnectionError, SHCException, SHCSessionError
 from .information import SHCInformation
 from .room import SHCRoom
 from .scenario import SHCScenario
@@ -208,17 +208,16 @@ class SHCSession:
             userdefinedstate_id = raw_state["id"]
             userdefinedstate = SHCUserDefinedState(
                 api=self._api,
-                info=cast(SHCInformation, self.information),
+                info=self.information,
                 raw_state=raw_state,
             )
             self._userdefinedstates_by_id[userdefinedstate_id] = userdefinedstate
 
     def _initialize_domains(self) -> None:
-        assert self._shc_information is not None
         self._domains_by_id["IDS"] = SHCIntrusionSystem(
             self._api,
             self._api.get_domain_intrusion_detection(),
-            self._shc_information.macAddress,
+            self.information.macAddress,
         )
         try:
             raw_water_alarm_state = self._api.get_water_alarm_system_state()
@@ -228,7 +227,7 @@ class SHCSession:
             logger.debug("Water alarm system domain unavailable: %s", ex)
         else:
             self._domains_by_id["WATERALARM"] = SHCWaterAlarmSystem(
-                self._api, raw_water_alarm_state, self._shc_information.macAddress
+                self._api, raw_water_alarm_state, self.information.macAddress
             )
 
     def _initialize_emma(self) -> None:
@@ -405,10 +404,12 @@ class SHCSession:
                 self._userdefinedstates_by_id[state_id].update_raw_information(
                     raw_result
                 )
-            else:
+            elif (info := self._shc_information) is not None:
+                # Read the attribute, not the raising property: the poll
+                # processor must never crash, whatever the session state.
                 userdefinedstate = SHCUserDefinedState(
                     api=self._api,
-                    info=cast(SHCInformation, self.information),
+                    info=info,
                     raw_state=raw_result,
                 )
                 self._userdefinedstates_by_id[state_id] = userdefinedstate
@@ -588,6 +589,11 @@ class SHCSession:
 
     def authenticate(self) -> None:
         self._shc_information = SHCInformation(api=self._api, zeroconf=self._zeroconf)
+        if self._shc_information.unique_id is None:
+            # The resolution chain (mDNS -> public macAddress -> ARP -> host)
+            # exhausted every source; a controller without an identity cannot
+            # be paired or addressed reliably.
+            raise SHCConnectionError("Unable to resolve a unique id for the controller")
 
     def mdns_info(self) -> SHCInformation:
         return SHCInformation(
@@ -595,8 +601,23 @@ class SHCSession:
         )
 
     @property
-    def information(self) -> SHCInformation | None:
+    def information(self) -> SHCInformation:
+        """The authenticated controller's information.
+
+        Populated by authenticate(); a session constructed with ``lazy=True``
+        must enumerate first.
+        """
+        if self._shc_information is None:
+            raise SHCSessionError("Session is not authenticated")
         return self._shc_information
+
+    @property
+    def unique_id(self) -> str:
+        """Stable controller identifier, validated during authenticate()."""
+        unique_id = self.information.unique_id
+        if unique_id is None:
+            raise SHCSessionError("Session is not authenticated")
+        return unique_id
 
     @property
     def intrusion_system(self) -> SHCIntrusionSystem:

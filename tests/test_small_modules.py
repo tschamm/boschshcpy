@@ -112,11 +112,46 @@ def test_shcinformation_update_state_available():
     assert info.updateState == SHCInformation.UpdateState.UPDATE_AVAILABLE
 
 
-def test_shcinformation_update_state_invalid_returns_none():
-    # BUG 4 fix: unknown swUpdateState values used to raise ValueError;
-    # after the fix they return None so HA doesn't crash on new FW.
+def test_shcinformation_update_state_invalid_returns_unknown():
+    # Unknown swUpdateState values used to raise ValueError; they now map to
+    # the UNKNOWN member so HA doesn't crash on new FW and never sees None.
     info = _make_shc_info(sw_state="INVALID_STATE")
-    assert info.updateState is None
+    assert info.updateState is SHCInformation.UpdateState.UNKNOWN
+
+
+def test_session_information_raises_before_authentication():
+    """A session that has not authenticated has no information to return."""
+    from boschshcpy.exceptions import SHCSessionError
+    from boschshcpy.session import SHCSession
+
+    session = SHCSession.__new__(SHCSession)
+    session._shc_information = None
+    with pytest.raises(SHCSessionError):
+        _ = session.information
+
+
+def test_session_unique_id_returns_resolved_identity():
+    from boschshcpy.session import SHCSession
+
+    session = SHCSession.__new__(SHCSession)
+    info = _make_shc_info()
+    info._unique_id = "aa:bb:cc:dd:ee:ff"
+    session._shc_information = info
+    assert session.unique_id == "aa:bb:cc:dd:ee:ff"
+
+
+def test_session_authenticate_raises_when_identity_unresolvable():
+    """Public info without mac and ip leaves no identity source at all."""
+    from boschshcpy.exceptions import SHCConnectionError
+    from boschshcpy.session import SHCSession
+
+    session = SHCSession.__new__(SHCSession)
+    session._zeroconf = None
+    session._api = MagicMock()
+    session._api.get_public_information.return_value = {}
+    session._api.get_information.return_value = {"connectivityVersion": "1"}
+    with pytest.raises(SHCConnectionError):
+        session.authenticate()
 
 
 def test_shcinformation_shc_ip_address():
@@ -780,28 +815,28 @@ def test_shcinformation_version_present_returns_value():
     assert obj.version == "9.40.102"
 
 
-def test_shcinformation_update_state_field_absent_returns_none():
+def test_shcinformation_update_state_field_absent_returns_unknown():
     """Regression: KeyError on pub_info['softwareUpdateState']['swUpdateState'] when absent."""
     from boschshcpy.information import SHCInformation
     obj = SHCInformation.__new__(SHCInformation)
     obj._pub_info = {}  # no softwareUpdateState at all
-    assert obj.updateState is None
+    assert obj.updateState is SHCInformation.UpdateState.UNKNOWN
 
 
-def test_shcinformation_update_state_sw_update_state_absent_returns_none():
+def test_shcinformation_update_state_sw_update_state_absent_returns_unknown():
     """Regression: swUpdateState key missing inside softwareUpdateState."""
     from boschshcpy.information import SHCInformation
     obj = SHCInformation.__new__(SHCInformation)
     obj._pub_info = {"softwareUpdateState": {"swInstalledVersion": "9.40.102"}}
-    assert obj.updateState is None
+    assert obj.updateState is SHCInformation.UpdateState.UNKNOWN
 
 
-def test_shcinformation_update_state_unknown_value_returns_none():
-    """Regression: ValueError on UpdateState('FUTURE_STATE') → None, not crash."""
+def test_shcinformation_update_state_unknown_value_returns_unknown():
+    """Regression: ValueError on UpdateState('FUTURE_STATE') → UNKNOWN, not crash."""
     from boschshcpy.information import SHCInformation
     obj = SHCInformation.__new__(SHCInformation)
     obj._pub_info = {"softwareUpdateState": {"swInstalledVersion": "9.40.102", "swUpdateState": "FUTURE_BOSCH_STATE"}}
-    assert obj.updateState is None
+    assert obj.updateState is SHCInformation.UpdateState.UNKNOWN
 
 
 def test_shcinformation_update_state_known_values():
