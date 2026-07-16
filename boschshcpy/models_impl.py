@@ -102,7 +102,7 @@ class SHCBatteryDevice(SHCDevice):
         return BatteryLevelService.State.NOT_AVAILABLE
 
 
-class _CommunicationQuality(SHCDevice):
+class CommunicationQualityMixin(SHCDevice):
     def __init__(
         self,
         api: SHCAPI,
@@ -129,7 +129,7 @@ class _CommunicationQuality(SHCDevice):
         await self._communicationquality_service.async_request_quality_test()
 
 
-class _PowerMeter(SHCDevice):
+class PowerMeterMixin(SHCDevice):
     def __init__(
         self,
         api: SHCAPI,
@@ -267,7 +267,7 @@ class _PowerSwitchProgram(SHCDevice):
     # To be implemented
 
 
-class _TemperatureLevel(SHCDevice):
+class TemperatureLevelMixin(SHCDevice):
     def __init__(
         self,
         api: SHCAPI,
@@ -288,7 +288,7 @@ class _TemperatureLevel(SHCDevice):
         return self._temperaturelevel_service.temperature
 
 
-class _HumidityLevel(SHCDevice):
+class HumidityLevelMixin(SHCDevice):
     def __init__(
         self,
         api: SHCAPI,
@@ -309,6 +309,13 @@ class _HumidityLevel(SHCDevice):
         if self._humiditylevel_service is None:
             return None
         return self._humiditylevel_service.humidity
+
+
+# Compatibility aliases for the pre-0.6.2 private mixin names.
+_CommunicationQuality = CommunicationQualityMixin
+_PowerMeter = PowerMeterMixin
+_TemperatureLevel = TemperatureLevelMixin
+_HumidityLevel = HumidityLevelMixin
 
 
 class _TemperatureOffset(SHCDevice):
@@ -533,7 +540,7 @@ class SHCSmokeDetector(SHCBatteryDevice):
         return self._smoke_sensitivity_service is not None
 
 
-class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
+class SHCSmartPlug(PowerMeterMixin, _PowerSwitch, _PowerSwitchProgram):
     def __init__(
         self,
         api: SHCAPI,
@@ -706,7 +713,7 @@ class SHCSmartPlug(_PowerMeter, _PowerSwitch, _PowerSwitchProgram):
 
 
 class SHCSmartPlugCompact(
-    _CommunicationQuality, _PowerMeter, _PowerSwitch, _PowerSwitchProgram
+    CommunicationQualityMixin, PowerMeterMixin, _PowerSwitch, _PowerSwitchProgram
 ):
     def __init__(
         self,
@@ -865,11 +872,11 @@ class SHCLightSwitch(_ChildProtection, _PowerSwitch, _PowerSwitchProgram):
     pass
 
 
-class SHCLightSwitchBSM(SHCLightSwitch, _PowerMeter):
+class SHCLightSwitchBSM(SHCLightSwitch, PowerMeterMixin):
     pass
 
 
-class SHCLightControl(_CommunicationQuality, _PowerMeter):
+class SHCLightControl(CommunicationQualityMixin, PowerMeterMixin):
     def __init__(
         self,
         api: SHCAPI,
@@ -1002,7 +1009,7 @@ class SHCLightControl(_CommunicationQuality, _PowerMeter):
 
 
 class SHCMicromoduleRelay(
-    _CommunicationQuality, _ChildProtection, _PowerSwitch, _PowerSwitchProgram
+    CommunicationQualityMixin, _ChildProtection, _PowerSwitch, _PowerSwitchProgram
 ):
     class RelayType(Enum):
         BUTTON = "BUTTON"
@@ -1232,7 +1239,7 @@ class SHCShutterControl(SHCDevice):
 
 
 class SHCMicromoduleShutterControl(
-    SHCShutterControl, _CommunicationQuality, _ChildProtection, _PowerMeter
+    SHCShutterControl, CommunicationQualityMixin, _ChildProtection, PowerMeterMixin
 ):
     def __init__(
         self,
@@ -1372,7 +1379,7 @@ class SHCShutterContact(SHCBatteryDevice):
         return self._service.value
 
 
-class SHCShutterContact2(SHCShutterContact, _CommunicationQuality):
+class SHCShutterContact2(SHCShutterContact, CommunicationQualityMixin):
     def __init__(
         self,
         api: SHCAPI,
@@ -1655,10 +1662,10 @@ class SHCCameraOutdoorGen2(SHCCamera360):
 
 class SHCThermostat(
     SHCBatteryDevice,
-    _CommunicationQuality,
+    CommunicationQualityMixin,
     _SilentMode,
     _Thermostat,
-    _TemperatureLevel,
+    TemperatureLevelMixin,
     _TemperatureOffset,
 ):
     def __init__(
@@ -1681,7 +1688,7 @@ class SHCThermostat(
         return self._valvetappet_service.value
 
 
-class SHCClimateControl(_TemperatureLevel):
+class SHCClimateControl(TemperatureLevelMixin):
     def __init__(
         self,
         api: SHCAPI,
@@ -2010,7 +2017,11 @@ class SHCHeatingCircuit(SHCDevice):
 
 
 class SHCWallThermostat(
-    SHCBatteryDevice, _TemperatureLevel, _HumidityLevel, _Thermostat, _TemperatureOffset
+    SHCBatteryDevice,
+    TemperatureLevelMixin,
+    HumidityLevelMixin,
+    _Thermostat,
+    _TemperatureOffset,
 ):
     pass
 
@@ -2176,7 +2187,7 @@ class SHCThermostatGen2(SHCThermostat):
 
 class SHCRoomThermostat2(
     SHCWallThermostat,
-    _CommunicationQuality,
+    CommunicationQualityMixin,
     _Thermostat,
     _TemperatureOffset,
 ):
@@ -2758,7 +2769,7 @@ class SHCMotionDetector2(SHCBatteryDevice):
         return self._smart_sensitivity_control_service is not None
 
 
-class SHCTwinguard(SHCBatteryDevice):
+class SHCTwinguard(SHCBatteryDevice, TemperatureLevelMixin, HumidityLevelMixin):
     def __init__(
         self,
         api: SHCAPI,
@@ -2800,6 +2811,11 @@ class SHCTwinguard(SHCBatteryDevice):
     @property
     def temperature_rating(self) -> AirQualityLevelService.RatingState:
         return self._airqualitylevel_service.temperatureRating
+
+    @property
+    def supports_humidity(self) -> bool:
+        # Humidity comes from the AirQualityLevel service, not HumidityLevel.
+        return True
 
     @property
     def humidity(self) -> float:
@@ -3159,7 +3175,7 @@ class SHCWaterLeakageSensor(SHCBatteryDevice):
 
 
 class SHCMicromoduleDimmer(
-    SHCLight, _CommunicationQuality, _ChildProtection, _PowerSwitch
+    SHCLight, CommunicationQualityMixin, _ChildProtection, _PowerSwitch
 ):
     def __init__(
         self,

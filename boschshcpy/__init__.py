@@ -38,7 +38,13 @@ from .device_helper import (
 )
 from .device_service import SHCDeviceService
 from .domain_impl import SHCIntrusionSystem, SHCWaterAlarmSystem
-from .models_impl import SHCBoiler
+from .models_impl import (
+    CommunicationQualityMixin,
+    HumidityLevelMixin,
+    PowerMeterMixin,
+    SHCBoiler,
+    TemperatureLevelMixin,
+)
 from .exceptions import (
     SHCAuthenticationError,
     SHCConnectionError,
@@ -138,6 +144,10 @@ __all__ = [
     "SHCThermostatGen2",
     "SHCRoomThermostat2",
     "SHCTwinguard",
+    "CommunicationQualityMixin",
+    "HumidityLevelMixin",
+    "PowerMeterMixin",
+    "TemperatureLevelMixin",
     "SHCUniversalSwitch",
     "SHCWallThermostat",
     "SHCWaterLeakageSensor",
