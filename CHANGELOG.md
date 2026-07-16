@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.2 — export capability mixins, non-optional session identity
+
+**No breaking changes.**
+
+- `TemperatureLevelMixin`/`HumidityLevelMixin`/`PowerMeterMixin`/
+  `CommunicationQualityMixin` (existing capability mixins backing several
+  device classes) are now exported from `boschshcpy/__init__.py`, matching
+  every other public capability/device type. Lets consumers type against
+  the capability instead of a specific device class.
+- `SHCSessionAsync`/`SHCSession.unique_id` — a convenience passthrough to
+  `self.information.unique_id`, now typed as non-optional `str` (raises if
+  called before the session has actually authenticated, instead of forcing
+  every caller to null-check something that's always present post-setup).
+- `SHCTwinguard` aligned with the mixins it already structurally satisfies.
+
 ## 0.6.1 — export SHCBoiler from the package top-level
 
 **No breaking changes.**
