@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.3 — invalidate poll_id on any long-poll error, not just -32001
+
+**No breaking changes.**
+
+- **Fix: a long-poll error other than `-32001` ("unknown poll id") never
+  invalidated `poll_id`**, in both `SHCSession` and `SHCSessionAsync`. The
+  poll loop would log the error and back off, then retry with the *same*
+  now-broken poll id on the next iteration — repeating the identical error
+  indefinitely instead of recovering via resubscribe. Any JSON-RPC-level
+  error response to a poll request means that poll id is no longer usable,
+  regardless of the specific code, so it's now always invalidated (triggers
+  a resubscribe + device refresh next iteration, same recovery path already
+  used for `-32001`). Found while researching the SHC's other documented
+  long-poll error scenarios (event-buffer limits, subscription expiry).
+
 ## 0.6.2 — export capability mixins, non-optional session identity
 
 **No breaking changes.**

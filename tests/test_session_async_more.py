@@ -674,7 +674,13 @@ class TestPollLoopResubscribeDeviceStatusRefresh:
 
 class TestPollLoopJSONRPCNon32001:
     def test_poll_loop_non_32001_jsonrpc_error_backs_off(self):
-        """A JSONRPCError with code != -32001 must log + sleep _BACKOFF_OTHER_ERROR."""
+        """A JSONRPCError with code != -32001 must log + sleep _BACKOFF_STALE_POLL_ID.
+
+        Any JSON-RPC error on the poll call invalidates poll_id and retries
+        promptly (same short backoff as -32001) -- there's no reason to wait
+        the longer _BACKOFF_OTHER_ERROR when the very next iteration is
+        going to resubscribe with a fresh poll_id anyway.
+        """
         api = _fake_api()
 
         error_calls = [0]
@@ -705,12 +711,21 @@ class TestPollLoopJSONRPCNon32001:
                 s._poll_task = None
 
         asyncio.run(run())
-        # Must have slept with _BACKOFF_OTHER_ERROR (15.0)
-        from boschshcpy.session_async import _BACKOFF_OTHER_ERROR
-        assert _BACKOFF_OTHER_ERROR in sleep_calls
+        from boschshcpy.session_async import _BACKOFF_STALE_POLL_ID
+        assert _BACKOFF_STALE_POLL_ID in sleep_calls
 
-    def test_poll_loop_non_32001_does_not_invalidate_poll_id(self):
-        """A non-(-32001) JSONRPCError must NOT invalidate poll_id."""
+    def test_poll_loop_non_32001_invalidates_poll_id(self):
+        """A non-(-32001) JSONRPCError MUST also invalidate poll_id.
+
+        Any JSON-RPC-level error response to a poll request means that
+        poll_id is no longer usable -- reusing it (as this codebase did
+        before this fix) just repeats the same error every iteration
+        forever, since only -32001 used to trigger a resubscribe. Proven
+        here by the next iteration actually calling long_polling_subscribe
+        (which only happens when poll_id was reset to None) rather than by
+        checking the final poll_id, since a successful resubscribe
+        legitimately leaves poll_id set to the new, valid id.
+        """
         api = _fake_api()
 
         error_calls = [0]
@@ -725,7 +740,7 @@ class TestPollLoopJSONRPCNon32001:
 
         async def run():
             s = _bare_session(api)
-            s._poll_id = "pid-stays-valid"
+            s._poll_id = "pid-should-be-invalidated"
 
             with patch("boschshcpy.session_async.asyncio.sleep", new_callable=AsyncMock):
                 s._poll_task = asyncio.get_event_loop().create_task(s._poll_loop())
@@ -737,8 +752,9 @@ class TestPollLoopJSONRPCNon32001:
             return s
 
         s = asyncio.run(run())
-        # poll_id must NOT have been set to None (only -32001 does that)
-        assert s._poll_id == "pid-stays-valid"
+        # A resubscribe only happens on an iteration that starts with
+        # poll_id is None -- proves the error handler invalidated it.
+        s._api.long_polling_subscribe.assert_called_once()
 
 
 # ---------------------------------------------------------------------------

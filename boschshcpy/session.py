@@ -302,14 +302,26 @@ class SHCSession:
 
             return True
         except JSONRPCError as json_rpc_error:
+            # Any JSON-RPC-level error on the poll call means this poll_id is
+            # no longer usable -- reusing it would just repeat the same error
+            # every iteration. Previously only code -32001 invalidated
+            # poll_id; any other code (e.g. an event-buffer-limit error) hit
+            # the generic Exception handler in polling_thread_main, which
+            # logs+sleeps but keeps the same dead poll_id, looping on the
+            # same error forever instead of recovering via resubscribe.
+            self._poll_id = None
             if json_rpc_error.code == -32001:
-                self._poll_id = None
                 logger.debug(
                     "SHC claims unknown poll id. Invalidating poll id and trying resubscribe next time..."
                 )
-                return False
             else:
-                raise json_rpc_error
+                logger.warning(
+                    "Long-poll request failed (code: %s, message: %s). "
+                    "Invalidating poll id and resubscribing next time...",
+                    json_rpc_error.code,
+                    json_rpc_error.message,
+                )
+            return False
 
     def _maybe_unsubscribe(self) -> None:
         if self._poll_id is not None:

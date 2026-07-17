@@ -415,7 +415,9 @@ class SHCSessionAsync:
           (no call_soon_threadsafe needed)
 
         Error handling mirrors the sync session:
-        - JSONRPCError -32001: re-subscribe (new poll_id) + asyncio.sleep(1)
+        - Any JSONRPCError (poll_id invalid, event-buffer limit, or any
+          other SHC-returned poll error): invalidate poll_id, re-subscribe
+          next iteration, asyncio.sleep(1)
         - Other exceptions: log + asyncio.sleep(15) + continue
         - asyncio.CancelledError: cleanup + re-raise (structured concurrency)
         """
@@ -523,25 +525,28 @@ class SHCSessionAsync:
                 raise  # MUST re-raise — swallowing breaks structured concurrency
 
             except JSONRPCError as json_rpc_error:
+                # Any JSON-RPC-level error on the poll call means this
+                # poll_id is no longer usable -- reusing it would just repeat
+                # the same error every iteration. Previously only -32001
+                # invalidated poll_id; any other code (e.g. an event-buffer-
+                # limit error) fell through to a plain log+backoff that kept
+                # the same dead poll_id, looping on the same error forever
+                # instead of recovering via resubscribe.
+                self._poll_id = None
                 if json_rpc_error.code == -32001:
-                    # Stale poll id — SHC rotates these ~every 24h.
-                    # Invalidate; next iteration will re-subscribe.
-                    # Mirrors session.py:209-217.
-                    self._poll_id = None
                     logger.debug(
                         "Async session: SHC claims unknown poll id. "
                         "Invalidating and resubscribing next iteration..."
                     )
-                    await asyncio.sleep(_BACKOFF_STALE_POLL_ID)
                 else:
-                    logger.error(
-                        "Async poll got unexpected JSONRPCError (code %s): %s. "
-                        "Waiting %ss.",
+                    logger.warning(
+                        "Async poll got JSONRPCError (code %s): %s. "
+                        "Invalidating poll id and resubscribing next "
+                        "iteration...",
                         json_rpc_error.code,
                         json_rpc_error,
-                        _BACKOFF_OTHER_ERROR,
                     )
-                    await asyncio.sleep(_BACKOFF_OTHER_ERROR)
+                await asyncio.sleep(_BACKOFF_STALE_POLL_ID)
 
             except Exception as ex:
                 # Mirrors session.py:330-334: generic error → log + backoff.

@@ -287,14 +287,19 @@ class TestLongPoll:
         assert result is False
         assert s._poll_id is None
 
-    def test_long_poll_reraises_other_rpc_errors(self):
+    def test_long_poll_invalidates_poll_id_on_other_rpc_errors(self):
+        """Any JSON-RPC error on poll invalidates poll_id, not just -32001.
+
+        Reusing a poll_id after ANY error response just repeats the same
+        error forever; only -32001 used to trigger this recovery.
+        """
         s = _bare_session()
         s._poll_id = "pid"
         err = JSONRPCError(-32600, "Invalid Request")
         s._api.long_polling_poll.side_effect = err
-        with pytest.raises(JSONRPCError) as exc_info:
-            s._long_poll()
-        assert exc_info.value.code == -32600
+        result = s._long_poll()
+        assert result is False
+        assert s._poll_id is None
 
     def test_long_poll_passes_wait_seconds(self):
         s = _bare_session()
