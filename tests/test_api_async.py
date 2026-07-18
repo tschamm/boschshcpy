@@ -166,6 +166,50 @@ class TestSSLContextParam:
         assert calls == [(cert, key)]
 
 
+class TestSSLContextFallbackError:
+    """When ssl_context isn't pre-built, a corrupted/missing cert or key must
+    raise a typed, catchable SHCCertificateError instead of a raw
+    ssl.SSLError/OSError — matches the sync-side certificate.py convention.
+    """
+
+    def _patch_aiohttp(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import sys
+        import types
+        fake = types.SimpleNamespace(
+            TCPConnector=lambda **kw: MagicMock(),
+            ClientSession=lambda **kw: MagicMock(),
+        )
+        monkeypatch.setitem(sys.modules, "aiohttp", fake)
+
+    def test_corrupted_pem_raises_shc_certificate_error(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from boschshcpy.exceptions import SHCCertificateError
+
+        self._patch_aiohttp(monkeypatch)
+        with pytest.raises(SHCCertificateError):
+            SHCAPIAsync("192.0.2.1", "/bad/cert.pem", "/bad/key.pem")
+
+    def test_missing_files_raise_shc_certificate_error(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+    ) -> None:
+        from boschshcpy.exceptions import SHCCertificateError
+
+        self._patch_aiohttp(monkeypatch)
+        missing = str(tmp_path / "does_not_exist.pem")
+        with pytest.raises(SHCCertificateError):
+            SHCAPIAsync("192.0.2.1", missing, missing)
+
+    def test_valid_cert_still_succeeds(
+        self, cert_and_key_paths: tuple[str, str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Sanity check: the try/except doesn't swallow the happy path."""
+        cert, key = cert_and_key_paths
+        self._patch_aiohttp(monkeypatch)
+        api = SHCAPIAsync("192.0.2.1", cert, key)
+        assert isinstance(api._ssl_ctx, ssl.SSLContext)
+
+
 # ---------------------------------------------------------------------------
 # Helpers for mocking aiohttp responses
 # ---------------------------------------------------------------------------

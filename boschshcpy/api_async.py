@@ -39,7 +39,7 @@ import ssl
 import urllib.parse
 from typing import Any, cast
 
-from .exceptions import SHCConnectionError, SHCSessionError
+from .exceptions import SHCCertificateError, SHCConnectionError, SHCSessionError
 
 logger = logging.getLogger("boschshcpy")
 
@@ -124,11 +124,24 @@ class SHCAPIAsync:
         self._public_root = f"https://{controller_ip}:8446/smarthome/public"
         self._rpc_root = f"https://{controller_ip}:8444/remote/json-rpc"
 
-        self._ssl_ctx = (
-            ssl_context
-            if ssl_context is not None
-            else build_ssl_context(certificate, key)
-        )
+        if ssl_context is not None:
+            self._ssl_ctx = ssl_context
+        else:
+            # Caller didn't pre-build the context off-loop (e.g. a direct
+            # library user, or a caller on an older boschshcpy without the
+            # ssl_context parameter) — build it here. A corrupted/missing
+            # cert or key file raises a raw ssl.SSLError/OSError from
+            # OpenSSL here; translate it into the same typed exception the
+            # sync-side certificate.py uses for the same failure class, so
+            # every caller gets a catchable, self-explanatory error instead
+            # of a cryptic "[SSL] PEM lib" traceback.
+            try:
+                self._ssl_ctx = build_ssl_context(certificate, key)
+            except (ssl.SSLError, OSError, ValueError) as exc:
+                raise SHCCertificateError(
+                    f"Could not load client certificate/key ({certificate}, "
+                    f"{key}): {exc}"
+                ) from exc
         self._owns_session = external_session is None
 
         if self._owns_session:

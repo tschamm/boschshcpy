@@ -115,10 +115,17 @@ def write_tls_asset(filename: str, asset: bytes) -> None:
     Uses os.open with mode 0o600 rather than the bare open() builtin: the
     latter creates the file with the process umask (world-readable under the
     common 022 umask), exposing the client private key to any local user.
+
+    Explicitly fsyncs before closing: without it, a crash/power-loss in the
+    window between a successful pairing and the OS flushing dirty pages can
+    leave a truncated/empty PEM file on disk that only fails much later, with
+    a cryptic OpenSSL error, on some unrelated future restart.
     """
     fd = os.open(filename, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf8") as file_handle:
         file_handle.write(asset.decode("utf-8"))
+        file_handle.flush()
+        os.fsync(file_handle.fileno())
 
 
 def main() -> None:

@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.6.4 — SHCCertificateError on a corrupted client cert/key, fsync on write
+
+**No breaking changes.**
+
+- **Fix: a corrupted or missing client certificate/key made `SHCAPIAsync`
+  crash with a raw, cryptic `ssl.SSLError: [SSL] PEM lib`** instead of a
+  catchable error. This only happened on the fallback path (no pre-built
+  `ssl_context` passed to the constructor — a direct library user, or a
+  caller predating the `ssl_context` parameter); callers that pre-build the
+  context off-loop (e.g. `boschshc-hass`) were already unaffected by this
+  specific crash shape via their own error handling. `SHCAPIAsync.__init__`
+  now catches `ssl.SSLError`/`OSError`/`ValueError` from `build_ssl_context()`
+  and re-raises as `SHCCertificateError`, matching the existing convention
+  already used by the sync-side `certificate.py` for the same failure class.
+  Found while root-causing a community report of an integration setup
+  crashing after a corrupted PEM file on disk.
+- **Hardening: `register_client.py`'s `write_tls_asset()` now calls
+  `os.fsync()` before closing the file handle.** Without it, a crash or
+  power-loss in the narrow window between a successful pairing and the OS
+  flushing dirty pages to disk could leave a truncated/empty PEM file that
+  only surfaces as a cryptic failure much later, on some unrelated future
+  restart.
+
 ## 0.6.3 — invalidate poll_id on any long-poll error, not just -32001
 
 **No breaking changes.**
