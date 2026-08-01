@@ -1838,6 +1838,10 @@ class SHCClimateControl(TemperatureLevelMixin):
         return self._roomclimatecontrol_service.has_demand
 
     @property
+    def ventilation_mode(self) -> bool:
+        return self._roomclimatecontrol_service.ventilation_mode
+
+    @property
     def active_schedule_id(self) -> str | None:
         return self._roomclimatecontrol_service.active_schedule_id
 

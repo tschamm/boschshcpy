@@ -1117,6 +1117,24 @@ class TestSHCClimateControl:
         d._roomclimatecontrol_service._raw_state.pop("hasDemand", None)
         assert d.has_demand is False
 
+    def test_ventilation_mode_true(self):
+        """hass#389: ventilation_mode was modeled on RoomClimateControlService
+        but never wired through SHCClimateControl, so it was unreachable from
+        the device model consumers (hass) actually use."""
+        d = self._make()
+        d._roomclimatecontrol_service._raw_state["ventilationMode"] = True
+        assert d.ventilation_mode is True
+
+    def test_ventilation_mode_false(self):
+        d = self._make()
+        d._roomclimatecontrol_service._raw_state["ventilationMode"] = False
+        assert d.ventilation_mode is False
+
+    def test_ventilation_mode_absent_defaults_false(self):
+        d = self._make()
+        d._roomclimatecontrol_service._raw_state.pop("ventilationMode", None)
+        assert d.ventilation_mode is False
+
 
 # ---------------------------------------------------------------------------
 # SHCHeatingCircuit

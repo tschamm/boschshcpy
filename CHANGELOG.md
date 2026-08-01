@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.5 — SHCClimateControl.ventilation_mode was unreachable from the device model
+
+**No breaking changes.**
+
+- **Fix: `RoomClimateControlService.ventilation_mode` was never wired through
+  `SHCClimateControl`** (hass#389), so consumers of the device-model API
+  (e.g. `boschshc-hass`) had no way to read a room's ventilation/open-window
+  state — only the lower-level service object exposed it. Added a
+  read-only `SHCClimateControl.ventilation_mode` property, matching the
+  existing `has_demand` pass-through pattern.
+
 ## 0.6.4 — SHCCertificateError on a corrupted client cert/key, fsync on write
 
 **No breaking changes.**
