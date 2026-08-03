@@ -755,7 +755,10 @@ class PowerSwitchProgramService(SHCDeviceService):
 
     @property
     def value(self) -> State:
-        return self.State(self.state["operationMode"])
+        try:
+            return self.State(self.state["operationMode"])
+        except (KeyError, ValueError):
+            return self.State.MANUAL
 
     @value.setter
     def value(self, state: State) -> None:
@@ -769,7 +772,12 @@ class PowerSwitchProgramService(SHCDeviceService):
 class BinarySwitchService(SHCDeviceService):
     @property
     def value(self) -> bool:
-        return bool(self.state["on"])
+        # Spec marks "on" as required, but other "required" boolean state
+        # fields (e.g. UserDefinedState's deleted/state, hass#351;
+        # OccupancyDetectionService.isOccupied) have been observed omitted
+        # in practice on partial poll snapshots -- use the same defensive
+        # .get() convention as sibling boolean properties.
+        return bool(self.state.get("on", False))
 
     def summary(self) -> None:
         super().summary()
@@ -779,7 +787,12 @@ class BinarySwitchService(SHCDeviceService):
 class MultiLevelSwitchService(SHCDeviceService):
     @property
     def value(self) -> int:
-        return int(self.state["level"])
+        # A partial state push (e.g. one that only carries a changed "on"
+        # flag) can omit "level" entirely -- use the same defensive .get()
+        # convention as the sibling MultiLevelSensorService.illuminance
+        # property below, instead of an unguarded dict index that would
+        # KeyError and break the entity's state until a full poll recovers.
+        return int(self.state.get("level", 0))
 
     def summary(self) -> None:
         super().summary()
@@ -799,7 +812,11 @@ class MultiLevelSensorService(SHCDeviceService):
 class HueColorTemperatureService(SHCDeviceService):
     @property
     def value(self) -> int:
-        return int(self.state["colorTemperature"])
+        # A partial state push can omit "colorTemperature" entirely -- use
+        # the same defensive .get() convention as min_value/max_value below
+        # instead of an unguarded dict index that would KeyError and break
+        # the entity's color state until a full poll recovers.
+        return int(self.state.get("colorTemperature", 0))
 
     @property
     def min_value(self) -> int:
@@ -819,11 +836,15 @@ class HueColorTemperatureService(SHCDeviceService):
 class HSBColorActuatorService(SHCDeviceService):
     @property
     def value(self) -> int:
-        return int(self.state["rgb"])
+        # A partial state push can omit "rgb" entirely -- use the same
+        # defensive .get() convention as min_value/max_value below instead
+        # of an unguarded dict index that would KeyError and break the
+        # entity's color state until a full poll recovers.
+        return int(self.state.get("rgb", 0))
 
     @property
     def gamut(self) -> str:
-        return str(self.state["gamut"])
+        return str(self.state.get("gamut", ""))
 
     @property
     def min_value(self) -> int:
@@ -1894,7 +1915,10 @@ class ThermostatService(SHCDeviceService):
 
     @property
     def childLock(self) -> State:
-        return self.State(self.state["childLock"])
+        try:
+            return self.State(self.state["childLock"])
+        except (KeyError, ValueError):
+            return self.State.OFF
 
     def summary(self) -> None:
         super().summary()

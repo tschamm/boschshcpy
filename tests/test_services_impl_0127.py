@@ -136,6 +136,16 @@ class TestRoutingServiceUnknownEnum:
         assert svc.value == RoutingService.State.ENABLED
 
 
+class TestPowerSwitchProgramServiceUnknownEnum:
+    def test_power_switch_program_unknown_returns_manual(self):
+        svc = _make_svc(PowerSwitchProgramService, {"operationMode": "UNKNOWN_XYZ"})
+        assert svc.value == PowerSwitchProgramService.State.MANUAL
+
+    def test_power_switch_program_absent_returns_manual(self):
+        svc = _make_svc(PowerSwitchProgramService, {})
+        assert svc.value == PowerSwitchProgramService.State.MANUAL
+
+
 class TestRoomClimateControlOperationModeUnknownEnum:
     def test_rcc_operation_mode_unknown_returns_manual(self):
         svc = _make_svc(

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.6.6 — hardened 6 services against KeyError/ValueError on a partial long-poll snapshot
+
+**No breaking changes.**
+
+- **Proactive bug-hunt round** (part of a combined boschshc-hass +
+  boschshcpy pass, each finding independently adversarially verified before
+  being fixed): `BinarySwitchService.value`, `MultiLevelSwitchService.value`,
+  `HueColorTemperatureService.value`, `HSBColorActuatorService.value`/`gamut`,
+  `ThermostatService.childLock`, and `PowerSwitchProgramService.value` all
+  indexed the raw SHC state dict directly instead of degrading gracefully —
+  the same bug class as the historical #351 `ChildProtectionService`/
+  `OccupancyDetectionService` fixes. Any of them could raise `KeyError`/
+  `ValueError` on a partial long-poll snapshot that omits the relevant
+  field, instead of falling back like their already-hardened siblings in
+  the same file. All now use `.get(key, default)` or a `try/except
+  (KeyError, ValueError)` fallback, matching the existing convention
+  elsewhere in `services_impl.py`.
+
 ## 0.6.5 — SHCClimateControl.ventilation_mode was unreachable from the device model
 
 **No breaking changes.**

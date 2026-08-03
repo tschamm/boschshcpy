@@ -943,6 +943,14 @@ def test_binary_switch_false():
     assert svc.value is False
 
 
+def test_binary_switch_missing_on_key_does_not_raise():
+    # Regression: a partial/short SHC long-poll snapshot can omit the "on"
+    # key entirely (same failure mode as hass#351 / OccupancyDetectionService
+    # .isOccupied) -- .value must not raise KeyError in that case.
+    svc = _make_svc(BinarySwitchService, {})
+    assert svc.value is False
+
+
 # ===========================================================================
 # 8. MultiLevelSwitchService
 # ===========================================================================
@@ -951,6 +959,14 @@ def test_binary_switch_false():
 def test_multi_level_switch_value():
     svc = _make_svc(MultiLevelSwitchService, {"level": 75})
     assert svc.value == 75
+
+
+def test_multi_level_switch_missing_level_key_does_not_raise():
+    # Regression: a partial state push (e.g. one that only carries a changed
+    # "on" flag) can omit "level" entirely -- .value must not raise KeyError
+    # in that case (same failure mode as BinarySwitchService.value above).
+    svc = _make_svc(MultiLevelSwitchService, {})
+    assert svc.value == 0
 
 
 # ===========================================================================
@@ -992,6 +1008,14 @@ def test_hue_color_temp_max():
     assert svc.max_value == 6500
 
 
+def test_hue_color_temp_missing_color_temperature_key_does_not_raise():
+    # Regression: a partial state push can omit "colorTemperature" entirely
+    # (same failure mode as BinarySwitchService.value/MultiLevelSwitchService
+    # .value above) -- .value must not raise KeyError in that case.
+    svc = _make_svc(HueColorTemperatureService, {})
+    assert svc.value == 0
+
+
 # ===========================================================================
 # 11. HSBColorActuatorService
 # ===========================================================================
@@ -1031,6 +1055,15 @@ def test_hsb_max_ct():
         "colorTemperatureRange": {"minCt": 2200, "maxCt": 6000},
     })
     assert svc.max_value == 6000
+
+
+def test_hsb_missing_rgb_and_gamut_keys_do_not_raise():
+    # Regression: a partial state push can omit "rgb"/"gamut" entirely (same
+    # failure mode as BinarySwitchService.value/MultiLevelSwitchService.value
+    # above) -- .value/.gamut must not raise KeyError in that case.
+    svc = _make_svc(HSBColorActuatorService, {})
+    assert svc.value == 0
+    assert svc.gamut == ""
 
 
 # ===========================================================================
@@ -1168,6 +1201,18 @@ def test_thermostat_on():
 
 def test_thermostat_off():
     svc = _make_svc(ThermostatService, {"childLock": "OFF"})
+    assert svc.childLock == ThermostatService.State.OFF
+
+
+def test_thermostat_childlock_missing_key_degrades_to_off():
+    """A partial poll omitting "childLock" must not raise KeyError."""
+    svc = _make_svc(ThermostatService, {})
+    assert svc.childLock == ThermostatService.State.OFF
+
+
+def test_thermostat_childlock_invalid_value_degrades_to_off():
+    """An out-of-enum value must not raise ValueError."""
+    svc = _make_svc(ThermostatService, {"childLock": "BOGUS"})
     assert svc.childLock == ThermostatService.State.OFF
 
 
