@@ -177,6 +177,81 @@ class TestPropertyAccessors:
         s._shc_information = info
         assert s.information is info
 
+
+class TestCreateDeleteAutomationRuleAndUserDefinedState:
+    def test_create_automation_rule_posts_and_caches(self):
+        s = _bare_session()
+        s._api.post_automation_rule.return_value = {
+            "@type": "automationRule",
+            "id": "r-new",
+            "name": "HA bridge",
+            "enabled": True,
+            "automationTriggers": [],
+            "automationConditions": [],
+            "automationActions": [],
+            "conditionLogicalOp": "AND",
+        }
+
+        rule = s.create_automation_rule("HA bridge")
+
+        sent_body = s._api.post_automation_rule.call_args[0][0]
+        assert sent_body["id"] == ""
+        assert sent_body["name"] == "HA bridge"
+        assert sent_body["automationTriggers"] == []
+        assert rule.id == "r-new"
+        assert s._automation_rules_by_id["r-new"] is rule
+
+    def test_create_automation_rule_passes_triggers_conditions_actions(self):
+        s = _bare_session()
+        triggers = [{"type": "KeypadButtonPressTrigger", "configuration": "{}"}]
+        actions = [{"type": "UserDefinedStateAction", "configuration": "{}"}]
+        s._api.post_automation_rule.return_value = {
+            "@type": "automationRule",
+            "id": "r-new",
+            "name": "x",
+            "automationTriggers": triggers,
+            "automationConditions": [],
+            "automationActions": actions,
+        }
+
+        s.create_automation_rule("x", triggers=triggers, actions=actions)
+
+        sent_body = s._api.post_automation_rule.call_args[0][0]
+        assert sent_body["automationTriggers"] == triggers
+        assert sent_body["automationActions"] == actions
+
+    def test_delete_automation_rule_removes_from_cache(self):
+        s = _bare_session()
+        s._automation_rules_by_id["r1"] = MagicMock()
+        s.delete_automation_rule("r1")
+        s._api.delete_automation_rule.assert_called_once_with("r1")
+        assert "r1" not in s._automation_rules_by_id
+
+    def test_create_userdefinedstate_posts_and_caches(self):
+        s = _bare_session()
+        s._shc_information = MagicMock()
+        s._api.post_userdefinedstate.return_value = {
+            "@type": "userDefinedState",
+            "id": "u-new",
+            "name": "HA bridge state",
+            "state": False,
+        }
+
+        uds = s.create_userdefinedstate("HA bridge state")
+
+        sent_body = s._api.post_userdefinedstate.call_args[0][0]
+        assert sent_body["id"] == ""
+        assert sent_body["name"] == "HA bridge state"
+        assert uds.id == "u-new"
+        assert s._userdefinedstates_by_id["u-new"] is uds
+
+    def test_delete_userdefinedstate_removes_from_cache(self):
+        s = _bare_session()
+        s._userdefinedstates_by_id["u1"] = MagicMock()
+        s.delete_userdefinedstate("u1")
+        s._api.delete_userdefinedstate.assert_called_once_with("u1")
+        assert "u1" not in s._userdefinedstates_by_id
+
     def test_intrusion_system_property(self):
         s = _bare_session()
         ids = _fake_intrusion()

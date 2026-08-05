@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.8 — create/delete Automation rules and UserDefinedStates
+
+**No breaking changes.**
+
+- **New: create and delete support for Automation rules and
+  UserDefinedStates**, on top of the existing get/update/delete/trigger
+  layer. `SHCSession.create_automation_rule()`/`create_userdefinedstate()`
+  (+ async mirrors) POST to the SHC's local `/automation/rules` and
+  `/userdefinedstates` endpoints (both undocumented in the official OpenAPI
+  spec — traced via APK decompile and confirmed live with a create-then-
+  delete round trip against a real Controller; see
+  `bosch-shc-api-docs/best_practice/undocumented-local-endpoints.md` §10 for
+  the full trigger/condition/action type registry this seeds). New
+  `SHCAutomationRule.delete()`/`SHCUserDefinedState.delete()` (+ async)
+  round out the lifecycle. Lays the groundwork for a `boschshc-hass` feature
+  bridging a device's physical pushbutton press into a regular HA entity via
+  an SHC-side automation, without needing a new HA event/device-trigger
+  platform.
+
 ## 0.6.7 — debug-log outgoing PUT/POST requests and their responses
 
 **No breaking changes.**

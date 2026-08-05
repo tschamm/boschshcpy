@@ -579,6 +579,43 @@ class SHCSession:
     def automation_rule(self, rule_id: str) -> SHCAutomationRule:
         return self._automation_rules_by_id[rule_id]
 
+    def create_automation_rule(
+        self,
+        name: str,
+        triggers: list[dict[str, typing.Any]] | None = None,
+        conditions: list[dict[str, typing.Any]] | None = None,
+        actions: list[dict[str, typing.Any]] | None = None,
+        condition_logical_op: str = "AND",
+        enabled: bool = True,
+    ) -> SHCAutomationRule:
+        """Create a new automation rule on the Controller (sync).
+
+        triggers/conditions/actions are the raw ``{"type": ..., "configuration":
+        ...}`` envelope entries (each entry's "configuration" is itself a
+        JSON-encoded string, per-type -- see bosch-shc-api-docs
+        best_practice/undocumented-local-endpoints.md for known type/field
+        shapes). The Controller assigns the id.
+        """
+        body = {
+            "@type": "automationRule",
+            "id": "",
+            "name": name,
+            "enabled": enabled,
+            "automationTriggers": triggers or [],
+            "automationConditions": conditions or [],
+            "automationActions": actions or [],
+            "conditionLogicalOp": condition_logical_op,
+        }
+        raw_rule = self._api.post_automation_rule(body)
+        rule = SHCAutomationRule(api=self._api, raw_rule=raw_rule)
+        self._automation_rules_by_id[rule.id] = rule
+        return rule
+
+    def delete_automation_rule(self, rule_id: str) -> None:
+        """Delete an automation rule and drop it from the local cache (sync)."""
+        self._api.delete_automation_rule(rule_id)
+        self._automation_rules_by_id.pop(rule_id, None)
+
     @property
     def messages(self) -> typing.Sequence[SHCMessage]:
         return list(self._messages_by_id.values())
@@ -593,6 +630,23 @@ class SHCSession:
 
     def userdefinedstate(self, userdefinedstate_id: str) -> SHCUserDefinedState:
         return self._userdefinedstates_by_id[userdefinedstate_id]
+
+    def create_userdefinedstate(
+        self, name: str, state: bool = False
+    ) -> SHCUserDefinedState:
+        """Create a new UserDefinedState on the Controller (sync)."""
+        body = {"@type": "userDefinedState", "id": "", "name": name, "state": state}
+        raw_state = self._api.post_userdefinedstate(body)
+        userdefinedstate = SHCUserDefinedState(
+            api=self._api, info=self.information, raw_state=raw_state
+        )
+        self._userdefinedstates_by_id[userdefinedstate.id] = userdefinedstate
+        return userdefinedstate
+
+    def delete_userdefinedstate(self, userdefinedstate_id: str) -> None:
+        """Delete a UserDefinedState and drop it from the local cache (sync)."""
+        self._api.delete_userdefinedstate(userdefinedstate_id)
+        self._userdefinedstates_by_id.pop(userdefinedstate_id, None)
 
     def get_zigbee_routing_info(self, device_id: str) -> SHCZigbeeRoutingInfo:
         """Fetch+parse Zigbee routing info for a device (on-demand, not cached)."""

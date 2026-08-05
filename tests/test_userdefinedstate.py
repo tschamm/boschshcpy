@@ -1,6 +1,7 @@
 """Regression tests for SHCUserDefinedState — covers #351 (KeyError: 'deleted')."""
 
-from unittest.mock import MagicMock
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -56,3 +57,16 @@ class TestOtherProperties:
     def test_root_device_id(self):
         uds = _make_uds({"id": "u1", "name": "X", "state": False})
         assert uds.root_device_id == "AA:BB:CC:DD:EE:FF"
+
+
+class TestDelete:
+    def test_delete_calls_api_with_id(self):
+        uds = _make_uds({"id": "u42", "name": "X", "state": False})
+        uds.delete()
+        uds._api.delete_userdefinedstate.assert_called_once_with("u42")
+
+    def test_async_delete_awaits_api(self):
+        uds = _make_uds({"id": "u42", "name": "X", "state": False})
+        uds._api.delete_userdefinedstate = AsyncMock()
+        asyncio.run(uds.async_delete())
+        uds._api.delete_userdefinedstate.assert_awaited_once_with("u42")

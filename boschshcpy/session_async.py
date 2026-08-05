@@ -740,6 +740,36 @@ class SHCSessionAsync:
     def automation_rule(self, rule_id: str) -> SHCAutomationRule:
         return self._automation_rules_by_id[rule_id]
 
+    async def async_create_automation_rule(
+        self,
+        name: str,
+        triggers: list[dict[str, Any]] | None = None,
+        conditions: list[dict[str, Any]] | None = None,
+        actions: list[dict[str, Any]] | None = None,
+        condition_logical_op: str = "AND",
+        enabled: bool = True,
+    ) -> SHCAutomationRule:
+        """Mirrors SHCSession.create_automation_rule()."""
+        body = {
+            "@type": "automationRule",
+            "id": "",
+            "name": name,
+            "enabled": enabled,
+            "automationTriggers": triggers or [],
+            "automationConditions": conditions or [],
+            "automationActions": actions or [],
+            "conditionLogicalOp": condition_logical_op,
+        }
+        raw_rule = await self._api.post_automation_rule(body)
+        rule = SHCAutomationRule(api=self._api, raw_rule=raw_rule)  # type: ignore[arg-type]
+        self._automation_rules_by_id[rule.id] = rule
+        return rule
+
+    async def async_delete_automation_rule(self, rule_id: str) -> None:
+        """Mirrors SHCSession.delete_automation_rule()."""
+        await self._api.delete_automation_rule(rule_id)  # type: ignore[misc,func-returns-value]
+        self._automation_rules_by_id.pop(rule_id, None)
+
     @property
     def messages(self) -> Sequence[SHCMessage]:
         return list(self._messages_by_id.values())
@@ -754,6 +784,25 @@ class SHCSessionAsync:
 
     def userdefinedstate(self, userdefinedstate_id: str) -> SHCUserDefinedState:
         return self._userdefinedstates_by_id[userdefinedstate_id]
+
+    async def async_create_userdefinedstate(
+        self, name: str, state: bool = False
+    ) -> SHCUserDefinedState:
+        """Mirrors SHCSession.create_userdefinedstate()."""
+        body = {"@type": "userDefinedState", "id": "", "name": name, "state": state}
+        raw_state = await self._api.post_userdefinedstate(body)
+        userdefinedstate = SHCUserDefinedState(
+            api=self._api,  # type: ignore[arg-type]
+            info=self.information,
+            raw_state=raw_state,
+        )
+        self._userdefinedstates_by_id[userdefinedstate.id] = userdefinedstate
+        return userdefinedstate
+
+    async def async_delete_userdefinedstate(self, userdefinedstate_id: str) -> None:
+        """Mirrors SHCSession.delete_userdefinedstate()."""
+        await self._api.delete_userdefinedstate(userdefinedstate_id)  # type: ignore[misc,func-returns-value]
+        self._userdefinedstates_by_id.pop(userdefinedstate_id, None)
 
     async def get_zigbee_routing_info(self, device_id: str) -> SHCZigbeeRoutingInfo:
         """Fetch+parse Zigbee routing info for a device (on-demand, not cached)."""

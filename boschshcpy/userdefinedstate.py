@@ -48,6 +48,14 @@ class SHCUserDefinedState:
             f"{self._api._api_root}/userdefinedstates/{self.id}/state", state
         )
 
+    def delete(self) -> None:
+        """Permanently delete this UserDefinedState (sync)."""
+        self._api.delete_userdefinedstate(self.id)
+
+    async def async_delete(self) -> None:
+        """Permanently delete this UserDefinedState (async)."""
+        await self._api.delete_userdefinedstate(self.id)  # type: ignore[misc,func-returns-value]
+
     def update_raw_information(self, raw_state: dict[str, Any]) -> None:
         if self._raw_state["id"] != raw_state["id"]:
             raise SHCException("Error due to mismatching ids!")

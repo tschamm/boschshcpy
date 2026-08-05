@@ -83,6 +83,14 @@ class SHCAutomationRule:
         """Manually fire this rule now (async)."""
         await self._api.trigger_automation_rule(self.id)  # type: ignore[misc,func-returns-value]
 
+    def delete(self) -> None:
+        """Permanently delete this rule (sync)."""
+        self._api.delete_automation_rule(self.id)
+
+    async def async_delete(self) -> None:
+        """Permanently delete this rule (async)."""
+        await self._api.delete_automation_rule(self.id)  # type: ignore[misc,func-returns-value]
+
     def summary(self) -> None:
         print(f"automation rule: {self.id}")
         print(f"  Name      : {self.name}")

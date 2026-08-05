@@ -681,6 +681,17 @@ class TestGetEndpoints:
         with pytest.raises(SHCSessionError):
             api.delete_automation_rule("r1")
 
+    def test_post_automation_rule_url_and_body(self):
+        api = _make_api()
+        created = {"@type": "automationRule", "id": "r1", "name": "New rule"}
+        api._requests_session.post.return_value = _fake_response(created)
+        body = {"@type": "automationRule", "id": "", "name": "New rule"}
+        assert api.post_automation_rule(body) == created
+        called_url = api._requests_session.post.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/automation/rules"
+        sent = api._requests_session.post.call_args.kwargs["data"]
+        assert '"name": "New rule"' in sent
+
     # get_device_firmware_state ---------------------------------------------
     def test_get_device_firmware_state_url_and_result(self):
         api = _make_api()
@@ -779,6 +790,32 @@ class TestGetEndpoints:
         api = self._api_with_get([{"@type": "device"}])
         with pytest.raises(SHCSessionError):
             api.get_userdefinedstates()
+
+    def test_post_userdefinedstate_url_and_body(self):
+        api = _make_api()
+        created = {"@type": "userDefinedState", "id": "u1", "name": "New state"}
+        api._requests_session.post.return_value = _fake_response(created)
+        body = {"@type": "userDefinedState", "id": "", "name": "New state"}
+        assert api.post_userdefinedstate(body) == created
+        called_url = api._requests_session.post.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/userdefinedstates"
+        sent = api._requests_session.post.call_args.kwargs["data"]
+        assert '"name": "New state"' in sent
+
+    def test_delete_userdefinedstate_url(self):
+        api = _make_api()
+        api._requests_session.delete.return_value = _fake_response(None)
+        api.delete_userdefinedstate("u1")
+        called_url = api._requests_session.delete.call_args[0][0]
+        assert called_url == f"{_API_ROOT}/userdefinedstates/u1"
+
+    def test_delete_userdefinedstate_raises_on_error(self):
+        api = _make_api()
+        api._requests_session.delete.return_value = _fake_response(
+            None, status_code=500
+        )
+        with pytest.raises(SHCSessionError):
+            api.delete_userdefinedstate("u1")
 
     # get_messages --------------------------------------------------------------
     def test_get_messages_url(self):

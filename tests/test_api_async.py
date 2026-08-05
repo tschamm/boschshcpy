@@ -438,6 +438,64 @@ class TestUrlAndHeaders:
         with pytest.raises(SHCSessionError):
             asyncio.run(api.delete_automation_rule("r1"))
 
+    def test_post_automation_rule_url_and_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        created = {"@type": "automationRule", "id": "r1", "name": "New rule"}
+        resp = _make_mock_response(body=created)
+        api._session.post = MagicMock(return_value=resp)
+
+        result = asyncio.run(
+            api.post_automation_rule({"@type": "automationRule", "id": "", "name": "New rule"})
+        )
+
+        called_url = api._session.post.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/automation/rules"
+        sent = api._session.post.call_args[1]["data"]
+        assert '"name": "New rule"' in sent
+        assert result == created
+
+    def test_post_userdefinedstate_url_and_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        created = {"@type": "userDefinedState", "id": "u1", "name": "New state"}
+        resp = _make_mock_response(body=created)
+        api._session.post = MagicMock(return_value=resp)
+
+        result = asyncio.run(
+            api.post_userdefinedstate({"@type": "userDefinedState", "id": "", "name": "New state"})
+        )
+
+        called_url = api._session.post.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/userdefinedstates"
+        sent = api._session.post.call_args[1]["data"]
+        assert '"name": "New state"' in sent
+        assert result == created
+
+    def test_delete_userdefinedstate_url(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(body={})
+        api._session.delete = MagicMock(return_value=resp)
+
+        asyncio.run(api.delete_userdefinedstate("u1"))
+
+        called_url = api._session.delete.call_args[0][0]
+        assert called_url == "https://192.0.2.1:8444/smarthome/userdefinedstates/u1"
+
+    def test_delete_userdefinedstate_raises_on_error(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        resp = _make_mock_response(status=500, ok=False)
+        api._session.delete = MagicMock(return_value=resp)
+
+        with pytest.raises(SHCSessionError):
+            asyncio.run(api.delete_userdefinedstate("u1"))
+
     def test_get_boiler_capable_rooms_url(
         self, cert_and_key_paths: tuple[str, str]
     ) -> None:

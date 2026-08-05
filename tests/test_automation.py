@@ -204,6 +204,28 @@ def test_async_trigger_awaits_api():
     api.trigger_automation_rule.assert_awaited_once_with("rule-1")
 
 
+# ---------------------------------------------------------------------------
+# delete (sync + async)
+# ---------------------------------------------------------------------------
+
+
+def test_delete_calls_api_with_id():
+    api = MagicMock()
+    rule = _make_rule(api=api)
+    rule.delete()
+    api.delete_automation_rule.assert_called_once_with("rule-1")
+
+
+def test_async_delete_awaits_api():
+    from unittest.mock import AsyncMock
+
+    api = MagicMock()
+    api.delete_automation_rule = AsyncMock()
+    rule = _make_rule(api=api)
+    _run(rule.async_delete())
+    api.delete_automation_rule.assert_awaited_once_with("rule-1")
+
+
 def test_summary_prints_key_fields(capsys):
     _make_rule().summary()
     out = capsys.readouterr().out

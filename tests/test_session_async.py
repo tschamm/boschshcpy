@@ -1018,6 +1018,58 @@ class TestPropertyAccessors:
         s._userdefinedstates_by_id["u1"] = uds
         assert s.userdefinedstate("u1") is uds
 
+    def test_async_create_automation_rule_posts_and_caches(self):
+        s = _bare_session()
+        s._api.post_automation_rule.return_value = {
+            "@type": "automationRule",
+            "id": "r-new",
+            "name": "HA bridge",
+            "enabled": True,
+            "automationTriggers": [],
+            "automationConditions": [],
+            "automationActions": [],
+            "conditionLogicalOp": "AND",
+        }
+
+        rule = asyncio.run(s.async_create_automation_rule("HA bridge"))
+
+        sent_body = s._api.post_automation_rule.call_args[0][0]
+        assert sent_body["id"] == ""
+        assert sent_body["name"] == "HA bridge"
+        assert rule.id == "r-new"
+        assert s._automation_rules_by_id["r-new"] is rule
+
+    def test_async_delete_automation_rule_removes_from_cache(self):
+        s = _bare_session()
+        s._automation_rules_by_id["r1"] = MagicMock()
+        asyncio.run(s.async_delete_automation_rule("r1"))
+        s._api.delete_automation_rule.assert_awaited_once_with("r1")
+        assert "r1" not in s._automation_rules_by_id
+
+    def test_async_create_userdefinedstate_posts_and_caches(self):
+        s = _bare_session()
+        s._api.post_userdefinedstate.return_value = {
+            "@type": "userDefinedState",
+            "id": "u-new",
+            "name": "HA bridge state",
+            "state": False,
+        }
+
+        uds = asyncio.run(s.async_create_userdefinedstate("HA bridge state"))
+
+        sent_body = s._api.post_userdefinedstate.call_args[0][0]
+        assert sent_body["id"] == ""
+        assert sent_body["name"] == "HA bridge state"
+        assert uds.id == "u-new"
+        assert s._userdefinedstates_by_id["u-new"] is uds
+
+    def test_async_delete_userdefinedstate_removes_from_cache(self):
+        s = _bare_session()
+        s._userdefinedstates_by_id["u1"] = MagicMock()
+        asyncio.run(s.async_delete_userdefinedstate("u1"))
+        s._api.delete_userdefinedstate.assert_awaited_once_with("u1")
+        assert "u1" not in s._userdefinedstates_by_id
+
     def test_get_zigbee_routing_info_returns_parsed_model(self):
         from boschshcpy.zigbee_routing import SHCZigbeeRoutingInfo, ZigbeeRoutingQuality
 
