@@ -269,6 +269,8 @@ class SHCAPIAsync:
         """Async PUT — mirrors sync ``_put_api_or_fail``."""
         import aiohttp
 
+        logger.debug("PUT %s body=%s", api_url, body)
+
         async def _attempt() -> Any:
             async with self._session.put(
                 api_url,
@@ -280,6 +282,9 @@ class SHCAPIAsync:
                 if not resp.ok:
                     await self._process_nok_result(resp)
                 content = await resp.read()
+                logger.debug(
+                    "PUT %s -> status=%s body=%s", api_url, resp.status, content
+                )
                 return json.loads(content) if content else {}
 
         return await self._retry_once_on_connection_drop(api_url, _attempt)
@@ -293,6 +298,8 @@ class SHCAPIAsync:
         """Async POST — mirrors sync ``_post_api_or_fail``."""
         import aiohttp
 
+        logger.debug("POST %s body=%s", api_url, body)
+
         async def _attempt() -> Any:
             async with self._session.post(
                 api_url,
@@ -304,6 +311,9 @@ class SHCAPIAsync:
                 if not resp.ok:
                     await self._process_nok_result(resp)
                 content = await resp.read()
+                logger.debug(
+                    "POST %s -> status=%s body=%s", api_url, resp.status, content
+                )
                 return json.loads(content) if content else {}
 
         return await self._retry_once_on_connection_drop(api_url, _attempt)

@@ -150,6 +150,7 @@ class SHCAPI:
                 return {}
 
     def _put_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
+        logger.debug("PUT %s body=%s", api_url, body)
         try:
             result = self._session_request(
                 "PUT", api_url, data=json.dumps(body), timeout=timeout
@@ -158,12 +159,16 @@ class SHCAPI:
             raise SHCConnectionError(f"API call failed: {e}.") from e
         if not result.ok:
             self._process_nok_result(result)
+        logger.debug(
+            "PUT %s -> status=%s body=%s", api_url, result.status_code, result.content
+        )
         if len(result.content) > 0:
             return json.loads(result.content)
         else:
             return {}
 
     def _post_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
+        logger.debug("POST %s body=%s", api_url, body)
         try:
             result = self._session_request(
                 "POST", api_url, data=json.dumps(body), timeout=timeout
@@ -172,6 +177,9 @@ class SHCAPI:
             raise SHCConnectionError(f"API call failed: {e}.") from e
         if not result.ok:
             self._process_nok_result(result)
+        logger.debug(
+            "POST %s -> status=%s body=%s", api_url, result.status_code, result.content
+        )
         if len(result.content) > 0:
             return json.loads(result.content)
         else:

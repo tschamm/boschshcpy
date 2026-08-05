@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.7 — debug-log outgoing PUT/POST requests and their responses
+
+**No breaking changes.**
+
+- **Diagnostics**: `_put_api_or_fail`/`_post_api_or_fail` (both the async and
+  sync API clients) now emit a `logger.debug()` line before sending and
+  after receiving a response for every PUT/POST call — request URL + body,
+  then status code + response body. Previously only the long-poll read
+  stream was visible at debug level; outgoing write/operation calls (e.g. a
+  button pressing `resetCalibrationAndOpen`) left no trace at all, making it
+  impossible to tell from a debug log what the SHC actually returned for a
+  write. Pure logging addition, no behavior change (hass#396 investigation).
+
 ## 0.6.6 — hardened 6 services against KeyError/ValueError on a partial long-poll snapshot
 
 **No breaking changes.**
