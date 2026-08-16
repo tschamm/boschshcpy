@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from enum import Enum
 from typing import Any
@@ -992,14 +993,59 @@ class ShutterControlService(SHCDeviceService):
     async def async_reset_calibration_and_open(self) -> None:
         """Async: trigger the shutter's end-position (re)calibration run.
 
-        Confirmed via APK decompile: the app's
-        ShutterControlInteractor.RESET_CALIBRATION_AND_OPEN_COMMAND =
-        "resetCalibrationAndOpen", called as
-        `deviceService.executeOperation(RESET_CALIBRATION_AND_OPEN_COMMAND,
-        listener)` with no params — same operation/{name} bare-array
-        mechanism as PowerMeterService.async_reset_energy_summation, so the
-        wire body is an empty array `[]`.
+        hass#396: calling `resetCalibrationAndOpen` alone (previous
+        behavior) never made the device enter CALIBRATING — it just did a
+        single directional move, unlike the official app which always runs
+        a full close-then-open sweep. Confirmed via a second round of APK
+        decompile (MicroModuleShadingCalibrationInteractor.java): the app's
+        calibration wizard always runs an "initial test drive" step first —
+        a PUT on this service's own state with placeholder
+        `referenceMovingTimes` (160000ms both directions) and `level: 0.0`,
+        driving the shutter down briefly before stopping — and only *then*
+        calls `resetCalibrationAndOpen`
+        (RESET_CALIBRATION_AND_OPEN_COMMAND, called as
+        `deviceService.executeOperation(..., [])`, an empty-array
+        `operation/{name}` call, same mechanism as
+        PowerMeterService.async_reset_energy_summation). The device
+        apparently needs a non-null `referenceMovingTimes` already present
+        before it treats `resetCalibrationAndOpen` as a real calibration
+        trigger rather than a bare move-to-open command — this replicates
+        that priming step so the SHC has the same precondition the app
+        always gives it.
+
+        Two gaps versus the decompiled app flow, found in post-fix review
+        and closed here: (1) the app only sleeps its fixed 5s *after*
+        confirming the device actually reports MOVING
+        (getWaitMovementModelListener) — a rejected/no-op PUT here would
+        otherwise blindly sleep and STOP a device that never moved; (2) this
+        drives a real shutter motor, so the STOP must still be attempted
+        even if polling for that confirmation fails partway, rather than
+        leaving the shutter driving toward closed with no stop ever sent.
         """
+        await self.async_put_state(
+            {
+                "referenceMovingTimes": {
+                    "movingTimeBottomToTopInMillis": 160000,
+                    "movingTimeTopToBottomInMillis": 160000,
+                },
+                "level": 0.0,
+            }
+        )
+        try:
+            for _ in range(10):
+                await self.async_short_poll()
+                if self.operation_state is self.State.MOVING:
+                    break
+                await asyncio.sleep(0.5)
+            else:
+                logger.debug(
+                    "Calibration test-drive for %s never reported MOVING "
+                    "before timeout; stopping anyway",
+                    self.id,
+                )
+            await asyncio.sleep(5)
+        finally:
+            await self.async_put_state_element("operationState", "STOPPED")
         await self.async_post_operation("resetCalibrationAndOpen", [])
 
     def summary(self) -> None:

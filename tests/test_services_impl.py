@@ -553,14 +553,100 @@ def test_shutter_reset_calibration_and_open_posts_empty_array_operation():
     empty array), so the wire body must be `[]`, matching the same
     operation/{name} mechanism already fixed for Outdoor Siren/PowerMeter."""
     import asyncio
-    from unittest.mock import AsyncMock
+    from unittest.mock import AsyncMock, patch
 
     svc = _make_svc(ShutterControlService, {"operationState": "STOPPED", "calibrated": False})
     svc._api = AsyncMock()
-    asyncio.run(svc.async_reset_calibration_and_open())
+    svc._api.get_device_service = AsyncMock(
+        return_value={
+            "id": "ShutterControlService",
+            "deviceId": "test-device",
+            "path": "/test",
+            "state": {"@type": "testType", "operationState": "STOPPED"},
+        }
+    )
+    with patch("boschshcpy.services_impl.asyncio.sleep", new=AsyncMock()):
+        asyncio.run(svc.async_reset_calibration_and_open())
     call = svc._api.post_device_service_operation.call_args
     assert call.args[2] == "resetCalibrationAndOpen"
     assert call.args[3] == []
+
+
+def test_shutter_reset_calibration_and_open_primes_reference_moving_times():
+    """hass#396: HA-triggered calibration never entered CALIBRATING because,
+    unlike the app, it never primed a non-null referenceMovingTimes before
+    calling resetCalibrationAndOpen. Confirmed via APK decompile
+    (MicroModuleShadingCalibrationInteractor.doInitialTestDrive): the app
+    always PUTs placeholder reference times + drives down + stops first."""
+    import asyncio
+    from unittest.mock import AsyncMock, patch
+
+    svc = _make_svc(ShutterControlService, {"operationState": "STOPPED", "calibrated": False})
+    svc._api = AsyncMock()
+    svc._api.get_device_service = AsyncMock(
+        return_value={
+            "id": "ShutterControlService",
+            "deviceId": "test-device",
+            "path": "/test",
+            "state": {"@type": "testType", "operationState": "STOPPED"},
+        }
+    )
+    with patch("boschshcpy.services_impl.asyncio.sleep", new=AsyncMock()):
+        asyncio.run(svc.async_reset_calibration_and_open())
+    put_calls = svc._api.put_device_service_state.call_args_list
+    assert put_calls[0].args[2] == {
+        "@type": "testType",
+        "referenceMovingTimes": {
+            "movingTimeBottomToTopInMillis": 160000,
+            "movingTimeTopToBottomInMillis": 160000,
+        },
+        "level": 0.0,
+    }
+    assert put_calls[1].args[2] == {"@type": "testType", "operationState": "STOPPED"}
+
+
+def test_shutter_reset_calibration_and_open_stops_as_soon_as_moving_confirmed():
+    """Post-fix review finding: mirroring the app's movementStarted gate
+    (getWaitMovementModelListener) — stop polling for MOVING as soon as it's
+    observed, instead of blindly sleeping through the whole poll budget."""
+    import asyncio
+    from unittest.mock import AsyncMock, patch
+
+    svc = _make_svc(ShutterControlService, {"operationState": "STOPPED", "calibrated": False})
+    svc._api = AsyncMock()
+    svc._api.get_device_service = AsyncMock(
+        return_value={
+            "id": "ShutterControlService",
+            "deviceId": "test-device",
+            "path": "/test",
+            "state": {"@type": "testType", "operationState": "MOVING"},
+        }
+    )
+    with patch("boschshcpy.services_impl.asyncio.sleep", new=AsyncMock()) as mock_sleep:
+        asyncio.run(svc.async_reset_calibration_and_open())
+    # Only the final fixed 5s "let it drive" sleep should fire — no 0.5s
+    # polling-loop sleeps, since MOVING was observed on the first poll.
+    assert mock_sleep.call_args_list == [((5,), {})]
+
+
+def test_shutter_reset_calibration_and_open_stops_even_if_polling_fails():
+    """Post-fix review finding: this drives a real shutter motor — if
+    polling for movement confirmation blows up partway (network blip), the
+    device must not be left driving toward closed with no STOP ever sent."""
+    import asyncio
+    from unittest.mock import AsyncMock, patch
+
+    svc = _make_svc(ShutterControlService, {"operationState": "STOPPED", "calibrated": False})
+    svc._api = AsyncMock()
+    svc._api.get_device_service = AsyncMock(side_effect=RuntimeError("network blip"))
+    with patch("boschshcpy.services_impl.asyncio.sleep", new=AsyncMock()):
+        try:
+            asyncio.run(svc.async_reset_calibration_and_open())
+        except RuntimeError:
+            pass
+    put_calls = svc._api.put_device_service_state.call_args_list
+    assert put_calls[-1].args[2] == {"@type": "testType", "operationState": "STOPPED"}
+    svc._api.post_device_service_operation.assert_not_called()
 
 
 # ===========================================================================

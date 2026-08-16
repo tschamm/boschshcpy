@@ -574,11 +574,12 @@ class TestSHCShutterControl:
         """hass audit: resetCalibrationAndOpen — empty-array operation/{name}
         call, confirmed genuinely called in reachable app code."""
         import asyncio
-        from unittest.mock import AsyncMock
+        from unittest.mock import AsyncMock, patch
 
         d = self._make()
         d._service._api = AsyncMock()
-        asyncio.run(d.async_reset_calibration_and_open())
+        with patch("boschshcpy.services_impl.asyncio.sleep", new=AsyncMock()):
+            asyncio.run(d.async_reset_calibration_and_open())
         call = d._service._api.post_device_service_operation.call_args
         assert call.args[2] == "resetCalibrationAndOpen"
         assert call.args[3] == []

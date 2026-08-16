@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.6.9-beta.1 — Shutter II calibration actually calibrates (hass#396)
+
+**No breaking changes.**
+
+- **`ShutterControlService.async_reset_calibration_and_open()` (and the
+  `SHCShutterControl` model wrapper) now actually triggers a full
+  calibration sweep**, instead of the shutter just nudging toward open and
+  stopping without ever entering `CALIBRATING`. Root cause, found via a
+  second round of APK decompile
+  (`MicroModuleShadingCalibrationInteractor.java`): the official app always
+  primes the device with a PUT of placeholder `referenceMovingTimes`
+  (160000ms both directions) + `level: 0.0` (a brief test-drive toward
+  closed) *before* calling the `resetCalibrationAndOpen` operation — the
+  device apparently needs a non-null `referenceMovingTimes` already present
+  to treat that operation as a real calibration trigger rather than a bare
+  move command. This replicates that priming step: PUT the placeholder
+  times + drive down, wait (with a bounded poll, not a blind sleep) for the
+  device to actually report `MOVING`, then stop and call
+  `resetCalibrationAndOpen` as before. The stop is sent from a `finally`
+  block so a real shutter motor is never left driving with no stop command
+  in flight if something fails partway through.
+- **Needs real-hardware confirmation** — implemented from decompiled app
+  behavior, not yet confirmed against a live Controller. If you're hitting
+  #396, please test this beta and report back.
+
 ## 0.6.8 — create/delete Automation rules and UserDefinedStates
 
 **No breaking changes.**
