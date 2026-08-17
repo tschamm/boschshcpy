@@ -571,15 +571,17 @@ class TestSHCShutterControl:
         assert d.reference_moving_time_bottom_to_top_ms is None
 
     def test_reset_calibration_and_open_delegates_to_service(self):
-        """hass audit: resetCalibrationAndOpen — empty-array operation/{name}
-        call, confirmed genuinely called in reachable app code."""
+        """hass#396 follow-up: just the bare empty-array operation/{name}
+        call, confirmed genuinely called in reachable app code — no client-
+        side priming PUT or forced-stop (those were confirmed harmful, see
+        services_impl.py's async_reset_calibration_and_open docstring)."""
         import asyncio
-        from unittest.mock import AsyncMock, patch
+        from unittest.mock import AsyncMock
 
         d = self._make()
         d._service._api = AsyncMock()
-        with patch("boschshcpy.services_impl.asyncio.sleep", new=AsyncMock()):
-            asyncio.run(d.async_reset_calibration_and_open())
+        asyncio.run(d.async_reset_calibration_and_open())
+        d._service._api.put_device_service_state.assert_not_called()
         call = d._service._api.post_device_service_operation.call_args
         assert call.args[2] == "resetCalibrationAndOpen"
         assert call.args[3] == []

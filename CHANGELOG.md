@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.6.9-beta.2 — Remove the calibration "priming" step, it was counterproductive (hass#396)
+
+**No breaking changes.**
+
+- **`ShutterControlService.async_reset_calibration_and_open()` no longer
+  primes the device with a fake `referenceMovingTimes`/`level: 0.0` PUT
+  before calling `resetCalibrationAndOpen`.** A real debug-log capture from
+  0.6.9-beta.1 showed that priming step was actively counterproductive: the
+  device accepted the placeholder `referenceMovingTimes` (160000ms) as
+  literal calibration data and immediately reported `calibrated: true`
+  *without moving at all* — and `resetCalibrationAndOpen` itself then reset
+  that fake state straight back to `false` anyway, so priming it first
+  accomplished nothing. Worse, the follow-up `level: 0.0` write triggered an
+  ordinary close move unrelated to calibration, which the old code then
+  forcibly interrupted with a hard-coded 5s-sleep-then-STOP, wasting time
+  and leaving the shutter in an arbitrary position before the real
+  calibration drive even started. This now just calls
+  `resetCalibrationAndOpen` directly — no state writes, no polling, no
+  forced stop — letting the device run its own sequence uninterrupted.
+- **Needs real-hardware confirmation** — the debug log confirms this removes
+  a self-inflicted bug, but it isn't yet confirmed that this alone makes
+  calibration complete successfully (the device's own resetCalibrationAndOpen-
+  triggered drive may still stop short on its own; still under
+  investigation). If you're hitting #396, please test this beta and report
+  back — ideally with a debug log capturing the full run through to
+  whatever the shutter settles at.
+
 ## 0.6.9-beta.1 — Shutter II calibration actually calibrates (hass#396)
 
 **No breaking changes.**
