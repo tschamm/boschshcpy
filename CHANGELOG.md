@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.10-beta.1 — Atomic RCC off/heating/cooling write (hass#394)
+
+**No breaking changes.**
+
+- **New `RoomClimateControlService.async_set_hvac_control_mode(value)`** on
+  `SHCClimateControl` writes `HEATING`/`COOLING`/`OFF` for a room in a
+  single atomic `PUT /roomclimatecontrol/roomControlMode` call, using the
+  existing `put_domain_action` helper. Traced from the official Bosch
+  app's `RestRequests.updateRccModesRequest`/`RccModesWorkingCopy` — the
+  app never writes `summerMode` and `operationMode`/`roomControlMode`
+  separately to move a room in/out of off; it sends the target state in
+  one call instead. hass's `climate.py` switches to this for every
+  off/heat/cool/auto transition, fixing the root cause of hass#394's
+  spurious "auto" activity-log entry: the old two-step write exposed a
+  real, momentary intermediate device state on the Controller itself.
+  **Needs real-hardware confirmation** before this ships as stable.
+
 ## 0.6.9-beta.2 — Remove the calibration "priming" step, it was counterproductive (hass#396)
 
 **No breaking changes.**

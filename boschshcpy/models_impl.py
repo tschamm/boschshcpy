@@ -1803,6 +1803,23 @@ class SHCClimateControl(TemperatureLevelMixin):
             "roomControlMode", value
         )
 
+    async def async_set_hvac_control_mode(self, value: str) -> None:
+        """Async write: atomically set HEATING/COOLING/OFF for this room.
+
+        APK ground-truth (hass#394): unlike `room_control_mode` above (which
+        only ever writes HEATING/COOLING to the per-device `roomControlMode`
+        state field), the official app never uses that field to turn a room
+        off -- it uses this separate, room-level endpoint instead, which
+        also accepts "OFF" as a value in the same call. Using it for
+        off<->heating/cooling transitions avoids ever exposing the
+        momentary intermediate state that the old summerMode-then-
+        operationMode write sequence produced (the spurious "auto"
+        activity-log entry).
+        """
+        await self._api.put_domain_action(  # type: ignore[misc, func-returns-value]
+            "roomclimatecontrol/roomControlMode", {self.id: value}
+        )
+
     @property
     def cooling_mode(self) -> bool:
         return self._roomclimatecontrol_service.cooling_mode
