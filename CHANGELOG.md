@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.10-beta.1 — Atomic RCC off/heating/cooling write (hass#394)
+## 0.6.10 — Atomic RCC off/heating/cooling write (hass#394)
 
 **No breaking changes.**
 
@@ -15,7 +15,9 @@
   off/heat/cool/auto transition, fixing the root cause of hass#394's
   spurious "auto" activity-log entry: the old two-step write exposed a
   real, momentary intermediate device state on the Controller itself.
-  **Needs real-hardware confirmation** before this ships as stable.
+  Promoted to stable without a real-hardware confirmation reply on
+  hass#394 — if you hit anything unexpected here, please open a fresh
+  report with a debug log.
 
 ## 0.6.9-beta.2 — Remove the calibration "priming" step, it was counterproductive (hass#396)
 
