@@ -586,6 +586,20 @@ class TestSHCShutterControl:
         assert call.args[2] == "resetCalibrationAndOpen"
         assert call.args[3] == []
 
+    def test_calibrate_delegates_to_service(self):
+        """hass#396: real calibration run, confirmed by Bosch (2026-09-21) —
+        PUT operationState: "CALIBRATING", not resetCalibrationAndOpen."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        d = self._make()
+        d._service._api = AsyncMock()
+        asyncio.run(d.async_calibrate())
+        d._service._api.put_device_service_state.assert_called_once()
+        call = d._service._api.put_device_service_state.call_args
+        assert call.args[2]["operationState"] == "CALIBRATING"
+        d._service._api.post_device_service_operation.assert_not_called()
+
     def test_operation_state_stopped(self):
         from boschshcpy.services_impl import ShutterControlService
         d = self._make("STOPPED")

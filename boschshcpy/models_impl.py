@@ -1234,8 +1234,16 @@ class SHCShutterControl(SHCDevice):
         return self._service.reference_moving_time_bottom_to_top_ms
 
     async def async_reset_calibration_and_open(self) -> None:
-        """Async write: trigger the shutter's end-position (re)calibration run."""
+        """Async write: reset the calibration flag and drive fully open.
+
+        Does NOT calibrate (hass#396, confirmed by Bosch) — use
+        async_calibrate() for the actual calibration run.
+        """
         await self._service.async_reset_calibration_and_open()
+
+    async def async_calibrate(self) -> None:
+        """Async write: run the actual end-position calibration drive."""
+        await self._service.async_calibrate()
 
 
 class SHCMicromoduleShutterControl(

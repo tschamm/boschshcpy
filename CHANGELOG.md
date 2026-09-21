@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.11-beta.1 — Shutter II calibration: the actual fix (hass#396)
+
+**No breaking changes. Needs real-hardware confirmation before promoting to stable.**
+
+- **`ShutterControlService.async_calibrate()` (new) / `SHCShutterControl.async_calibrate()`
+  starts the real end-position calibration drive.** Confirmed by Bosch directly
+  (2026-09-21): `resetCalibrationAndOpen` (used since 0.6.9) never calibrated
+  anything — it only resets the calibration flag and drives the shutter fully
+  open, meant to give the calibration wizard a defined starting position. The
+  actual calibration run is triggered by PUTting the `ShutterControl`
+  `DeviceServiceState` with `operationState: "CALIBRATING"`, which drives the
+  full up/down sequence and ends in `calibrated: true`.
+- Fixed a stale docstring on `async_reset_calibration_and_open` left over from
+  the earlier (incorrect) understanding, and strengthened its tests to assert
+  it does *not* call the old POST-operation path.
+
 ## 0.6.10 — Atomic RCC off/heating/cooling write (hass#394)
 
 **No breaking changes.**

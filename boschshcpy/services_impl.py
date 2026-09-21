@@ -990,7 +990,13 @@ class ShutterControlService(SHCDeviceService):
         return int(raw) if raw is not None else None
 
     async def async_reset_calibration_and_open(self) -> None:
-        """Async: trigger the shutter's end-position (re)calibration run.
+        """Async: reset the calibration flag and drive the shutter fully open.
+
+        Does NOT calibrate anything (hass#396, confirmed by Bosch) — it only
+        resets `calibrated` to `false` and drives to the open end position,
+        meant to give the app's calibration wizard a defined starting
+        position before it separately triggers the real run. Use
+        `async_calibrate()` for the actual calibration drive.
 
         hass#396 follow-up: the previous "priming" PUT (a fake
         `referenceMovingTimes`/`level: 0.0` write before calling this
@@ -1012,6 +1018,24 @@ class ShutterControlService(SHCDeviceService):
         `operation/{name}` call).
         """
         await self.async_post_operation("resetCalibrationAndOpen", [])
+
+    async def async_calibrate(self) -> None:
+        """Async: start the actual end-position calibration drive.
+
+        hass#396: `resetCalibrationAndOpen` (above) does NOT calibrate — per
+        Bosch (2026-09-21), it only resets the calibration flag and drives
+        the shutter fully open (~20s in the uncalibrated state), meant to
+        give the calibration wizard a defined starting position. The real
+        calibration run is triggered by PUTting the ShutterControl
+        DeviceServiceState with `operationState: "CALIBRATING"`, which
+        drives the full up/down sequence and ends in `calibrated: true`.
+        (No PUT-operation existed for device services when the original
+        shutter integration was written, hence the older POST-operation
+        workaround above.)
+        """
+        await self.async_put_state_element(
+            "operationState", self.State.CALIBRATING.value
+        )
 
     def summary(self) -> None:
         super().summary()

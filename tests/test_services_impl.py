@@ -582,6 +582,22 @@ def test_shutter_reset_calibration_and_open_does_not_prime_or_stop():
     svc._api.get_device_service.assert_not_called()
 
 
+def test_shutter_calibrate_puts_operation_state_calibrating():
+    """hass#396: confirmed by Bosch (2026-09-21) that the real calibration
+    run is triggered by PUTting the ShutterControl state with
+    operationState: "CALIBRATING", not by resetCalibrationAndOpen."""
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    svc = _make_svc(ShutterControlService, {"operationState": "STOPPED", "calibrated": False})
+    svc._api = AsyncMock()
+    asyncio.run(svc.async_calibrate())
+    svc._api.put_device_service_state.assert_called_once()
+    call = svc._api.put_device_service_state.call_args
+    assert call.args[2] == {"@type": "testType", "operationState": "CALIBRATING"}
+    svc._api.post_device_service_operation.assert_not_called()
+
+
 # ===========================================================================
 # BlindsControlService
 # ===========================================================================
