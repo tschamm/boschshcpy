@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.13 — Public unregister_event API
+
+- **`SHCDeviceService.unregister_event()` (new).** `register_event` had no
+  public counterpart to remove a callback (unlike `subscribe_callback` /
+  `unsubscribe_callback`), so callers had to reach into the private
+  `_event_callbacks` dict directly. Flagged by ha-core review
+  (home-assistant/core#183139) on the new `bosch_shc` event platform.
+
 ## 0.6.11-beta.1 — Shutter II calibration: the actual fix (hass#396)
 
 **No breaking changes. Needs real-hardware confirmation before promoting to stable.**

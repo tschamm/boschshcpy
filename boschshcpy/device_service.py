@@ -59,6 +59,9 @@ class SHCDeviceService:
     def register_event(self, event: str, callback: Callable[[], None]) -> None:
         self._event_callbacks[event] = callback
 
+    def unregister_event(self, event: str) -> None:
+        self._event_callbacks.pop(event, None)
+
     def summary(self) -> None:
         print(f"  Device Service: {self.id}")
         print(f"    State: {self.state}")

@@ -168,6 +168,21 @@ def test_alarm_register_event_suppresses_replayed_unchanged_value():
         assert calls == [1], f"{service_id} re-fired an unchanged value"
 
 
+def test_unregister_event_stops_further_callbacks():
+    svc = _make_alarm_service("Alarm", "IDLE_OFF")
+    calls = []
+    svc.register_event("dev-1", lambda: calls.append(1))
+
+    svc.unregister_event("dev-1")
+    _poll(svc, "Alarm", "PRIMARY_ALARM")
+    assert calls == [], "callback still fired after unregister_event"
+
+
+def test_unregister_event_on_unknown_key_is_a_no_op():
+    svc = _make_alarm_service("Alarm", "IDLE_OFF")
+    svc.unregister_event("never-registered")  # must not raise
+
+
 def test_non_dict_state_in_poll_result_is_ignored_not_crashed():
     """A "state" that isn't a dict (firmware glitch/partial poll) used to
     crash `.get("@type")` with AttributeError -- same "trusts shape without
