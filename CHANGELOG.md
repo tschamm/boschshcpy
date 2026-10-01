@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.14 — SurveillanceAlarm PRE_ALARM
+
+- **`SurveillanceAlarmService.State.PRE_ALARM` (new).** The Bosch app treats
+  `PRE_ALARM` (light-smoke pre-alarm) as its own `SurveillanceAlarm` value.
+  It was previously folded into `ALARM_OFF`, so a pre-alarm looked like "off".
+
 ## 0.6.13 — Public unregister_event API
 
 - **`SHCDeviceService.unregister_event()` (new).** `register_event` had no

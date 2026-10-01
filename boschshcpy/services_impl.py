@@ -1897,6 +1897,7 @@ class SurveillanceAlarmService(SHCDeviceService):
         ALARM_OFF = "ALARM_OFF"
         ALARM_ON = "ALARM_ON"
         ALARM_MUTED = "ALARM_MUTED"
+        PRE_ALARM = "PRE_ALARM"
 
     @property
     def value(self) -> State:
