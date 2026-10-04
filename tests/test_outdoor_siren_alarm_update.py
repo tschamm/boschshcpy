@@ -91,6 +91,21 @@ class TestOutdoorSirenService:
             "flashDelay": 10,
         }
 
+    def test_sync_config_put_merges_full_block(self):
+        from unittest.mock import MagicMock
+
+        from boschshcpy.services_impl import OutdoorSirenService
+        s = self._svc(api=MagicMock())
+        s.set_configuration(sound_level=OutdoorSirenService.SoundLevel.HIGH)
+        body = s._api.put_device_service_state.call_args.args[2]
+        assert body["outdoorSirenConfiguration"] == {
+            "alarmDuration": 3,
+            "flashDuration": 5,
+            "soundLevel": "HIGH",
+            "alarmDelay": 0,
+            "flashDelay": 10,
+        }
+
     def test_config_put_override_multiple(self):
         s = self._svc(api=AsyncMock())
         asyncio.run(s.async_set_configuration(alarm_duration=9, flash_delay=42))

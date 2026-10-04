@@ -2544,6 +2544,54 @@ class OutdoorSirenService(SHCDeviceService):
         cfg.update(overrides)
         return cfg
 
+    def _configuration_overrides(
+        self,
+        alarm_duration: float | None,
+        flash_duration: float | None,
+        sound_level: OutdoorSirenService.SoundLevel | None,
+        alarm_delay: float | None,
+        flash_delay: float | None,
+    ) -> dict[str, Any] | None:
+        """Merged configuration block, or None if the config is not yet known."""
+        if not self._config:
+            logger.warning(
+                "OutdoorSiren %s: configuration not yet known, skipping write to "
+                "avoid resetting siren settings",
+                self.device_id,
+            )
+            return None
+        overrides: dict[str, Any] = {}
+        if alarm_duration is not None:
+            overrides["alarmDuration"] = alarm_duration
+        if flash_duration is not None:
+            overrides["flashDuration"] = flash_duration
+        if sound_level is not None:
+            overrides["soundLevel"] = sound_level.value
+        if alarm_delay is not None:
+            overrides["alarmDelay"] = alarm_delay
+        if flash_delay is not None:
+            overrides["flashDelay"] = flash_delay
+        return self._merged_config(**overrides)
+
+    def set_configuration(
+        self,
+        *,
+        alarm_duration: float | None = None,
+        flash_duration: float | None = None,
+        sound_level: OutdoorSirenService.SoundLevel | None = None,
+        alarm_delay: float | None = None,
+        flash_delay: float | None = None,
+    ) -> None:
+        """Write: update one or more configuration fields (sync).
+
+        Same semantics as `async_set_configuration`.
+        """
+        config = self._configuration_overrides(
+            alarm_duration, flash_duration, sound_level, alarm_delay, flash_delay
+        )
+        if config is not None:
+            self.put_state_element("outdoorSirenConfiguration", config)
+
     async def async_set_configuration(
         self,
         *,
@@ -2561,27 +2609,11 @@ class OutdoorSirenService(SHCDeviceService):
         read), skip the write rather than PUT a block of zeros that would wipe
         the user's settings.
         """
-        if not self._config:
-            logger.warning(
-                "OutdoorSiren %s: configuration not yet known, skipping write to "
-                "avoid resetting siren settings",
-                self.device_id,
-            )
-            return
-        overrides: dict[str, Any] = {}
-        if alarm_duration is not None:
-            overrides["alarmDuration"] = alarm_duration
-        if flash_duration is not None:
-            overrides["flashDuration"] = flash_duration
-        if sound_level is not None:
-            overrides["soundLevel"] = sound_level.value
-        if alarm_delay is not None:
-            overrides["alarmDelay"] = alarm_delay
-        if flash_delay is not None:
-            overrides["flashDelay"] = flash_delay
-        await self.async_put_state_element(
-            "outdoorSirenConfiguration", self._merged_config(**overrides)
+        config = self._configuration_overrides(
+            alarm_duration, flash_duration, sound_level, alarm_delay, flash_delay
         )
+        if config is not None:
+            await self.async_put_state_element("outdoorSirenConfiguration", config)
 
     async def async_trigger_test_alarm(
         self, sound_level: OutdoorSirenService.SoundLevel | None = None

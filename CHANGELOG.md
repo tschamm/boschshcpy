@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.15 — Sync OutdoorSiren configuration write
+
+- **`OutdoorSirenService.set_configuration()` (new).** Sync counterpart to
+  `async_set_configuration`, for callers using the sync session (Home Assistant
+  Core's `bosch_shc`). Same merged-config semantics and same guard against
+  writing before the configuration is known.
+
 ## 0.6.14 — SurveillanceAlarm PRE_ALARM
 
 - **`SurveillanceAlarmService.State.PRE_ALARM` (new).** The Bosch app treats
