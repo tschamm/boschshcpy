@@ -2000,6 +2000,14 @@ class SHCHeatingCircuit(SHCDevice):
             "operationMode", mode.value
         )
 
+    def set_setpoint_temperature_eco(self, temperature: float) -> None:
+        """Sync write: set HeatingCircuit ECO setpoint temperature."""
+        self._heating_circuit_service.set_setpoint_temperature_eco(temperature)
+
+    def set_setpoint_temperature_comfort(self, temperature: float) -> None:
+        """Sync write: set HeatingCircuit comfort setpoint temperature."""
+        self._heating_circuit_service.set_setpoint_temperature_comfort(temperature)
+
     async def async_set_setpoint_temperature_eco(self, temperature: float) -> None:
         """Async write: set HeatingCircuit ECO setpoint temperature."""
         await self._heating_circuit_service.async_put_state_element(
@@ -3228,6 +3236,54 @@ class SHCMicromoduleDimmer(
     def dimmer_configuration(self) -> DimmerConfigurationService | None:
         """The DimmerConfiguration service (calibration), or None."""
         return self._dimmerconfig_service
+
+    @property
+    def edge_phase_control_mode(
+        self,
+    ) -> DimmerConfigurationService.EdgePhaseControlMode | None:
+        if self._dimmerconfig_service is not None:
+            return self._dimmerconfig_service.edge_phase_control_mode
+        return None
+
+    @edge_phase_control_mode.setter
+    def edge_phase_control_mode(
+        self, mode: DimmerConfigurationService.EdgePhaseControlMode
+    ) -> None:
+        self.set_edge_phase_control_mode(mode)
+
+    @property
+    def dimming_speed(self) -> int | None:
+        if self._dimmerconfig_service is not None:
+            return self._dimmerconfig_service.dimming_speed
+        return None
+
+    @dimming_speed.setter
+    def dimming_speed(self, speed: int) -> None:
+        self.set_dimming_speed(speed)
+
+    def set_edge_phase_control_mode(
+        self, mode: DimmerConfigurationService.EdgePhaseControlMode
+    ) -> None:
+        """Sync write: set the dimmer phase-control mode when supported."""
+        if self._dimmerconfig_service is not None:
+            self._dimmerconfig_service.set_edge_phase_control_mode(mode)
+
+    def set_dimming_speed(self, speed: int) -> None:
+        """Sync write: set the dimming speed when supported."""
+        if self._dimmerconfig_service is not None:
+            self._dimmerconfig_service.set_dimming_speed(speed)
+
+    def set_brightness_range(
+        self,
+        *,
+        min_brightness: int | None = None,
+        max_brightness: int | None = None,
+    ) -> None:
+        """Sync write: update the calibrated brightness range when supported."""
+        if self._dimmerconfig_service is not None:
+            self._dimmerconfig_service.set_brightness_range(
+                min_brightness=min_brightness, max_brightness=max_brightness
+            )
 
     @property
     def binarystate(self) -> bool:

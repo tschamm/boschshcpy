@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.17 — Sync dimmer, profile and heating-circuit setters
+
+- Add sync dimmer phase-control, dimming-speed and brightness-range setters,
+  with micromodule device delegates and scalar property setters. Range writes
+  preserve validation and serialize read-modify-write with a threading lock.
+- Add explicit sync ECO/comfort setpoint setters on HeatingCircuitService and
+  SHCHeatingCircuit, matching the existing async device setters.
+- Confirm the existing SHCDevice.set_profile sync implementation and its tests
+  cover full device payloads, validation and server-response state updates.
+
 ## 0.6.16 — Polling and short-poll robustness
 
 - **A raising callback no longer stops polling.** Each poll result is handled
