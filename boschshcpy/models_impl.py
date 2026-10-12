@@ -2842,7 +2842,7 @@ class SHCTwinguard(SHCBatteryDevice, TemperatureLevelMixin, HumidityLevelMixin):
         return self._airqualitylevel_service.combinedRating
 
     @property
-    def temperature(self) -> float:
+    def temperature(self) -> float | None:
         return self._airqualitylevel_service.temperature
 
     @property
@@ -2863,7 +2863,7 @@ class SHCTwinguard(SHCBatteryDevice, TemperatureLevelMixin, HumidityLevelMixin):
         return self._airqualitylevel_service.humidityRating
 
     @property
-    def purity(self) -> int:
+    def purity(self) -> int | None:
         # See AirQualityLevelService.purity in services_impl.py: the APK's
         # AirQualityLevelState model declares purity as java.lang.Integer
         # (unlike temperature/humidity, which are Float) -- kept as int.

@@ -1837,11 +1837,15 @@ class AirQualityLevelService(SHCDeviceService):
         return str(self.state.get("description", ""))
 
     @property
-    def temperature(self) -> float:
+    def temperature(self) -> float | None:
         # Bosch reports temperature as a JSON number with one decimal
         # (OpenAPI: AirQualityLevelServiceStates.temperature = number).
         # int() truncated it to whole degrees -> stepwise jumps (#352).
-        return float(self.state["temperature"])
+        # Missing when the device reports no value (e.g. empty battery).
+        try:
+            return float(self.state["temperature"])
+        except (KeyError, TypeError):
+            return None
 
     @property
     def temperatureRating(self) -> RatingState:
@@ -1865,7 +1869,7 @@ class AirQualityLevelService(SHCDeviceService):
             return self.RatingState.UNKNOWN
 
     @property
-    def purity(self) -> int:
+    def purity(self) -> int | None:
         # OpenAPI AirQualityLevelServiceStates.purity = number (like
         # temperature/humidity), but the decompiled Android app's
         # AirQualityLevelState model class declares temperature/humidity as
@@ -1874,7 +1878,11 @@ class AirQualityLevelService(SHCDeviceService):
         # doesn't capture. The 0.8.3 follow-up (#352) over-generalized the
         # temperature float-fix to purity too; reverted back to int() here.
         # Do NOT re-float this without new APK/API evidence.
-        return int(self.state["purity"])
+        # Missing when the device reports no value (e.g. empty battery).
+        try:
+            return int(self.state["purity"])
+        except (KeyError, TypeError):
+            return None
 
     @property
     def purityRating(self) -> RatingState:

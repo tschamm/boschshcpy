@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.18 — Tolerate missing Twinguard values
+
+- `AirQualityLevelService.temperature` and `.purity` return `None` instead of
+  raising `KeyError`/`TypeError` when the SHC omits the value or sends `null` (seen with an empty
+  Twinguard battery, home-assistant/core#186016). Existing behaviour with the
+  keys present is unchanged; ratings keep returning `UNKNOWN` when absent.
+
 ## 0.6.17 — Sync dimmer, profile and heating-circuit setters
 
 - Add sync dimmer phase-control, dimming-speed and brightness-range setters,
