@@ -1,8 +1,25 @@
 """An empty Twinguard battery can leave AirQualityLevel values absent (core#186016)."""
 
+from unittest.mock import MagicMock
+
 from boschshcpy.services_impl import AirQualityLevelService
 
-from tests.test_services_impl import _make_svc
+
+def _make_svc(cls, state_dict):
+    svc = cls.__new__(cls)
+    raw = {
+        "id": cls.__name__,
+        "deviceId": "test-device",
+        "path": "/test",
+        "state": {"@type": "testType", **state_dict},
+    }
+    svc._api = MagicMock()
+    svc._raw_device_service = raw
+    svc._raw_state = raw["state"]
+    svc._last_update = None
+    svc._callbacks = {}
+    svc._event_callbacks = {}
+    return svc
 
 
 def test_air_quality_values_present():
