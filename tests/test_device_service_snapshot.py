@@ -208,3 +208,59 @@ def test_non_dict_state_in_poll_result_is_ignored_not_crashed():
         "@type": "powerSwitchState",
         "switchState": "ON",
     }, "malformed state must not overwrite the last-known-good state"
+
+
+def test_push_during_snapshot_apply_is_not_overwritten():
+    """A push landing between the revision check and the snapshot apply must
+    win: the compare+apply and the push assign+bump are mutually exclusive."""
+    import threading
+
+    svc = _make_service()
+    svc._api.get_device_service.return_value = {
+        "@type": "DeviceServiceData",
+        "id": "PowerSwitch",
+        "state": {"@type": "powerSwitchState", "switchState": "OFF"},
+    }
+    pushed = {
+        "@type": "DeviceServiceData",
+        "id": "PowerSwitch",
+        "state": {"@type": "powerSwitchState", "switchState": "ON"},
+    }
+    real_apply = svc._apply_snapshot
+
+    def apply_with_concurrent_push(snapshot):
+        t = threading.Thread(
+            target=svc.process_long_polling_poll_result, args=(pushed,)
+        )
+        t.start()
+        t.join(timeout=0.3)  # blocks on the lock when properly guarded
+        real_apply(snapshot)
+
+    svc._apply_snapshot = apply_with_concurrent_push
+    svc.short_poll()
+    for _ in range(100):
+        if svc.state["switchState"] == "ON":
+            break
+        threading.Event().wait(0.01)
+    assert svc.state["switchState"] == "ON"
+
+
+def test_state_lock_is_per_service_instance():
+    import threading
+    from boschshcpy.device_service import SHCDeviceService
+
+    a = SHCDeviceService.__new__(SHCDeviceService)
+    b = SHCDeviceService.__new__(SHCDeviceService)
+    assert a._state_lock is not b._state_lock
+    assert a._state_lock is a._state_lock
+    done = threading.Event()
+    with a._state_lock:
+
+        def other():
+            with b._state_lock:
+                done.set()
+
+        t = threading.Thread(target=other)
+        t.start()
+        assert done.wait(2)
+        t.join(2)

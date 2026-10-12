@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from enum import Enum
 from typing import Any
@@ -2921,15 +2922,33 @@ class DimmerConfigurationService(SHCDeviceService):
         entities, so editing one without cross-checking the other's cached
         value could otherwise silently send an invalid range to the SHC.
         """
-        new_min = self.min_brightness if min_brightness is None else int(min_brightness)
-        new_max = self.max_brightness if max_brightness is None else int(max_brightness)
-        if new_min >= new_max:
-            raise ValueError(
-                f"Invalid brightness range: minBrightness ({new_min}) must be "
-                f"less than maxBrightness ({new_max})"
-            )
-        rng = {"minBrightness": new_min, "maxBrightness": new_max}
-        await self.async_put_state_element("brightnessRange", rng)
+        # Serialize the read-modify-write: two concurrent/back-to-back partial
+        # writes would otherwise both start from the same cached bounds and the
+        # second would revert the first (whole sub-object is sent).
+        lock = getattr(self, "_range_lock", None)
+        if lock is None:
+            lock = self._range_lock = asyncio.Lock()
+        async with lock:
+            cur_min, cur_max = self.min_brightness, self.max_brightness
+            written = getattr(self, "_written_range", None)
+            # Bounds we wrote ourselves are newer than the cached state until a
+            # push replaces the state object (identity changes).
+            if written is not None and written[0] is self._raw_state:
+                cur_min, cur_max = written[1], written[2]
+            new_min = cur_min if min_brightness is None else int(min_brightness)
+            new_max = cur_max if max_brightness is None else int(max_brightness)
+            if new_min >= new_max:
+                raise ValueError(
+                    f"Invalid brightness range: minBrightness ({new_min}) must be "
+                    f"less than maxBrightness ({new_max})"
+                )
+            rng = {"minBrightness": new_min, "maxBrightness": new_max}
+            # Capture state identity BEFORE the await: a push arriving during
+            # the PUT replaces the state object and must not be paired with our
+            # (now older) written bounds.
+            state_before = self._raw_state
+            await self.async_put_state_element("brightnessRange", rng)
+            self._written_range = (state_before, new_min, new_max)
 
     async def async_preview_max_brightness(self) -> None:
         """Async: flash the load at the configured maximum (calibration)."""

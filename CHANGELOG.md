@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.16 — Polling and short-poll robustness
+
+- **A raising callback no longer stops polling.** Each poll result is handled
+  in isolation, so one failing callback or a malformed embedded
+  `deviceServiceDataModel` no longer drops the rest of the batch or ends the
+  polling thread.
+- **Polling can be restarted after `stop_polling()`**, and a stop/start race
+  can no longer leave an orphaned worker. `stop_polling()` keeps the worker
+  handle while it is still running.
+- **A stale short-poll snapshot no longer overwrites a newer pushed state**,
+  and a JSON `null` service state is ignored instead of crashing.
+- **Brightness-range writes (`async_set_brightness_range`) are serialized**,
+  so setting minimum and maximum back to back no longer undoes the first
+  write.
+
 ## 0.6.15 — Sync OutdoorSiren configuration write
 
 - **`OutdoorSirenService.set_configuration()` (new).** Sync counterpart to

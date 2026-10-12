@@ -29,6 +29,23 @@ logger = logging.getLogger("boschshcpy")
 
 
 class SHCSession:
+    # Lifecycle lock for polling worker/subscription ownership (never held
+    # across Thread.join()). Per instance; the property lazily creates it for
+    # partially constructed (__new__) test doubles. dict.setdefault is atomic,
+    # so concurrent first access yields one shared Condition.
+    @property
+    def _poll_cond(self) -> threading.Condition:
+        cond: threading.Condition = self.__dict__.setdefault(
+            "_poll_cond_obj", threading.Condition()
+        )
+        return cond
+
+    @_poll_cond.setter
+    def _poll_cond(self, value: threading.Condition) -> None:
+        self.__dict__["_poll_cond_obj"] = value
+
+    _poll_stopping: bool = False
+
     def __init__(
         self,
         controller_ip: str,
@@ -41,6 +58,7 @@ class SHCSession:
         ssl_verify: bool = True,
     ) -> None:
         # API
+        self.__dict__["_poll_cond_obj"] = threading.Condition()
         self._long_poll_timeout = long_poll_timeout
         self._api = SHCAPI(
             controller_ip=controller_ip,
@@ -244,7 +262,19 @@ class SHCSession:
         try:
             raw_results = self.api.long_polling_poll(self._poll_id, wait_seconds)
             for raw_result in raw_results:
-                self._process_long_polling_poll_result(raw_result)
+                if self._stop_polling_thread:
+                    # stop_polling() was requested (possibly timed out): don't
+                    # keep dispatching callbacks from a worker being stopped.
+                    break
+                try:
+                    self._process_long_polling_poll_result(raw_result)
+                except Exception as ex:  # noqa: BLE001
+                    # Isolate per result: a malformed event or a raising
+                    # callback (even a RuntimeError, which the worker loop
+                    # treats as shutdown) must not drop the rest of the batch.
+                    logger.error(
+                        "Error processing long poll result: %s. Skipping it.", ex
+                    )
 
             if resubscribed:
                 # hass#370: bulk-refresh every device's own top-level info (in
@@ -368,7 +398,12 @@ class SHCSession:
                         "Ignoring malformed embedded deviceServiceDataModel: %s", ex
                     )
                 else:
-                    self._process_long_polling_poll_result(raw_data_model)
+                    if isinstance(raw_data_model, dict):
+                        self._process_long_polling_poll_result(raw_data_model)
+                    else:
+                        logger.debug(
+                            "Ignoring non-object embedded deviceServiceDataModel"
+                        )
             else:
                 # callback is missing when receiving new message
                 message_id = raw_result["id"]
@@ -439,7 +474,26 @@ class SHCSession:
         return
 
     def start_polling(self) -> None:
+        with self._poll_cond:
+            # Block until an in-flight stop_polling() finished its cleanup
+            # (unsubscribe + handle release); otherwise the older stop would
+            # clear the handle of the worker started here.
+            if self._poll_stopping:
+                self._poll_cond.wait_for(
+                    lambda: not self._poll_stopping,
+                    # Full stop-cleanup budget: join (timeout + 10) plus the
+                    # unsubscribe request (30 s) plus margin.
+                    timeout=self._long_poll_timeout + 10 + 30 + 15,
+                )
+                if self._poll_stopping:
+                    raise SHCSessionError("Polling stop still in progress")
+            self._start_polling_locked()
+
+    def _start_polling_locked(self) -> None:
         if self._polling_thread is None:
+            # A previous stop_polling() (or the RuntimeError path) leaves the
+            # stop flag set; clear it so a restarted worker actually polls.
+            self._stop_polling_thread = False
 
             def polling_thread_main() -> None:
                 try:
@@ -480,7 +534,11 @@ class SHCSession:
                     # already reset by the RuntimeError branch's own
                     # _maybe_unsubscribe() above when that path is taken, and by
                     # stop_polling() itself on the normal path.
-                    self._polling_thread = None
+                    # Only clear our own handle: after stop+restart the slot may
+                    # already belong to a newer worker.
+                    with self._poll_cond:
+                        if self._polling_thread is threading.current_thread():
+                            self._polling_thread = None
 
             self._polling_thread = threading.Thread(
                 target=polling_thread_main, name="SHCPollingThread", daemon=True
@@ -495,27 +553,45 @@ class SHCSession:
         # self._polling_thread concurrently (e.g. after a RuntimeError), which
         # would otherwise turn the .join()/.is_alive() calls below into an
         # AttributeError on None.
-        polling_thread = self._polling_thread
-        if polling_thread is not None:
+        with self._poll_cond:
+            polling_thread = self._polling_thread
+            if polling_thread is None:
+                raise SHCSessionError("Not polling!")
             logger.debug("Unsubscribing from long poll")
             self._stop_polling_thread = True
+            # start_polling() waits until cleanup below is complete.
+            self._poll_stopping = True
+        try:
             # The polling thread may be blocked inside a long-poll HTTP call
             # (timeout = long_poll_timeout + 5). Bound the join so an in-flight
             # poll can't wedge HA shutdown for the full timeout; the daemon
             # thread is reaped by the interpreter if it outlives the join.
+            # Join is deliberately outside the lock (the worker's exit path
+            # takes it).
             polling_thread.join(timeout=self._long_poll_timeout + 10)
-            if polling_thread.is_alive():
+            still_alive = polling_thread.is_alive()
+            if still_alive:
                 logger.warning(
-                    "Long-poll thread did not stop within %ss; it will be "
-                    "reaped on interpreter exit",
+                    "Long-poll thread did not stop within %ss; it will exit "
+                    "on its own (stop flag is set)",
                     self._long_poll_timeout + 10,
                 )
 
-            self._maybe_unsubscribe()
-            self._polling_thread = None
-            self._poll_id = None
-        else:
-            raise SHCSessionError("Not polling!")
+            try:
+                self._maybe_unsubscribe()
+            finally:
+                with self._poll_cond:
+                    # Keep the handle of a still-running worker so
+                    # start_polling() can't spawn a second one next to it; the
+                    # worker clears the handle itself when it exits. Only clear
+                    # the handle we stopped, never a newer worker's.
+                    if not still_alive and self._polling_thread is polling_thread:
+                        self._polling_thread = None
+                    self._poll_id = None
+        finally:
+            with self._poll_cond:
+                self._poll_stopping = False
+                self._poll_cond.notify_all()
 
     def subscribe(self, callback_tuple: Any) -> None:
         self._subscribers.append(callback_tuple)

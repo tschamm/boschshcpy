@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
@@ -7,14 +8,33 @@ from .api import SHCAPI
 
 
 class SHCDeviceService:
+    _state_revision: int = 0
+
+    # Guards revision compare + snapshot apply vs pushed-state assign + revision
+    # bump (polling thread). Only tiny critical sections; no I/O or callbacks.
+    # Per instance (created in __init__); the property lazily creates it for
+    # objects built via __new__ (test doubles). dict.setdefault is atomic, so
+    # concurrent first access still yields a single shared lock.
+    @property
+    def _state_lock(self) -> threading.Lock:
+        lock: threading.Lock = self.__dict__.setdefault(
+            "_state_lock_obj", threading.Lock()
+        )
+        return lock
+
+    @_state_lock.setter
+    def _state_lock(self, value: threading.Lock) -> None:
+        self.__dict__["_state_lock_obj"] = value
+
     def __init__(self, api: SHCAPI, raw_device_service: dict[str, Any]) -> None:
         self._api = api
+        self.__dict__["_state_lock_obj"] = threading.Lock()
         self._raw_device_service = raw_device_service
-        self._raw_state: dict[str, Any] = (
-            self._raw_device_service["state"]
-            if "state" in self._raw_device_service
-            else {}
-        )
+        _state = self._raw_device_service.get("state")
+        self._raw_state: dict[str, Any] = _state if isinstance(_state, dict) else {}
+        # Bumped on every pushed state so a slower short-poll GET snapshot taken
+        # before the push can be recognised as stale and dropped.
+        self._state_revision = 0
         self._last_update: datetime | None = None
 
         self._callbacks: dict[Any, Callable[[], None]] = {}
@@ -113,20 +133,29 @@ class SHCDeviceService:
             self.device_id.replace("#", "%23"), self.id, operation, data
         )
 
+    def _apply_snapshot(self, snapshot: dict[str, Any]) -> None:
+        self._raw_device_service = snapshot
+        if "state" not in snapshot:
+            self._raw_state = {}
+        elif isinstance(snapshot["state"], dict):
+            self._raw_state = snapshot["state"]
+        # else: malformed (e.g. null) state -> keep the previous valid state
+
     def short_poll(self, fire_callbacks: bool = False) -> None:
         now = datetime.now(timezone.utc)  # [S2] single clock read
         if self._last_update is None or (now - self._last_update) > timedelta(
             seconds=1
         ):
-            self._raw_device_service = self._api.get_device_service(
+            revision = self._state_revision
+            snapshot = self._api.get_device_service(
                 self.device_id.replace("#", "%23"), self.id
             )
             self._last_update = now
-            self._raw_state = (
-                self._raw_device_service["state"]
-                if "state" in self._raw_device_service
-                else {}
-            )
+            with self._state_lock:
+                if self._state_revision != revision:
+                    # A newer pushed state arrived while the GET was in flight.
+                    return
+                self._apply_snapshot(snapshot)
             # #183: after a poll-id resubscribe (the SHC rotates poll IDs ~every
             # 24 h) the session refresh loop calls device.update(fire_callbacks=
             # True) → short_poll(fire_callbacks=True) for every service so that
@@ -157,15 +186,16 @@ class SHCDeviceService:
         if self._last_update is None or (now - self._last_update) > timedelta(
             seconds=1
         ):
-            self._raw_device_service = await self._api.get_device_service(
+            revision = self._state_revision
+            snapshot = await self._api.get_device_service(
                 self.device_id.replace("#", "%23"), self.id
             )
             self._last_update = now
-            self._raw_state = (
-                self._raw_device_service["state"]
-                if "state" in self._raw_device_service
-                else {}
-            )
+            with self._state_lock:
+                if self._state_revision != revision:
+                    # A newer pushed state arrived while the GET was in flight.
+                    return
+                self._apply_snapshot(snapshot)
             if fire_callbacks:
                 for fn in list(self._callbacks.values()):  # [S4]
                     fn()
@@ -187,7 +217,9 @@ class SHCDeviceService:
                 return
             if self.state and new_state.get("@type") != self.state.get("@type"):
                 return
-            self._raw_state = new_state  # Update state
+            with self._state_lock:
+                self._raw_state = new_state  # Update state
+                self._state_revision += 1
 
             for fn in list(self._callbacks.values()):  # [S4]
                 fn()

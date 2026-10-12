@@ -715,6 +715,7 @@ class TestPollingLifecycle:
     def test_stop_polling_joins_thread_and_unsubscribes(self):
         s = _bare_session()
         mock_thread = MagicMock()
+        mock_thread.is_alive.return_value = False
         s._polling_thread = mock_thread
         s._poll_id = "pid"
         s._stop_polling_thread = False
@@ -730,6 +731,7 @@ class TestPollingLifecycle:
     def test_stop_polling_clears_poll_id(self):
         s = _bare_session()
         mock_thread = MagicMock()
+        mock_thread.is_alive.return_value = False
         s._polling_thread = mock_thread
         s._poll_id = None  # Already unsubscribed
         s.stop_polling()
@@ -899,7 +901,7 @@ class TestPollingThreadLogic:
 
         target = self._capture_polling_closure(s)
         s._stop_polling_thread = False
-        s._polling_thread = MagicMock()  # simulate "currently polling"
+        s._polling_thread = threading.current_thread()  # simulate "currently polling"
         target()
 
         assert s._polling_thread is None
