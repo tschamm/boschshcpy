@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.19 — Tolerate missing Twinguard humidity
+
+- `AirQualityLevelService.humidity` returns `None` instead of a fabricated
+  `0.0` (when absent) or a `TypeError` (when `null`), so an empty-battery
+  Twinguard no longer crashes setup, `summary()` or the polling callbacks
+  (follow-up to 0.6.18, home-assistant/core#186016).
+
 ## 0.6.18 — Tolerate missing Twinguard values
 
 - `AirQualityLevelService.temperature` and `.purity` return `None` instead of

@@ -1855,11 +1855,15 @@ class AirQualityLevelService(SHCDeviceService):
             return self.RatingState.UNKNOWN
 
     @property
-    def humidity(self) -> float:
+    def humidity(self) -> float | None:
         # OpenAPI AirQualityLevelServiceStates.humidity = number. int()
         # truncated the decimal (same class of bug as temperature, #352)
         # and was inconsistent with HumidityLevelService, which floats.
-        return float(self.state.get("humidity", 0.0))
+        # Missing or null when the device reports no value (empty battery).
+        try:
+            return float(self.state["humidity"])
+        except (KeyError, TypeError):
+            return None
 
     @property
     def humidityRating(self) -> RatingState:

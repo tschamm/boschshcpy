@@ -15,6 +15,12 @@ def test_air_quality_temperature_and_purity_absent_return_none():
     svc = _make_svc(AirQualityLevelService, {"humidity": 55.5})
     assert svc.temperature is None
     assert svc.purity is None
+    assert svc.humidity == 55.5
+
+
+def test_air_quality_humidity_absent_or_null_returns_none():
+    assert _make_svc(AirQualityLevelService, {}).humidity is None
+    assert _make_svc(AirQualityLevelService, {"humidity": None}).humidity is None
 
 
 def test_air_quality_ratings_absent_stay_unknown():

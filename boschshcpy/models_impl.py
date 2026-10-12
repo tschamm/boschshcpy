@@ -2855,7 +2855,7 @@ class SHCTwinguard(SHCBatteryDevice, TemperatureLevelMixin, HumidityLevelMixin):
         return True
 
     @property
-    def humidity(self) -> float:
+    def humidity(self) -> float | None:
         return self._airqualitylevel_service.humidity
 
     @property
