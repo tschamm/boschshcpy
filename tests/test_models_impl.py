@@ -1595,6 +1595,72 @@ class TestSHCSmokeDetectionSystem:
         d = self._make("ALARM_MUTED")
         assert d.alarm == SurveillanceAlarmService.State.ALARM_MUTED
 
+    def _with_messages(self, messages):
+        from unittest.mock import MagicMock
+
+        d = self._make("ALARM_ON")
+        d._api = MagicMock()
+        d._api.get_messages.return_value = messages
+        d._raw_device["id"] = "sds"
+        return d
+
+    @staticmethod
+    def _msg(events, source="sds", name="SMOKE_ALARM"):
+        return {
+            "messageCode": {"name": name},
+            "sourceId": source,
+            "arguments": {"surveillanceEvents": events},
+        }
+
+    def test_triggered_device_ids_list_and_string_events(self):
+        import json
+
+        d = self._with_messages(
+            [
+                self._msg([{"type": "SMOKE_PRIMARY", "triggerId": "tw1"}]),
+                self._msg(json.dumps([{"type": "SMOKE_LIGHT", "device": "tw2"}])),
+            ]
+        )
+        assert d.triggered_device_ids() == {"tw1", "tw2"}
+
+    def test_triggered_device_ids_ignores_other_messages(self):
+        d = self._with_messages(
+            [
+                self._msg([{"type": "SMOKE_PRIMARY", "triggerId": "tw1"}], source="x"),
+                self._msg([{"type": "SMOKE_PRIMARY", "triggerId": "tw1"}], name="OTHER"),
+                self._msg([{"type": "ALARM_OFF", "triggerId": "tw1"}]),
+                {"messageCode": "bad"},
+                {"messageCode": {"name": "SMOKE_ALARM"}, "sourceId": "sds", "arguments": 1},
+                self._msg("not json"),
+                self._msg(5),
+                None,
+                self._msg([{"type": "SMOKE_PRIMARY", "triggerId": ["a"]}]),
+                self._msg([{"type": "SMOKE_PRIMARY", "triggerId": 5}]),
+            ]
+        )
+        assert d.triggered_device_ids() == set()
+
+    def test_triggered_device_ids_alarm_off_returns_empty(self):
+        d = self._with_messages(
+            [self._msg([{"type": "SMOKE_PRIMARY", "triggerId": "tw1"}])]
+        )
+        d._surveillancealarm_service._raw_state["value"] = "ALARM_OFF"
+        assert d.triggered_device_ids() == set()
+        d._api.get_messages.assert_not_called()
+
+    def test_async_triggered_device_ids(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        d = self._with_messages([])
+        d._api.get_messages = AsyncMock(
+            return_value=[self._msg([{"type": "SMOKE_PRIMARY", "triggerId": "tw1"}])]
+        )
+        assert asyncio.run(d.async_triggered_device_ids()) == {"tw1"}
+
+    def test_triggered_device_ids_no_messages(self):
+        assert self._with_messages(None).triggered_device_ids() == set()
+
 
 # ---------------------------------------------------------------------------
 # SHCPresenceSimulationSystem

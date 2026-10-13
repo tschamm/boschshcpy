@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import colorsys
+import json
 from enum import Enum, Flag, auto
 from typing import Any
 
@@ -2967,6 +2968,59 @@ class SHCSmokeDetectionSystem(SHCDevice):
     @property
     def alarm(self) -> SurveillanceAlarmService.State:
         return self._surveillancealarm_service.value
+
+    def triggered_device_ids(self) -> set[str]:
+        """Sync: ids of the devices that raised the active smoke alarm.
+
+        Reads the controller messages (a blocking request) and returns an
+        empty set while the alarm state is off. Messages of ended alarms
+        (``ALARM_OFF`` event) are skipped. The device id is read from
+        ``triggerId``, or from ``device`` as the Bosch app does.
+        Connection errors of the request are not caught.
+        """
+        if self.alarm == SurveillanceAlarmService.State.ALARM_OFF:
+            return set()
+        return self._device_ids_from_messages(self._api.get_messages())
+
+    async def async_triggered_device_ids(self) -> set[str]:
+        """Async: ids of the devices that raised the active smoke alarm."""
+        if self.alarm == SurveillanceAlarmService.State.ALARM_OFF:
+            return set()
+        return self._device_ids_from_messages(await self._api.get_messages())
+
+    def _device_ids_from_messages(self, messages: Any) -> set[str]:
+        device_ids: set[str] = set()
+        for message in messages or []:
+            if not isinstance(message, dict):
+                continue
+            code = message.get("messageCode")
+            if not isinstance(code, dict) or code.get("name") != "SMOKE_ALARM":
+                continue
+            if message.get("sourceId") != self.id:
+                continue
+            arguments = message.get("arguments")
+            if not isinstance(arguments, dict):
+                continue
+            events = self._surveillance_events(arguments.get("surveillanceEvents"))
+            if any(str(event.get("type")).upper() == "ALARM_OFF" for event in events):
+                continue
+            for event in events:
+                device_id = event.get("triggerId") or event.get("device")
+                if isinstance(device_id, str) and device_id:
+                    device_ids.add(device_id)
+        return device_ids
+
+    @staticmethod
+    def _surveillance_events(raw_events: Any) -> list[dict[str, Any]]:
+        # Some firmware versions send the events as a JSON-encoded string.
+        if isinstance(raw_events, str):
+            try:
+                raw_events = json.loads(raw_events)
+            except ValueError:
+                return []
+        if not isinstance(raw_events, list):
+            return []
+        return [event for event in raw_events if isinstance(event, dict)]
 
 
 class SHCPresenceSimulationSystem(SHCDevice):

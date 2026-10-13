@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.20 — Triggering devices of a smoke alarm
+
+- New `SHCSmokeDetectionSystem.triggered_device_ids()` and
+  `async_triggered_device_ids()` return the ids of the devices (for example
+  Twinguards) that raised the active smoke alarm, read from the controller's
+  `SMOKE_ALARM` messages. They return an empty set while the alarm is off and
+  skip messages of ended alarms. Used by the Home Assistant Twinguard smoke
+  sensor (home-assistant/core#186227).
+
 ## 0.6.19 — Tolerate missing Twinguard humidity
 
 - `AirQualityLevelService.humidity` returns `None` instead of a fabricated
