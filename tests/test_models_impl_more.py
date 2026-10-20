@@ -1511,3 +1511,48 @@ class TestSHCBoiler:
         obj = self._make(api=api)
         asyncio.run(obj.async_add_linked_room("hz_4"))
         api.put_boiler_add_room.assert_awaited_once_with(obj.id, "hz_4")
+
+
+class TestMotionDetectorEnableIlluminance:
+    """Both Motion Detector generations ask the SHC to report illuminance (#440)."""
+
+    @staticmethod
+    def _rd():
+        return {
+            "id": "hdm:ZigBee:abc",
+            "rootDeviceId": "root-1",
+            "deviceModel": "MD",
+            "name": "MD",
+            "manufacturer": "Bosch",
+            "status": "AVAILABLE",
+            "deviceServiceIds": [],
+        }
+
+    def test_sync_calls_api_with_device_id(self):
+        from unittest.mock import MagicMock
+
+        from boschshcpy.models_impl import SHCMotionDetector, SHCMotionDetector2
+
+        for cls in (SHCMotionDetector, SHCMotionDetector2):
+            api = MagicMock()
+            cls(
+                api=api, raw_device=self._rd(), raw_device_services=[]
+            ).enable_illuminance_sensor()
+            api.put_motion_detector_illuminance_enable.assert_called_once_with(
+                "hdm:ZigBee:abc"
+            )
+
+    def test_async_awaits_api(self):
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock
+
+        from boschshcpy.models_impl import SHCMotionDetector, SHCMotionDetector2
+
+        for cls in (SHCMotionDetector, SHCMotionDetector2):
+            api = MagicMock()
+            api.put_motion_detector_illuminance_enable = AsyncMock()
+            dev = cls(api=api, raw_device=self._rd(), raw_device_services=[])
+            asyncio.run(dev.async_enable_illuminance_sensor())
+            api.put_motion_detector_illuminance_enable.assert_awaited_once_with(
+                "hdm:ZigBee:abc"
+            )

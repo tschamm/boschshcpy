@@ -327,6 +327,20 @@ class TestUrlAndHeaders:
         sent = api._session.put.call_args[1]["data"]
         assert '"profile": "OUTDOOR"' in sent
 
+    def test_put_motion_detector_illuminance_enable_url_and_no_body(
+        self, cert_and_key_paths: tuple[str, str]
+    ) -> None:
+        api = _make_api(cert_and_key_paths)
+        api._session.put = MagicMock(return_value=_make_mock_response(body={}))
+
+        asyncio.run(api.put_motion_detector_illuminance_enable("hdm:ZigBee:abc"))
+
+        assert api._session.put.call_args[0][0] == (
+            "https://192.0.2.1:8444/smarthome/motiondetectors/"
+            "hdm%3AZigBee%3Aabc/sensors/illuminance/enable"
+        )
+        assert api._session.put.call_args[1]["data"] == "null"
+
     def test_put_device_firmware_activation_url_and_no_body(
         self, cert_and_key_paths: tuple[str, str]
     ) -> None:

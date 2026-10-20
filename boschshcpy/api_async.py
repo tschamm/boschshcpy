@@ -426,6 +426,19 @@ class SHCAPIAsync:
         api_url = f"{self._api_root}/devicemanagement/firmware/{urllib.parse.quote(device_id, safe='')}/activate"
         await self._put_api_or_fail(api_url, body=None)
 
+    async def put_motion_detector_illuminance_enable(self, device_id: str) -> None:
+        """Ask the SHC to report this Motion Detector's illuminance (no body).
+
+        The MultiLevelSensor only reports lux while a MotionLight or an
+        illuminance automation needs it (official OpenAPI). The Bosch app
+        calls this endpoint when an illuminance trigger/condition is
+        configured (APK: RestRequests.activateMotionDetectorIlluminanceSensor
+        -> PUT motiondetectors/{id}/sensors/illuminance/enable). Not in the
+        OpenAPI spec. NEVER_BLIND_FIX: confirm on real hardware.
+        """
+        api_url = f"{self._api_root}/motiondetectors/{urllib.parse.quote(device_id, safe='')}/sensors/illuminance/enable"
+        await self._put_api_or_fail(api_url, body=None)
+
     async def get_device_firmware_state(self, device_id: str) -> str | None:
         """Probe this device's firmware lifecycle state (no OpenAPI spec).
 

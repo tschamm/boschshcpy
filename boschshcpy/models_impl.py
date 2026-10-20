@@ -2468,6 +2468,16 @@ class SHCMotionDetector(SHCBatteryDevice):
     def illuminance(self) -> int:
         return self._multi_level_sensor_service.illuminance
 
+    def enable_illuminance_sensor(self) -> None:
+        """Ask the SHC to report illuminance for this detector (sync)."""
+        self._api.put_motion_detector_illuminance_enable(self.id)
+
+    async def async_enable_illuminance_sensor(self) -> None:
+        """Ask the SHC to report illuminance for this detector (async)."""
+        # self._api is typed SHCAPI (sync) but duck-typed to SHCAPIAsync at
+        # runtime for async sessions, see SHCDevice.async_activate_firmware_update.
+        await self._api.put_motion_detector_illuminance_enable(self.id)  # type: ignore[misc,func-returns-value]
+
 
 class SHCMotionDetector2(SHCBatteryDevice):
     def __init__(
@@ -2537,6 +2547,16 @@ class SHCMotionDetector2(SHCBatteryDevice):
     @property
     def illuminance(self) -> int:
         return self._multi_level_sensor_service.illuminance
+
+    def enable_illuminance_sensor(self) -> None:
+        """Ask the SHC to report illuminance for this detector (sync)."""
+        self._api.put_motion_detector_illuminance_enable(self.id)
+
+    async def async_enable_illuminance_sensor(self) -> None:
+        """Ask the SHC to report illuminance for this detector (async)."""
+        # self._api is typed SHCAPI (sync) but duck-typed to SHCAPIAsync at
+        # runtime for async sessions, see SHCDevice.async_activate_firmware_update.
+        await self._api.put_motion_detector_illuminance_enable(self.id)  # type: ignore[misc,func-returns-value]
 
     @property
     def supports_light(self) -> bool:

@@ -436,6 +436,17 @@ class TestGetEndpoints:
         sent = api._requests_session.put.call_args.kwargs["data"]
         assert sent == "null"
 
+    def test_put_motion_detector_illuminance_enable_url_and_no_body(self):
+        api = _make_api()
+        api._requests_session.put.return_value = _fake_response(None)
+        api.put_motion_detector_illuminance_enable("hdm:ZigBee:abc")
+        called_url = api._requests_session.put.call_args[0][0]
+        assert (
+            called_url
+            == f"{_API_ROOT}/motiondetectors/hdm%3AZigBee%3Aabc/sensors/illuminance/enable"
+        )
+        assert api._requests_session.put.call_args.kwargs["data"] == "null"
+
     def test_put_device_firmware_activation_encodes_special_chars(self):
         api = _make_api()
         api._requests_session.put.return_value = _fake_response(None)

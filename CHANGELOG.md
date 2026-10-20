@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.21 — Enable Motion Detector illuminance reporting
+
+- New `SHCMotionDetector.enable_illuminance_sensor()` /
+  `async_enable_illuminance_sensor()` (also on `SHCMotionDetector2`) and
+  `put_motion_detector_illuminance_enable()` on both API clients. The
+  controller only reports a Motion Detector's lux while a motion light or an
+  illuminance automation needs it, so the value could stay frozen for weeks
+  (tschamm/boschshc-hass#440). The Bosch app asks for it with
+  `PUT motiondetectors/{id}/sensors/illuminance/enable` (found in the app,
+  not in the OpenAPI spec). Not yet confirmed on real hardware.
+
 ## 0.6.20 — Triggering devices of a smoke alarm
 
 - New `SHCSmokeDetectionSystem.triggered_device_ids()` and
