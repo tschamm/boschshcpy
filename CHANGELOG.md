@@ -6,8 +6,10 @@
   `get_measurements_page()` on both API clients. They read
   `smoke/states/system`, `smoke/configuration` and
   `historicdata/page/{sensorId}`, which the Bosch app uses but the OpenAPI
-  spec does not list. The replies are returned as plain dicts. Not yet
-  confirmed on real hardware.
+  spec does not list. The replies are returned as plain dicts. Checked on a
+  controller without a smoke system: the two smoke endpoints answer as
+  described, and the history endpoint exists (it answers `404` for a sensor
+  without stored measurements). A history page with data has not been seen yet.
 
 ## 0.6.21 — Enable Motion Detector illuminance reporting
 
