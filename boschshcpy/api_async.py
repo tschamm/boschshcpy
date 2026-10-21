@@ -46,7 +46,7 @@ logger = logging.getLogger("boschshcpy")
 # Re-export so callers can ``from boschshcpy.api_async import JSONRPCError``
 # without importing the sync api module.
 from .api import JSONRPCError as JSONRPCError  # noqa: E402  -- explicit re-export for mypy
-from .api import _check_measurements_args
+from .api import _check_measurements_args  # noqa: E402
 
 
 def build_ssl_context(certificate: str, key: str) -> ssl.SSLContext:
