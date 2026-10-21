@@ -565,7 +565,9 @@ class SHCAPIAsync:
         Found in the Bosch app, not in the OpenAPI spec. The wire ``@type`` is
         not verified, so it is not checked here.
         """
-        return await self._get_api_result_or_fail(f"{self._api_root}/smoke/states/system")
+        return await self._get_api_result_or_fail(
+            f"{self._api_root}/smoke/states/system"
+        )
 
     async def get_smoke_configuration(self) -> Any:
         """Smoke detection system configuration (``GET smoke/configuration``).
@@ -573,7 +575,9 @@ class SHCAPIAsync:
         Lists the alarm actuator groups. Found in the Bosch app, not in the
         OpenAPI spec.
         """
-        return await self._get_api_result_or_fail(f"{self._api_root}/smoke/configuration")
+        return await self._get_api_result_or_fail(
+            f"{self._api_root}/smoke/configuration"
+        )
 
     async def get_measurements_page(
         self,
