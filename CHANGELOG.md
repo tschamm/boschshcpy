@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.22 — Read-only smoke system and measurement history endpoints
+
+- New `get_smoke_system_state()`, `get_smoke_configuration()` and
+  `get_measurements_page()` on both API clients. They read
+  `smoke/states/system`, `smoke/configuration` and
+  `historicdata/page/{sensorId}`, which the Bosch app uses but the OpenAPI
+  spec does not list. The replies are returned as plain dicts. Not yet
+  confirmed on real hardware.
+
 ## 0.6.21 — Enable Motion Detector illuminance reporting
 
 - New `SHCMotionDetector.enable_illuminance_sensor()` /

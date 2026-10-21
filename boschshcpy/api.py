@@ -29,6 +29,26 @@ class HostNameIgnoringAdapter(HTTPAdapter):
         )
 
 
+def _check_measurements_args(
+    sensor_id: str,
+    reference_time: int,
+    interval: int,
+    rounding: int,
+    overlap: int,
+) -> None:
+    """Reject arguments the controller cannot make sense of before the request."""
+    if not isinstance(sensor_id, str) or not sensor_id:
+        raise ValueError("sensor_id must be a non-empty string")
+    for name, value, minimum in (
+        ("reference_time", reference_time, 0),
+        ("interval", interval, 1),
+        ("rounding", rounding, 1),
+        ("overlap", overlap, 0),
+    ):
+        if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+            raise ValueError(f"{name} must be an integer >= {minimum} (seconds)")
+
+
 class SHCAPI:
     def __init__(
         self,
@@ -407,6 +427,47 @@ class SHCAPI:
     def get_domain_intrusion_detection(self) -> Any:
         api_url = f"{self._api_root}/intrusion/states/system"
         return self._get_api_result_or_fail(api_url, expected_type="systemState")
+
+    def get_smoke_system_state(self) -> Any:
+        """Smoke detection system availability (``GET smoke/states/system``).
+
+        Found in the Bosch app, not in the OpenAPI spec. The wire ``@type`` is
+        not verified, so it is not checked here.
+        """
+        return self._get_api_result_or_fail(f"{self._api_root}/smoke/states/system")
+
+    def get_smoke_configuration(self) -> Any:
+        """Smoke detection system configuration (``GET smoke/configuration``).
+
+        Lists the alarm actuator groups. Found in the Bosch app, not in the
+        OpenAPI spec.
+        """
+        return self._get_api_result_or_fail(f"{self._api_root}/smoke/configuration")
+
+    def get_measurements_page(
+        self,
+        sensor_id: str,
+        reference_time: int,
+        interval: int,
+        rounding: int,
+        overlap: int = 0,
+    ) -> Any:
+        """One page of measurement history (``GET historicdata/page/{id}``).
+
+        All times are in seconds (``reference_time`` is epoch seconds). The
+        reply holds ``times`` and a ``history`` map from measurement type
+        (``TEMPERATURE``, ``HUMIDITY``, ``PURITY``, ...) to a list of values.
+        An empty reply comes back as an empty dict. Found in the Bosch app
+        (Twinguard charts), not in the OpenAPI spec.
+        """
+        _check_measurements_args(sensor_id, reference_time, interval, rounding, overlap)
+        api_url = (
+            f"{self._api_root}/historicdata/page/"
+            f"{urllib.parse.quote(sensor_id, safe='')}"
+            f"?referenceTime={int(reference_time)}&interval={int(interval)}"
+            f"&rounding={int(rounding)}&overlap={int(overlap)}"
+        )
+        return self._get_api_result_or_fail(api_url)
 
     def get_zigbee_routing_info(self, device_id: str) -> Any:
         """Fetch Zigbee routing info for a device.
