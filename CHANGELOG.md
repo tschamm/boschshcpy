@@ -1,7 +1,13 @@
 # Changelog
 
-## 0.6.23 — Illuminance enable request sent without a body
+## 0.6.23 — Value bounds for LED and display settings, illuminance enable fix
 
+- New read-only properties for the limits the controller reports:
+  `led_brightness_min` / `led_brightness_max` / `led_brightness_step` on
+  Smart Plug and Smart Plug Compact, and `display_brightness_min` / `_max` /
+  `_step_size` plus `display_on_time_min` / `_max` / `_step_size` on
+  Thermostat II and Room Thermostat II. Lets integrations use the device's
+  real limits instead of fixed ranges.
 - `put_motion_detector_illuminance_enable()` now sends the request without any
   body, exactly like the Bosch app. It used to send a JSON `null` body, which
   the controller may ignore (#440). Not yet confirmed on a real Motion

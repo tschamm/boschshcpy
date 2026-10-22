@@ -651,6 +651,24 @@ class SHCSmartPlug(PowerMeterMixin, _PowerSwitch, _PowerSwitchProgram):
         if self._led_brightness_configuration_service is not None:
             self._led_brightness_configuration_service.brightness = value
 
+    @property
+    def led_brightness_min(self) -> int | None:
+        if self._led_brightness_configuration_service is None:
+            return None
+        return self._led_brightness_configuration_service.min_brightness
+
+    @property
+    def led_brightness_max(self) -> int | None:
+        if self._led_brightness_configuration_service is None:
+            return None
+        return self._led_brightness_configuration_service.max_brightness
+
+    @property
+    def led_brightness_step(self) -> int | None:
+        if self._led_brightness_configuration_service is None:
+            return None
+        return self._led_brightness_configuration_service.step_size
+
     async def async_set_led_brightness(self, value: int) -> None:
         """Async write: set LED brightness."""
         if self._led_brightness_configuration_service is not None:
@@ -806,6 +824,24 @@ class SHCSmartPlugCompact(
     def led_brightness(self, value: int) -> None:
         if self._led_brightness_configuration_service is not None:
             self._led_brightness_configuration_service.brightness = value
+
+    @property
+    def led_brightness_min(self) -> int | None:
+        if self._led_brightness_configuration_service is None:
+            return None
+        return self._led_brightness_configuration_service.min_brightness
+
+    @property
+    def led_brightness_max(self) -> int | None:
+        if self._led_brightness_configuration_service is None:
+            return None
+        return self._led_brightness_configuration_service.max_brightness
+
+    @property
+    def led_brightness_step(self) -> int | None:
+        if self._led_brightness_configuration_service is None:
+            return None
+        return self._led_brightness_configuration_service.step_size
 
     async def async_set_led_brightness(self, value: int) -> None:
         """Async write: set LED brightness."""
@@ -2115,6 +2151,42 @@ class SHCThermostatGen2(SHCThermostat):
         if self._display_config_service is not None:
             self._display_config_service.display_on_time = value
 
+    @property
+    def display_brightness_min(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_brightness_min
+
+    @property
+    def display_brightness_max(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_brightness_max
+
+    @property
+    def display_brightness_step_size(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_brightness_step_size
+
+    @property
+    def display_on_time_min(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_on_time_min
+
+    @property
+    def display_on_time_max(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_on_time_max
+
+    @property
+    def display_on_time_step_size(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_on_time_step_size
+
     async def async_set_display_on_time(self, value: int) -> None:
         if self._display_config_service is not None:
             await self._display_config_service.async_set_displayOnTime(value)
@@ -2278,6 +2350,42 @@ class SHCRoomThermostat2(
     def display_on_time(self, value: int) -> None:
         if self._display_config_service is not None:
             self._display_config_service.display_on_time = value
+
+    @property
+    def display_brightness_min(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_brightness_min
+
+    @property
+    def display_brightness_max(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_brightness_max
+
+    @property
+    def display_brightness_step_size(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_brightness_step_size
+
+    @property
+    def display_on_time_min(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_on_time_min
+
+    @property
+    def display_on_time_max(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_on_time_max
+
+    @property
+    def display_on_time_step_size(self) -> int | None:
+        if self._display_config_service is None:
+            return None
+        return self._display_config_service.display_on_time_step_size
 
     async def async_set_display_on_time(self, value: int) -> None:
         if self._display_config_service is not None:
