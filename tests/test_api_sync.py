@@ -445,7 +445,7 @@ class TestGetEndpoints:
             called_url
             == f"{_API_ROOT}/motiondetectors/hdm%3AZigBee%3Aabc/sensors/illuminance/enable"
         )
-        assert api._requests_session.put.call_args.kwargs["data"] == "null"
+        assert api._requests_session.put.call_args.kwargs["data"] is None
 
     def test_put_device_firmware_activation_encodes_special_chars(self):
         api = _make_api()

@@ -339,7 +339,7 @@ class TestUrlAndHeaders:
             "https://192.0.2.1:8444/smarthome/motiondetectors/"
             "hdm%3AZigBee%3Aabc/sensors/illuminance/enable"
         )
-        assert api._session.put.call_args[1]["data"] == "null"
+        assert api._session.put.call_args[1]["data"] is None
 
     def test_put_device_firmware_activation_url_and_no_body(
         self, cert_and_key_paths: tuple[str, str]

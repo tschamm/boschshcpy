@@ -169,11 +169,16 @@ class SHCAPI:
             else:
                 return {}
 
-    def _put_api_or_fail(self, api_url: str, body: Any, timeout: int = 30) -> Any:
+    def _put_api_or_fail(
+        self, api_url: str, body: Any, timeout: int = 30, send_body: bool = True
+    ) -> Any:
         logger.debug("PUT %s body=%s", api_url, body)
         try:
             result = self._session_request(
-                "PUT", api_url, data=json.dumps(body), timeout=timeout
+                "PUT",
+                api_url,
+                data=json.dumps(body) if send_body else None,
+                timeout=timeout,
             )
         except requests.exceptions.RequestException as e:
             raise SHCConnectionError(f"API call failed: {e}.") from e
@@ -315,7 +320,8 @@ class SHCAPI:
         OpenAPI spec. NEVER_BLIND_FIX: confirm on real hardware.
         """
         api_url = f"{self._api_root}/motiondetectors/{urllib.parse.quote(device_id, safe='')}/sensors/illuminance/enable"
-        self._put_api_or_fail(api_url, body=None)
+        # The app sends no request body at all (not a JSON "null").
+        self._put_api_or_fail(api_url, body=None, send_body=False)
 
     def get_device_firmware_state(self, device_id: str) -> str | None:
         """Probe this device's firmware lifecycle state (no OpenAPI spec).

@@ -266,6 +266,7 @@ class SHCAPIAsync:
         api_url: str,
         body: Any,
         timeout: int = 30,
+        send_body: bool = True,
     ) -> Any:
         """Async PUT — mirrors sync ``_put_api_or_fail``."""
         import aiohttp
@@ -275,7 +276,7 @@ class SHCAPIAsync:
         async def _attempt() -> Any:
             async with self._session.put(
                 api_url,
-                data=json.dumps(body),
+                data=json.dumps(body) if send_body else None,
                 headers=self._headers,
                 ssl=self._ssl_ctx,
                 timeout=aiohttp.ClientTimeout(total=timeout),
@@ -438,7 +439,8 @@ class SHCAPIAsync:
         OpenAPI spec. NEVER_BLIND_FIX: confirm on real hardware.
         """
         api_url = f"{self._api_root}/motiondetectors/{urllib.parse.quote(device_id, safe='')}/sensors/illuminance/enable"
-        await self._put_api_or_fail(api_url, body=None)
+        # The app sends no request body at all (not a JSON "null").
+        await self._put_api_or_fail(api_url, body=None, send_body=False)
 
     async def get_device_firmware_state(self, device_id: str) -> str | None:
         """Probe this device's firmware lifecycle state (no OpenAPI spec).

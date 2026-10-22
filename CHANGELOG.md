@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.23 — Illuminance enable request sent without a body
+
+- `put_motion_detector_illuminance_enable()` now sends the request without any
+  body, exactly like the Bosch app. It used to send a JSON `null` body, which
+  the controller may ignore (#440). Not yet confirmed on a real Motion
+  Detector.
+
 ## 0.6.22 — Read-only smoke system and measurement history endpoints
 
 - New `get_smoke_system_state()`, `get_smoke_configuration()` and
