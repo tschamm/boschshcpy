@@ -47,7 +47,7 @@ Press and hold the SHC front button until the LED flashes (registration mode, ~1
 boschshc_registerclient -ip 192.168.x.x -pw YOUR_SHC_PASSWORD
 ```
 
-This writes `cert.pem` and `key.pem` to the working directory.
+This writes a certificate/key pair named like `oss_boschshcpy_client_<controller id>_cert.pem` and `..._key.pem` to the working directory. The examples below use `cert.pem` / `key.pem`; rename the files or pass their real names.
 
 **3 — Use the session**
 
@@ -341,7 +341,7 @@ Then run:
 boschshc_registerclient -ip YOUR_SHC_IP -pw YOUR_SHC_PASSWORD
 ```
 
-This writes a certificate/key pair (`cert.pem` / `key.pem`) to the working directory. The CLI prompts for
+This writes a certificate/key pair named like `oss_boschshcpy_client_<controller id>_cert.pem` / `..._key.pem` to the working directory (the examples use `cert.pem` / `key.pem`; rename or pass the real names). The CLI prompts for
 the SHC password via a hidden `getpass` prompt if `-pw` is omitted, and writes the private key with `0600`
 permissions — neither the password nor the key material is ever printed to stdout or left in shell
 history.
