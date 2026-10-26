@@ -161,6 +161,10 @@ class PowerMeterMixin(SHCDevice):
         # (Smart Plug [+M] in Mini-PV mode) — gates the HA yield entities.
         return self._powermeter_service.energyyield is not None
 
+    def reset_energy_summation(self) -> None:
+        """Reset the accumulated energy counter (sync)."""
+        self._powermeter_service.reset_energy_summation()
+
     async def async_reset_energy_summation(self) -> None:
         """Async: reset the accumulated energy counter (hass#120 audit)."""
         await self._powermeter_service.async_reset_energy_summation()
@@ -1282,6 +1286,17 @@ class SHCShutterControl(SHCDevice):
     def reference_moving_time_bottom_to_top_ms(self) -> int | None:
         return self._service.reference_moving_time_bottom_to_top_ms
 
+    def reset_calibration_and_open(self) -> None:
+        """Reset the calibration flag and drive fully open (sync).
+
+        Does NOT calibrate (hass#396) -- use calibrate() for the real run.
+        """
+        self._service.reset_calibration_and_open()
+
+    def calibrate(self) -> None:
+        """Run the actual end-position calibration drive (sync)."""
+        self._service.calibrate()
+
     async def async_reset_calibration_and_open(self) -> None:
         """Async write: reset the calibration flag and drive fully open.
 
@@ -1858,6 +1873,12 @@ class SHCClimateControl(TemperatureLevelMixin):
         """Async write: set room control mode (HEATING/COOLING)."""
         await self._roomclimatecontrol_service.async_put_state_element(
             "roomControlMode", value
+        )
+
+    def set_hvac_control_mode(self, value: str) -> None:
+        """Atomically set HEATING/COOLING/OFF for this room (sync, hass#394)."""
+        self._api.put_domain_action(
+            "roomclimatecontrol/roomControlMode", {self.id: value}
         )
 
     async def async_set_hvac_control_mode(self, value: str) -> None:
@@ -3560,6 +3581,12 @@ class SHCOutdoorSiren(SHCBatteryDevice):
     @property
     def supports_legacy_alarm_configuration(self) -> bool:
         return self._legacy_alarm_service is not None
+
+    def trigger_test_alarm(
+        self, sound_level: OutdoorSirenService.SoundLevel | None = None
+    ) -> None:
+        """Fire a short test alarm at the given (or configured) level (sync)."""
+        self._siren_service.trigger_test_alarm(sound_level)
 
     async def async_trigger_test_alarm(
         self, sound_level: OutdoorSirenService.SoundLevel | None = None

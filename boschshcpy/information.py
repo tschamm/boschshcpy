@@ -267,6 +267,12 @@ class SHCInformation:
         else:
             raise SHCConnectionError
 
+    def refresh(self) -> None:
+        """Re-fetch the public /information block (software-update state etc.)."""
+        pub_info = self._api.get_public_information()
+        if pub_info is not None:
+            self._pub_info = pub_info
+
     def start_software_update(self) -> None:
         """Trigger a controller firmware update install.
 

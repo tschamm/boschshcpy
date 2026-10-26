@@ -721,6 +721,10 @@ class PowerMeterService(SHCDeviceService):
         """Epoch-ms timestamp the accumulated energyConsumption counts from."""
         return self.state.get("energyConsumptionStartDate")
 
+    def reset_energy_summation(self) -> None:
+        """Reset the accumulated energy counter (sync twin of the async call)."""
+        self.post_operation("resetEnergySummation", [])
+
     async def async_reset_energy_summation(self) -> None:
         """Async: reset the accumulated energy counter (hass#120 audit).
 
@@ -998,6 +1002,17 @@ class ShutterControlService(SHCDeviceService):
             "movingTimeBottomToTopInMillis"
         )
         return int(raw) if raw is not None else None
+
+    def reset_calibration_and_open(self) -> None:
+        """Reset the calibration flag and drive fully open (sync twin).
+
+        Does NOT calibrate (hass#396); use `calibrate()` for the real run.
+        """
+        self.post_operation("resetCalibrationAndOpen", [])
+
+    def calibrate(self) -> None:
+        """Start the end-position calibration drive (sync twin)."""
+        self.put_state_element("operationState", self.State.CALIBRATING.value)
 
     async def async_reset_calibration_and_open(self) -> None:
         """Async: reset the calibration flag and drive the shutter fully open.
@@ -2637,6 +2652,13 @@ class OutdoorSirenService(SHCDeviceService):
         if config is not None:
             await self.async_put_state_element("outdoorSirenConfiguration", config)
 
+    def trigger_test_alarm(
+        self, sound_level: OutdoorSirenService.SoundLevel | None = None
+    ) -> None:
+        """Fire a short test alarm (sync twin); bare positional array body."""
+        level = (sound_level or self.sound_level).value
+        self.post_operation("triggerTestAlarm", [level])
+
     async def async_trigger_test_alarm(
         self, sound_level: OutdoorSirenService.SoundLevel | None = None
     ) -> None:
@@ -3018,6 +3040,14 @@ class DimmerConfigurationService(SHCDeviceService):
             state_before = self._raw_state
             await self.async_put_state_element("brightnessRange", rng)
             self._written_range = (state_before, new_min, new_max)
+
+    def preview_max_brightness(self) -> None:
+        """Flash the load at the configured maximum (calibration, sync)."""
+        self.post_operation("previewMaxBrightness")
+
+    def preview_min_brightness(self) -> None:
+        """Flash the load at the configured minimum (calibration, sync)."""
+        self.post_operation("previewMinBrightness")
 
     async def async_preview_max_brightness(self) -> None:
         """Async: flash the load at the configured maximum (calibration)."""

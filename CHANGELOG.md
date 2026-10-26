@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.25 — Sync twins for async-only writes
+
+- Added synchronous counterparts for operations that were async-only, so sync
+  consumers such as Home Assistant core can use them:
+  `SHCInformation.refresh()`, `reset_energy_summation()` (power meter devices),
+  `reset_calibration_and_open()` and `calibrate()` (shutter controls),
+  `trigger_test_alarm()` (outdoor siren), `preview_max_brightness()` and
+  `preview_min_brightness()` (dimmer configuration), and
+  `SHCClimateControl.set_hvac_control_mode()` (atomic heating/cooling/off).
+
 ## 0.6.24 — Public accessors for heating circuit setpoints, output modes and comfort zone
 
 - `SHCHeatingCircuit` now exposes `setpoint_temperature_eco` and
