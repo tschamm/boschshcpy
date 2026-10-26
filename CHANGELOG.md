@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.24 — Public accessors for heating circuit setpoints, output modes and comfort zone
+
+- `SHCHeatingCircuit` now exposes `setpoint_temperature_eco` and
+  `setpoint_temperature_comfort` (read-only; `None` until configured), next to
+  the existing eco/comfort temperature ranges and sync setters.
+- `SHCMicromoduleRelay` and `SHCLightControl` now expose
+  `supported_output_modes`, the output modes the device advertises (an empty
+  list when the device has no switch configuration).
+- `SHCTwinguard` now exposes `comfort_zone` (an empty dict when the controller
+  reports none).
+- Integrations no longer need to reach into private service attributes for
+  these values.
+
 ## 0.6.23 — Value bounds for LED and display settings, illuminance enable fix
 
 - New read-only properties for the limits the controller reports:

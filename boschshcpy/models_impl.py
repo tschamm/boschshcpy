@@ -1028,6 +1028,12 @@ class SHCLightControl(CommunicationQualityMixin, PowerMeterMixin):
         if self._switch_config_service is not None:
             self._switch_config_service.output_mode = value
 
+    @property
+    def supported_output_modes(self) -> list[Any]:
+        if self._switch_config_service is None:
+            return []
+        return self._switch_config_service.supported_output_modes
+
     async def async_set_output_mode(
         self, value: SwitchConfiguration.OutputMode
     ) -> None:
@@ -1185,6 +1191,12 @@ class SHCMicromoduleRelay(
     def output_mode(self, value: SwitchConfiguration.OutputMode) -> None:
         if self._switch_config_service is not None:
             self._switch_config_service.output_mode = value
+
+    @property
+    def supported_output_modes(self) -> list[Any]:
+        if self._switch_config_service is None:
+            return []
+        return self._switch_config_service.supported_output_modes
 
     async def async_set_output_mode(
         self, value: SwitchConfiguration.OutputMode
@@ -2089,6 +2101,14 @@ class SHCHeatingCircuit(SHCDevice):
     def eco_temperature_range(self) -> tuple[float, float] | None:
         return self._heating_circuit_service.eco_temperature_range
 
+    @property
+    def setpoint_temperature_eco(self) -> float | None:
+        return self._heating_circuit_service.setpoint_temperature_eco
+
+    @property
+    def setpoint_temperature_comfort(self) -> float | None:
+        return self._heating_circuit_service.setpoint_temperature_comfort
+
 
 class SHCWallThermostat(
     SHCBatteryDevice,
@@ -2965,6 +2985,10 @@ class SHCTwinguard(SHCBatteryDevice, TemperatureLevelMixin, HumidityLevelMixin):
     @property
     def description(self) -> str:
         return self._airqualitylevel_service.description
+
+    @property
+    def comfort_zone(self) -> dict[str, Any]:
+        return self._airqualitylevel_service.comfortZone
 
     @property
     def combined_rating(self) -> AirQualityLevelService.RatingState:
