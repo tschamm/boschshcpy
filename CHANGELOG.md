@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.26-beta.1 — Domestic hot water (read-only) and room climate away flag
+
+- Added `DomesticHotWaterService` and `SHCDomesticHotWater` (operation mode,
+  temperature level, tank temperature, charge remaining time and duration),
+  modelled on the Bosch app 10.36 `DomesticHotWaterState`. Devices of any model
+  that expose the `DomesticHotWater` service are collected in
+  `device_helper.domestic_hot_water`. Read-only and not yet checked against a
+  real device, so every accessor tolerates missing fields.
+- Added `SHCClimateControl.away` (read-only away flag).
+
 ## 0.6.25 — Sync twins for async-only writes
 
 - Added synchronous counterparts for operations that were async-only, so sync

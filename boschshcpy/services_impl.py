@@ -99,6 +99,11 @@ class RoomClimateControlService(SHCDeviceService):
         return bool(self.state.get("ventilationMode", False))
 
     @property
+    def away(self) -> bool:
+        """Away mode flag (read-only; field known from the Bosch app 10.36 model)."""
+        return bool(self.state.get("away", False))
+
+    @property
     def low(self) -> bool:
         return bool(self.state.get("low", False))
 
@@ -277,6 +282,75 @@ class ThermostatSupportedControlModeService(SHCDeviceService):
     def summary(self) -> None:
         super().summary()
         print(f"    Supported Control Modes  : {self.supported_control_modes}")
+
+
+class DomesticHotWaterService(SHCDeviceService):
+    """Domestic hot water circuit (K40 heating system), read-only.
+
+    Fields come from the Bosch app 10.36 model (DomesticHotWaterState); no
+    rawscan has been seen yet, so every accessor tolerates missing keys.
+    """
+
+    class OperationMode(Enum):
+        OFF = "OFF"
+        LOW = "LOW"
+        ECO = "ECO"
+        HIGH = "HIGH"
+        AUTOMATIC = "AUTOMATIC"
+        UNKNOWN = "UNKNOWN"
+
+    class TemperatureLevel(Enum):
+        OFF = "OFF"
+        LOW = "LOW"
+        HIGH = "HIGH"
+        ECO = "ECO"
+        UNKNOWN = "UNKNOWN"
+
+    @property
+    def operation_mode(self) -> OperationMode:
+        try:
+            return self.OperationMode(self.state.get("operationMode", "UNKNOWN"))
+        except ValueError:
+            return self.OperationMode.UNKNOWN
+
+    @property
+    def current_temperature_level(self) -> TemperatureLevel:
+        try:
+            return self.TemperatureLevel(
+                self.state.get("currentTemperatureLevel", "UNKNOWN")
+            )
+        except ValueError:
+            return self.TemperatureLevel.UNKNOWN
+
+    @staticmethod
+    def _number(value: Any) -> float | None:
+        try:
+            return float(value) if value is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    @property
+    def tank_temperature(self) -> float | None:
+        return self._number(self.state.get("tankTemperature"))
+
+    @property
+    def charge_remaining_time(self) -> int | None:
+        value = self._number(self.state.get("chargeRemainingTime"))
+        return int(value) if value is not None else None
+
+    @property
+    def charge_duration(self) -> float | None:
+        duration = self.state.get("chargeDuration")
+        if not isinstance(duration, dict):
+            return None
+        return self._number(duration.get("value"))
+
+    def summary(self) -> None:
+        super().summary()
+        print(f"    Operation Mode           : {self.operation_mode}")
+        print(f"    Temperature Level        : {self.current_temperature_level}")
+        print(f"    Tank Temperature         : {self.tank_temperature}")
+        print(f"    Charge Remaining Time    : {self.charge_remaining_time}")
 
 
 class HeatingCircuitService(SHCDeviceService):
@@ -3110,6 +3184,7 @@ SERVICE_MAPPING = {
     "PowerSwitch": PowerSwitchService,
     "PowerSwitchConfiguration": PowerSwitchConfigurationService,
     "PowerSwitchProgram": PowerSwitchProgramService,
+    "DomesticHotWater": DomesticHotWaterService,
     "PowerSwitchWarning": PowerSwitchWarningService,
     "PresenceSimulationConfiguration": PresenceSimulationConfigurationService,
     "PrivacyMode": PrivacyModeService,

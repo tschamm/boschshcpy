@@ -15,6 +15,7 @@ from .models_impl import (
     SHCCameraEyes,
     SHCCameraOutdoorGen2,
     SHCClimateControl,
+    SHCDomesticHotWater,
     SHCHeatingCircuit,
     SHCLight,
     SHCMotionDetector,
@@ -53,6 +54,7 @@ __all__ = [
     "SHCCameraOutdoorGen2",
     "SHCClimateControl",
     "SHCDeviceHelper",
+    "SHCDomesticHotWater",
     "SHCHeatingCircuit",
     "SHCLight",
     "SHCMotionDetector",
@@ -88,6 +90,7 @@ class SHCDeviceHelper:
     def __init__(self, api: SHCAPI) -> None:
         self._api = api
         self._devices_by_model: dict[str, dict[str, SHCDevice]] = {}
+        self._domestic_hot_water: dict[str, SHCDomesticHotWater] = {}
         for model in SUPPORTED_MODELS:
             self._devices_by_model[model] = {}
 
@@ -104,6 +107,16 @@ class SHCDeviceHelper:
                 raw_device_services=device_services,
             )
             self._devices_by_model[device_model][device_id] = device
+        elif any(
+            service.get("id") == "DomesticHotWater" for service in device_services
+        ):
+            dhw = SHCDomesticHotWater(
+                api=self._api,
+                raw_device=raw_device,
+                raw_device_services=device_services,
+            )
+            self._domestic_hot_water[device_id] = dhw
+            device = dhw
         else:
             device = SHCDevice(
                 api=self._api,
@@ -384,6 +397,10 @@ class SHCDeviceHelper:
                 "smokeDetectionSystem"
             ),
         )
+
+    @property
+    def domestic_hot_water(self) -> typing.Sequence[SHCDomesticHotWater]:
+        return list(self._domestic_hot_water.values())
 
     @property
     def heating_circuits(self) -> typing.Sequence[SHCHeatingCircuit]:

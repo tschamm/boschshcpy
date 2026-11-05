@@ -29,6 +29,7 @@ from .services_impl import (
     DisplayedTemperatureConfiguration,
     EnergySavingModeService,
     HSBColorActuatorService,
+    DomesticHotWaterService,
     HeatingCircuitService,
     HueColorTemperatureService,
     HumidityLevelService,
@@ -1937,6 +1938,10 @@ class SHCClimateControl(TemperatureLevelMixin):
         return self._roomclimatecontrol_service.ventilation_mode
 
     @property
+    def away(self) -> bool:
+        return self._roomclimatecontrol_service.away
+
+    @property
     def active_schedule_id(self) -> str | None:
         return self._roomclimatecontrol_service.active_schedule_id
 
@@ -2026,6 +2031,41 @@ class SHCBoiler(SHCDevice):
     async def async_add_linked_room(self, room_id: str) -> None:
         """Async: link one additional room to this boiler."""
         await self._api.put_boiler_add_room(self.id, room_id)  # type: ignore[misc,func-returns-value]
+
+
+class SHCDomesticHotWater(SHCDevice):
+    """Domestic hot water circuit device (read-only)."""
+
+    def __init__(
+        self,
+        api: SHCAPI,
+        raw_device: dict[str, Any],
+        raw_device_services: list[dict[str, Any]],
+    ) -> None:
+        super().__init__(api, raw_device, raw_device_services)
+        self._dhw_service: DomesticHotWaterService = self.device_service(  # type: ignore[assignment]
+            "DomesticHotWater"
+        )
+
+    @property
+    def operation_mode(self) -> DomesticHotWaterService.OperationMode:
+        return self._dhw_service.operation_mode
+
+    @property
+    def current_temperature_level(self) -> DomesticHotWaterService.TemperatureLevel:
+        return self._dhw_service.current_temperature_level
+
+    @property
+    def tank_temperature(self) -> float | None:
+        return self._dhw_service.tank_temperature
+
+    @property
+    def charge_remaining_time(self) -> int | None:
+        return self._dhw_service.charge_remaining_time
+
+    @property
+    def charge_duration(self) -> float | None:
+        return self._dhw_service.charge_duration
 
 
 class SHCHeatingCircuit(SHCDevice):
