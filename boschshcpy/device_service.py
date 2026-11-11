@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from .api import SHCAPI
+from ._callbacks import CallbackMap, add_callback, iter_callbacks, remove_callback
 
 
 class SHCDeviceService:
@@ -37,7 +38,7 @@ class SHCDeviceService:
         self._state_revision = 0
         self._last_update: datetime | None = None
 
-        self._callbacks: dict[Any, Callable[[], None]] = {}
+        self._callbacks: CallbackMap = {}
         self._event_callbacks: dict[str, Callable[[], None]] = {}
         # Baseline event timestamp (Keypad eventTimestamp / LatestMotion
         # latestMotionDetected), seeded from the construction snapshot so the
@@ -71,10 +72,12 @@ class SHCDeviceService:
         return str(self._raw_device_service["path"])
 
     def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
-        self._callbacks[entity] = callback
+        add_callback(self._callbacks, entity, callback)
 
-    def unsubscribe_callback(self, entity: Any) -> None:
-        self._callbacks.pop(entity, None)
+    def unsubscribe_callback(
+        self, entity: Any, callback: Callable[[], None] | None = None
+    ) -> None:
+        remove_callback(self._callbacks, entity, callback)
 
     def register_event(self, event: str, callback: Callable[[], None]) -> None:
         self._event_callbacks[event] = callback
@@ -171,7 +174,7 @@ class SHCDeviceService:
             # schedule_update_ha_state() calls to every co-registered entity.
             # At initial setup _callbacks is empty, so firing is a no-op anyway.
             if fire_callbacks:
-                for fn in list(self._callbacks.values()):  # [S4]
+                for fn in iter_callbacks(self._callbacks):  # [S4]
                     fn()
 
     async def async_short_poll(self, fire_callbacks: bool = False) -> None:
@@ -197,7 +200,7 @@ class SHCDeviceService:
                     return
                 self._apply_snapshot(snapshot)
             if fire_callbacks:
-                for fn in list(self._callbacks.values()):  # [S4]
+                for fn in iter_callbacks(self._callbacks):  # [S4]
                     fn()
 
     def process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
@@ -221,7 +224,7 @@ class SHCDeviceService:
                 self._raw_state = new_state  # Update state
                 self._state_revision += 1
 
-            for fn in list(self._callbacks.values()):  # [S4]
+            for fn in iter_callbacks(self._callbacks):  # [S4]
                 fn()
 
             self._process_events(raw_result)

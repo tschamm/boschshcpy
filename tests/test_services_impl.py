@@ -2499,3 +2499,43 @@ def test_has_demand_truthy_int():
     """Non-bool truthy value in state is coerced to True."""
     svc = _make_rcc_service({"hasDemand": 1})
     assert svc.has_demand is True
+
+
+def test_service_push_fires_every_callback_sharing_a_key():
+    svc = _make_svc(TemperatureOffsetService, {"offset": 1.0})
+    svc._state_revision = 0
+    svc._state_lock_obj = __import__("threading").Lock()
+    svc.__dict__["_state_lock_obj"] = svc._state_lock_obj
+    fired = []
+
+    def cb1():
+        fired.append(1)
+
+    def cb2():
+        fired.append(2)
+
+    svc.subscribe_callback("uid", cb1)
+    svc.subscribe_callback("uid", cb2)
+    svc.process_long_polling_poll_result(
+        {
+            "@type": "DeviceServiceData",
+            "id": "TemperatureOffset",
+            "deviceId": "test-device",
+            "path": "/test",
+            "state": {"@type": "testType", "offset": 2.0},
+        }
+    )
+    assert sorted(fired) == [1, 2]
+
+    svc.unsubscribe_callback("uid", cb1)
+    fired.clear()
+    svc.process_long_polling_poll_result(
+        {
+            "@type": "DeviceServiceData",
+            "id": "TemperatureOffset",
+            "deviceId": "test-device",
+            "path": "/test",
+            "state": {"@type": "testType", "offset": 3.0},
+        }
+    )
+    assert fired == [2]

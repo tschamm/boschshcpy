@@ -4,6 +4,8 @@ from collections.abc import Callable
 from enum import Enum
 from typing import Any
 
+from ._callbacks import CallbackMap, add_callback, iter_callbacks, remove_callback
+
 
 class SHCIntrusionSystem:
     DOMAIN_STATES = {
@@ -59,7 +61,7 @@ class SHCIntrusionSystem:
         )
         self._root_device_id = root_device_id
 
-        self._callbacks: dict[Any, Callable[[], None]] = {}
+        self._callbacks: CallbackMap = {}
 
     @property
     def id(self) -> str:
@@ -131,10 +133,12 @@ class SHCIntrusionSystem:
         return list(self._raw_security_gap_state.get("securityGaps", []))
 
     def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
-        self._callbacks[entity] = callback
+        add_callback(self._callbacks, entity, callback)
 
-    def unsubscribe_callback(self, entity: Any) -> None:
-        self._callbacks.pop(entity, None)
+    def unsubscribe_callback(
+        self, entity: Any, callback: Callable[[], None] | None = None
+    ) -> None:
+        remove_callback(self._callbacks, entity, callback)
 
     def summary(self) -> None:
         print(f"  Domain:                  {self.id}")
@@ -217,7 +221,7 @@ class SHCIntrusionSystem:
         if raw_result.get("@type") == "securityGapState":
             self._raw_security_gap_state = raw_result
 
-        for fn in list(self._callbacks.values()):
+        for fn in iter_callbacks(self._callbacks):
             fn()
 
 
@@ -241,7 +245,7 @@ class SHCWaterAlarmSystem:
         self._api = api
         self._raw_state = raw_domain_state
         self._root_device_id = root_device_id
-        self._callbacks: dict[Any, Callable[[], None]] = {}
+        self._callbacks: CallbackMap = {}
 
     @property
     def id(self) -> str:
@@ -302,10 +306,12 @@ class SHCWaterAlarmSystem:
         return incident.get("timestamp")
 
     def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
-        self._callbacks[entity] = callback
+        add_callback(self._callbacks, entity, callback)
 
-    def unsubscribe_callback(self, entity: Any) -> None:
-        self._callbacks.pop(entity, None)
+    def unsubscribe_callback(
+        self, entity: Any, callback: Callable[[], None] | None = None
+    ) -> None:
+        remove_callback(self._callbacks, entity, callback)
 
     def summary(self) -> None:
         print(f"  Domain:            {self.id}")
@@ -325,7 +331,7 @@ class SHCWaterAlarmSystem:
     def process_long_polling_poll_result(self, raw_result: dict[str, Any]) -> None:
         if raw_result.get("@type") == "waterAlarmSystemState":
             self._raw_state = raw_result
-            for fn in list(self._callbacks.values()):
+            for fn in iter_callbacks(self._callbacks):
                 fn()
 
 

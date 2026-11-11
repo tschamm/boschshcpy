@@ -192,7 +192,7 @@ def test_ids_subscribe_callback():
     cb = MagicMock()
     svc.subscribe_callback("entity1", cb)
     assert "entity1" in svc._callbacks
-    assert svc._callbacks["entity1"] is cb
+    assert svc._callbacks["entity1"] == [cb]
 
 
 def test_ids_unsubscribe_callback():
@@ -671,7 +671,7 @@ def test_water_alarm_subscribe_unsubscribe_callback():
     svc = _make_water_alarm()
     cb = MagicMock()
     svc.subscribe_callback("entity1", cb)
-    assert svc._callbacks["entity1"] is cb
+    assert svc._callbacks["entity1"] == [cb]
     svc.unsubscribe_callback("entity1")
     assert "entity1" not in svc._callbacks
 
@@ -734,3 +734,19 @@ def test_water_alarm_process_long_polling_ignores_other_types():
     svc.process_long_polling_poll_result({"@type": "somethingElse"})
     assert svc.alarm_state == SHCWaterAlarmSystem.AlarmState.ALARM_OFF
     cb.assert_not_called()
+
+
+def test_callbacks_sharing_a_key_both_fire_and_unsubscribe_individually():
+    svc = _make_ids()
+    cb1, cb2 = MagicMock(), MagicMock()
+    svc.subscribe_callback("uid", cb1)
+    svc.subscribe_callback("uid", cb2)
+    svc.subscribe_callback("uid", cb2)  # duplicate is ignored
+    assert svc._callbacks["uid"] == [cb1, cb2]
+
+    svc.unsubscribe_callback("uid", cb1)
+    assert svc._callbacks["uid"] == [cb2]
+
+    svc.unsubscribe_callback("uid", cb2)
+    assert "uid" not in svc._callbacks
+    svc.unsubscribe_callback("uid", cb2)  # unknown callback is a no-op

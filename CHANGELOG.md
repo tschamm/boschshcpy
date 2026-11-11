@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.27 — Several callbacks per key
+
+- `subscribe_callback` now keeps a list per key instead of one callback, so
+  entities that share a key (for example a unique id) no longer overwrite each
+  other's callback. `unsubscribe_callback(entity, callback=None)` removes one
+  callback when given, or all callbacks of the key as before.
+  Applies to device services, devices and the domain state objects.
+  Subscribing again under the same key now adds a callback instead of
+  replacing it, so pair every subscribe with an unsubscribe.
+
 ## 0.6.26 — Domestic hot water (read-only) and room climate away flag
 
 - Added `DomesticHotWaterService` and `SHCDomesticHotWater` (operation mode,

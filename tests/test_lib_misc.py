@@ -618,3 +618,19 @@ def test_generate_certificate_key_parseable():
     _, key_pem = generate_certificate("client", "Org")
     key = load_pem_private_key(key_pem, password=None, backend=default_backend())
     assert key.key_size == 2048
+
+
+def test_emma_callbacks_sharing_a_key_both_fire():
+    emma = SHCEmma(api=None, shc_info=_shc_info_mock())
+    fired = []
+
+    def cb1():
+        fired.append("cb1")
+
+    def cb2():
+        fired.append("cb2")
+
+    emma.subscribe_callback("uid", cb1)
+    emma.subscribe_callback("uid", cb2)
+    emma.update_emma_data(_full_raw())
+    assert sorted(fired) == ["cb1", "cb2"]

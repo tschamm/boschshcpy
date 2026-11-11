@@ -5,6 +5,7 @@ import typing
 from typing import Any, Callable
 
 from .api import SHCAPI
+from ._callbacks import CallbackMap, add_callback, iter_callbacks, remove_callback
 from .device_service import SHCDeviceService
 from .exceptions import SHCException
 from .services_impl import SUPPORTED_DEVICE_SERVICE_IDS, build
@@ -22,7 +23,7 @@ class SHCDevice:
         self._api = api
         self._raw_device = raw_device
 
-        self._callbacks: dict[Any, Callable[[], None]] = {}
+        self._callbacks: CallbackMap = {}
         self._device_services_by_id: dict[str, SHCDeviceService] = {}
         if not raw_device_services:
             raw_device_services = self._enumerate_services()
@@ -222,17 +223,19 @@ class SHCDevice:
         return set(self._device_services_by_id.keys())
 
     def subscribe_callback(self, entity: Any, callback: Callable[[], None]) -> None:
-        self._callbacks[entity] = callback
+        add_callback(self._callbacks, entity, callback)
 
-    def unsubscribe_callback(self, entity: Any) -> None:
-        self._callbacks.pop(entity, None)
+    def unsubscribe_callback(
+        self, entity: Any, callback: Callable[[], None] | None = None
+    ) -> None:
+        remove_callback(self._callbacks, entity, callback)
 
     def update_raw_information(self, raw_device: dict[str, Any]) -> None:
         if self._raw_device["id"] != raw_device["id"]:
             raise SHCException("Error due to mismatching device ids!")
         self._raw_device = raw_device
 
-        for fn in list(self._callbacks.values()):
+        for fn in iter_callbacks(self._callbacks):
             fn()
 
     def device_service(self, device_service_id: str) -> SHCDeviceService | None:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from ._callbacks import iter_callbacks
 from .device import SHCDevice
 from .exceptions import SHCException
 from .information import SHCInformation
@@ -90,7 +91,7 @@ class SHCEmma(SHCDevice):
         self._raw_result = raw_result
         self._raw_device["status"] = "AVAILABLE"
 
-        for fn in list(self._callbacks.values()):
+        for fn in iter_callbacks(self._callbacks):
             fn()
 
     def summary(self) -> None:
