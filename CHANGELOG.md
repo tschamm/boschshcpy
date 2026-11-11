@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.26-beta.1 — Domestic hot water (read-only) and room climate away flag
+## 0.6.26 — Domestic hot water (read-only) and room climate away flag
 
 - Added `DomesticHotWaterService` and `SHCDomesticHotWater` (operation mode,
   temperature level, tank temperature, charge remaining time and duration),
